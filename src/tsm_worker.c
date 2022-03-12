@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <sys/wait.h>
 
-#include "data_type.h"
+#include "common.h"
 
-sint32 main() 
+/* TSM module worker */
+void TsmModulerWorker()
 {
-  sint32 a = 0;
-
-  return 0;
+    while(1)
+    {
+        LOG("Say Hello, %d !", 5);
+        usleep(20000);   // 休眠20ms
+    }
 }
