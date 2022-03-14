@@ -12,4 +12,18 @@ typedef unsigned long long uint64;
 typedef float float32;
 typedef double float64;
 
+typedef unsigned char boolean;
+
+#ifndef NULL_PTR
+#define NULL_PTR ((void*)0)
+#endif
+
+#ifndef true
+#define true 1U
+#endif
+
+#ifndef false
+#define false 0U
+#endif
+
 #endif

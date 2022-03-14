@@ -14,10 +14,10 @@ sint32 main()
 
   // 线程创建失败
   if (ret_thrd != 0) {
-    printf("main thread create failed!\n");
+    LOG("main thread create failed!");
     exit(-1);
   } else {
-    printf("main thread create success!\n");
+    LOG("main thread create success!");
   }
   // 等待线程终止
   pthread_join(main_thread, NULL);
