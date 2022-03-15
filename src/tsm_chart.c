@@ -8,7 +8,8 @@
 void TsmChartManager() {
     enum EventID event_id_array[(uint8)EVENT_COUNT];
     uint8 size = 0;
-    // 找到对应的触发事件ID的数组
+    // 找到触发事件ID的数组,因为状态和事件有相关性，我们会先找到符合的事件，然后用事件去匹配状态的思想，
+    // 并按优先级，找到跳转
     for (uint8 i = 0; i < (uint8)EVENT_COUNT; ++i) {
         if (event[i](&tsm)) {
             event_id_array[size++] = (enum EventID)i;
@@ -49,37 +50,90 @@ StateTransit* FindTrans(StateMachine* state_machine,
 // event声明
 boolean IsMrmSystemFaultNotExist()
 {
+    if (tsm.inter_media_msg.mrm_system_fault_level == NO_FAULT) {
+        return true;
+    }
     return false;
 }
 
 boolean IsLightingConditionMeet()
 {
     return false;
+    /*
+    if ((tsm.inter_media_msg.mrm_system_fault_level == FAILURE_FAULT) &&
+        tsm.inter_media_msg.mrm_failure_lighting_flag) {
+        return true;
+    }
+    return false;
+    */
 }
 
 boolean IsNoLightingConditionMeet()
 {
     return false;
+    /*
+    if ((tsm.inter_media_msg.mrm_system_fault_level == FAILURE_FAULT) &&
+        !tsm.inter_media_msg.mrm_failure_lighting_flag) {
+        return true;
+    }
+    return false;
+    */
 }
 
 boolean IsStandbyConditionMeet()
 {
     return true;
+    /*
+    if ((tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_EPB_PHASE_IN) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_NORMAL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDACTIVE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDWAIT) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_NORMAL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDACTIVE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDWAIT) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_FREE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_ON) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_LNG_OVERRIDE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_OVERRIDE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_STAND) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_LAT_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_LAT_LNG_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EMERGENCY_LANE_WITH_LAT_LNG_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EMERGENCY_LANE_WITH_LAT_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_LNG_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_CONTROL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_LNG_CONTROL)) {
+        return true;
+    }
+    return false;
+    */
 }
 
 boolean IsStandbyConditionNotMeet()
 {
+    
     return false;
 }
 
 boolean IsMrmBothCtrlConditionMeet()
 {
+    // TODO: 
+    if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
+        !tsm.inter_media_msg.brake_is_set) {
+        return true;        
+    }
     return false;
 }
 
 boolean IsMrmLatCtrlConditionMeet()
 {
-    return true;
+    // TODO:
+    if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_SATISFY) ||
+        tsm.inter_media_msg.brake_is_set) {
+        return true;
+    }
+    return false;
 }
 
 boolean IsEnterMrcFromStandby()
@@ -94,7 +148,7 @@ boolean IsEnterMrcFromMrm()
 
 boolean IsEnterLightingFromMrm()
 {
-    return true;
+    return false;
 }
 
 boolean IsEnterNoLightingFromMrm()
@@ -110,4 +164,45 @@ boolean IsEnterLightingFromMrc()
 boolean IsEnterNoLightingFromMrc()
 {
     return false;
+}
+
+// action definition
+void ActionInPassive()
+{
+    LOG("It's in Passive St.");
+}
+
+void ActionInFailureLighting()
+{
+    LOG("It's in Failure Lighting St.");
+    tsm.action_param.lng_override_flag = 0;
+}
+
+void ActionInFailureNoLighting()
+{
+    LOG("It's in Failure No Lighting St.");
+}
+
+void ActionInStandby()
+{
+    LOG("It's in Standby St.");
+}
+
+void ActionInMrmBothCtrl()
+{
+    LOG("It's in Mrm Both Ctrl St.");
+    // car test
+    tsm.action_param.lng_override_flag = 0;
+}
+
+void ActionInMrmLatCtrl()
+{
+    LOG("It's in Mrm Lat Ctrl St.");
+    // car test
+    tsm.action_param.lng_override_flag = 1;
+}
+
+void ActionInMrc()
+{
+    LOG("It's in Mrc St.");
 }

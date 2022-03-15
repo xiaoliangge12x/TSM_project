@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include "tsm_worker.h"
+#include "common.h"
 
 sint32 main() 
 {

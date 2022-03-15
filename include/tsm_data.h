@@ -4,10 +4,16 @@
 #include "Rte_Type.h"
 #include "data_type.h"
 
+// 可标定量
+static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
+
+// 定义宏常量
+#define TOTAL_TRANS_NUM 23
+
+// 函数指针的类型定义
 typedef void (*Action[])();
 typedef boolean (*TransitEvent[])();
-// 定义全局变量(可标定量)
-#define TOTAL_TRANS_NUM 23
+
 // 定义外部枚举量
 typedef enum DMSDrvrDetSts
 {
@@ -198,6 +204,17 @@ typedef enum LaneChangeState
     LANE_CHANGE_RIGHT
 };
 
+typedef enum AccDriverOrvd
+{
+    NO_OVERRIDE = 0,
+    DRIVER_OVERRIDE
+};
+
+typedef enum BrkPedalAppliedSt
+{
+    BRAKE_PEDAL_NOT_APPLIED = 0,
+    BRAKE_PEDAL_APPLIED
+};
 // 定义状态机枚举量
 typedef enum State
 {
@@ -248,6 +265,10 @@ typedef struct
     uint8 planning_control_st;                                // 规控能力(option)
     uint8 brake_is_set;                                       // 刹车是否踩下
     uint8 vehicle_standstill_flag;                            // 车辆是否静止
+    // 上述是给状态机的直接输入，以下是间接中间变量
+    uint8 nda_need_phase_in;                            // nda 是否需要phase-in
+    uint8 nda_passive_vd_flag;                          // nda passive的vd标志位， 1 为valid
+    uint8 nda_handsfree_handson_flag;                   // HandsFree 和 HandsOn 的配置码
 } InterMediaMsg;
 
 typedef struct 
@@ -259,8 +280,24 @@ typedef struct
 
 typedef struct 
 {
+    uint8 lng_override_flag;
+} ActionParam;
+
+typedef struct 
+{
     enum State state;      // 当前状态
-    InterMediaMsg inter_media_msg;
+    InterMediaMsg inter_media_msg;   // 中间信号
+    ActionParam action_param;     // 行为参数
 } StateMachine;
-// Action ID 对应 action 函数数组的Index 
+
+// 定义全局变量
+StateMachine tsm;
+uint8 brakeset_cnt;
+Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
+Dt_RECORD_Diag2TSM rt_in_diag_tsm;
+Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
+Dt_RECORD_TSM2PLANLITE rt_out_tsm_planlite;
+Dt_RECORD_TSM2CtrlArb rt_out_tsm_ctrlarb;
+Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
+Dt_RECORD_TSM2Diag rt_out_tsm_diag;
 #endif

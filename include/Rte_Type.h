@@ -62,6 +62,8 @@ typedef struct tagSoc_Info
     uint8_t                   NDA_Odc_Flag_After_Active;  // NDA激活后的ODD标志位
     uint8_t                   NDA_Enable_State;           // NDA使能状态
     uint8_t                   Planning_Start_Req;         // soc侧的planning起步请求
+    uint8_t                   SD_Map_HD_Map_Match_St;     // SD地图和高精地图的匹配状态， from localMap
+    uint8_t                   User_Set_Navi;              // 用户设置导航， from navi
 } Dt_RECORD_Soc_Info;
 
 typedef struct tagVehicleSignal2TSM
@@ -193,13 +195,19 @@ typedef struct tagDecisionArbitrator2TSM
     Dt_RECORD_TimeStamp Decision_Arbitrator_TimeStamp;
 } Dt_RECORD_DecisionArbitrator2TSM;
 
-// CANSwitch --> TSM
-typedef struct tagDeCANSwitch2TSM
+// CANSwitch --> TSM  保持和IFC环境同步
+typedef struct tagDeCANGATE2TSM
 {
-    Dt_RECORD_TimeStamp         CAN_Switch_TimeStamp;
-    Dt_RECORD_VehicleSignal2TSM Vehicle_Signal_To_Tsm;  // 车身信号
-    Dt_RECORD_Soc_Info          Soc_Info;               // soc的消息  
-} Dt_RECORD_CANSwitch2TSM;
+    Dt_RECORD_TimeStamp         TimeStamp;
+    Dt_RECORD_VehicleSignal2TSM Vehicle_Signal_To_Tsm;   // 车身信号
+    Dt_RECORD_Soc_Info          Soc_Info;                // soc的消息
+} Dt_RECORD_CANGATE2TSM;
+// typedef struct tagDeCANSwitch2TSM
+// {
+//     Dt_RECORD_TimeStamp         CAN_Switch_TimeStamp;
+//     Dt_RECORD_VehicleSignal2TSM Vehicle_Signal_To_Tsm;  // 车身信号
+//     Dt_RECORD_Soc_Info          Soc_Info;               // soc的消息  
+// } Dt_RECORD_CANSwitch2TSM;
 
 // Diag --> TSM
 typedef struct tagDiag2TSM
@@ -218,28 +226,44 @@ typedef struct tagPlanning2TSM
 } Dt_RECORD_PLANLITE2TSM;
 
 //****************************************************** output *******************************************//
-// TSM --> PlanningLite
+// TSM --> PlanningLite   保持和IFC环境一致
 typedef struct tagTSM2Planninglite
 {
-    Dt_RECORD_TimeStamp Tsm_TimeStamp;        // 自己创建的时间戳
-    Dt_RECORD_TimeStamp CAN_Switch_TimeStamp;   // 纯转发消息的时间戳
-    bool                Lat_Takeover_Flag;  // 横向接管标志位
-    bool                Lon_Takeover_Flag;
-    bool                Lat_Override_Flag;
-    bool                Lon_Override_Flag;
+    Dt_RECORD_TimeStamp DeTimeStamp;        // 自己创建的时间戳
+    Dt_RECORD_TimeStamp TimeStamp;   // 纯转发消息的时间戳
     uint8_t             NDA_Lane_Change_Type;
     uint8_t             NDA_Lane_Change_Direction;
     uint8_t             NDA_Lane_Change_State;  // 包含变道请求
     uint8_t             MRM_Status;             // 告知planning lite 退出的标志位， 状态机 0 - 退出 ， 1 - 激活 
-} Dt_RECORD_TSM2Planninglite;
+} Dt_RECORD_TSM2PLANLITE;
+// typedef struct tagTSM2Planninglite
+// {
+//     Dt_RECORD_TimeStamp Tsm_TimeStamp;        // 自己创建的时间戳
+//     Dt_RECORD_TimeStamp CAN_Switch_TimeStamp;   // 纯转发消息的时间戳
+//     bool                Lat_Takeover_Flag;  // 横向接管标志位
+//     bool                Lon_Takeover_Flag;
+//     bool                Lat_Override_Flag;
+//     bool                Lon_Override_Flag;
+//     uint8_t             NDA_Lane_Change_Type;
+//     uint8_t             NDA_Lane_Change_Direction;
+//     uint8_t             NDA_Lane_Change_State;  // 包含变道请求
+//     uint8_t             MRM_Status;             // 告知planning lite 退出的标志位， 状态机 0 - 退出 ， 1 - 激活 
+// } Dt_RECORD_TSM2Planninglite;
 
 // tsm --> Control Arbitrator
-typedef struct tagTSM2ControlArbitrator
+typedef struct tagTSM2CtrlArb
 {
-    Dt_RECORD_TimeStamp CAN_Switch_TimeStamp;   // 接收消息的时间戳
-    uint8_t Planning_Control_State;   // from PlanLite  归控能力
+    Dt_RECORD_TimeStamp TimeStamp;   // 接收消息的时间戳
+    uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
-} Dt_RECORD_TSM2ControlArbitrator;
+    bool                lng_override_flag;    // 纵向override状态， 1为 override
+} Dt_RECORD_TSM2CtrlArb;
+// typedef struct tagTSM2ControlArbitrator
+// {
+//     Dt_RECORD_TimeStamp CAN_Switch_TimeStamp;   // 接收消息的时间戳
+//     uint8_t Planning_Control_State;   // from PlanLite  归控能力
+//     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
+// } Dt_RECORD_TSM2ControlArbitrator;
 
 // tsm --> Decision Arbitrator
 typedef struct tagTSM2DecisionArbitrator
