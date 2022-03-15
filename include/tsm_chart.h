@@ -6,8 +6,16 @@
 #include "common.h"
 #include "tsm_worker.h"
 
-extern void TsmChartManager();
-extern StateTransit* FindTrans(StateMachine* state_machine, 
+void MrmTsmModule(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
+    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
+
+void TsmChartManager();
+StateTransit* FindTrans(StateMachine* state_machine, 
     const enum EventID event_id_array[], const uint8 array_length);
 
 // event声明， 条件判断中可以不再加状态，实现状态和条件的解耦(如果真要状态，那么可以在中间条件里增加状态信号)

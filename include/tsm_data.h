@@ -293,11 +293,4 @@ typedef struct
 // 定义全局变量
 StateMachine tsm;
 uint8 brakeset_cnt;
-Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
-Dt_RECORD_Diag2TSM rt_in_diag_tsm;
-Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
-Dt_RECORD_TSM2PLANLITE rt_out_tsm_planlite;
-Dt_RECORD_TSM2CtrlArb rt_out_tsm_ctrlarb;
-Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
-Dt_RECORD_TSM2Diag rt_out_tsm_diag;
 #endif

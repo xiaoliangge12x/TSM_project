@@ -5,8 +5,16 @@
 /* TSM module worker */
 void TsmModulerWorker()
 {
+    
     memset(&tsm, 0, sizeof(tsm));
 
+    Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
+    Dt_RECORD_Diag2TSM rt_in_diag_tsm;
+    Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
+    Dt_RECORD_TSM2PLANLITE rt_out_tsm_planlite;
+    Dt_RECORD_TSM2CtrlArb rt_out_tsm_ctrlarb;
+    Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
+    Dt_RECORD_TSM2Diag rt_out_tsm_diag;
     // 外部信号初始化
     memset(&rt_in_cangate_tsm, 0, sizeof(Dt_RECORD_CANGATE2TSM));
     memset(&rt_in_diag_tsm, 0, sizeof(Dt_RECORD_Diag2TSM));
@@ -18,6 +26,7 @@ void TsmModulerWorker()
 
     // 计时器初始化
     brakeset_cnt = 0;
+    rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.VCU_AccDriverOrvd = 1;
 
     while(1)
     {
@@ -26,16 +35,4 @@ void TsmModulerWorker()
             &rt_out_tsm_ctrlarb, &rt_out_tsm_deciarb, &rt_out_tsm_diag);
         usleep(20000);   // 休眠20ms
     }
-}
-
-void MrmTsmModule(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
-    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
-    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
-{
-    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
-    TsmChartManager();   // 运行状态机接口
 }

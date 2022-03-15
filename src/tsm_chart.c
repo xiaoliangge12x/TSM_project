@@ -1,4 +1,17 @@
 #include "tsm_chart.h"
+#include "tsm_signalhandling.h"
+
+void MrmTsmModule(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
+    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
+{
+    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
+    TsmChartManager();   // 运行状态机接口
+}
 
 // ------------- 状态机 ---------------
 
