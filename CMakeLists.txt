@@ -19,6 +19,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/output/bin)
 # 调整编译模式
 set(CMAKE_BUILD_TYPE "Debug")
 
+# 设置LOG打印
+add_compile_options(-D_NEED_LOG)
+
 # 添加选项
 add_definitions(-w)
 set(CMAKE_C_FLAGS -pthread)

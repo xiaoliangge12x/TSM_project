@@ -2,7 +2,9 @@
 #define TSM_SIGNAL_HANDLING_H_
 
 #include "tsm_data.h"
+#ifdef _NEED_LOG
 #include "common.h"
+#endif
 
 // 总的信号处理入口
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 

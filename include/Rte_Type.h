@@ -256,7 +256,7 @@ typedef struct tagTSM2CtrlArb
     Dt_RECORD_TimeStamp TimeStamp;   // 接收消息的时间戳
     uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
-    uint8               lng_override_flag;    // 纵向override状态， 1为 override
+    uint8_t lng_override_flag;    // 纵向override状态， 1为 override
 } Dt_RECORD_TSM2CtrlArb;
 // typedef struct tagTSM2ControlArbitrator
 // {

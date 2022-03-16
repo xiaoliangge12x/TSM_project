@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include "tsm_worker.h"
+#ifdef _NEED_LOG
 #include "common.h"
+#endif
 
 sint32 main() 
 {
@@ -15,10 +17,14 @@ sint32 main()
 
   // 线程创建失败
   if (ret_thrd != 0) {
+#ifdef _NEED_LOG
     LOG("main thread create failed!");
+#endif
     exit(-1);
   } else {
+#ifdef _NEED_LOG
     LOG("main thread create success!");
+#endif
   }
   // 等待线程终止
   pthread_join(main_thread, NULL);

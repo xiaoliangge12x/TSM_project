@@ -24,7 +24,9 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 
     // 输出信号的准备
     rty_DeTSM2CtrlArb->lng_override_flag = tsm.action_param.lng_override_flag;
+#ifdef _NEED_LOG
     LOG("rty_DeTSM2CtrlArb->lng_override_flag: %d", rty_DeTSM2CtrlArb->lng_override_flag);
+#endif
 }
 
 // ------------- 状态机 ---------------
@@ -45,7 +47,9 @@ void TsmChartManager() {
     // 基于触发事件数组和状态机当前状态，寻找对应的transit
     StateTransit* state_transit = FindTrans(&tsm, event_id_array, size);
     if (state_transit == NULL_PTR) {
+#ifdef _NEED_LOG
         LOG("No transit, stay in current state.");
+#endif
         // 执行当前操作
         action[(uint8)tsm.state]();
         return;
@@ -196,40 +200,54 @@ boolean IsEnterNoLightingFromMrc()
 // action definition
 void ActionInPassive()
 {
+#ifdef _NEED_LOG
     LOG("It's in Passive St.");
+#endif
 }
 
 void ActionInFailureLighting()
 {
+#ifdef _NEED_LOG
     LOG("It's in Failure Lighting St.");
+#endif
     tsm.action_param.lng_override_flag = 0;
 }
 
 void ActionInFailureNoLighting()
 {
+#ifdef _NEED_LOG
     LOG("It's in Failure No Lighting St.");
+#endif
 }
 
 void ActionInStandby()
 {
+#ifdef _NEED_LOG
     LOG("It's in Standby St.");
+#endif
 }
 
 void ActionInMrmBothCtrl()
 {
+#ifdef _NEED_LOG
     LOG("It's in Mrm Both Ctrl St.");
+#endif
     // car test
     tsm.action_param.lng_override_flag = 0;
 }
 
 void ActionInMrmLatCtrl()
 {
+#ifdef _NEED_LOG
     LOG("It's in Mrm Lat Ctrl St.");
+#endif
     // car test
     tsm.action_param.lng_override_flag = 1;
 }
 
 void ActionInMrc()
 {
+#ifdef _NEED_LOG
     LOG("It's in Mrc St.");
+#endif
 }

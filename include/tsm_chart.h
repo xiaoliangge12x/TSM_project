@@ -2,7 +2,9 @@
 #define TSM_CHART_H_
 
 #include "tsm_data.h"
+#ifdef _NEED_LOG
 #include "common.h"
+#endif
 
 void TsmChartManager();
 StateTransit* FindTrans(StateMachine* state_machine, 
