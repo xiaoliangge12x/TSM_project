@@ -1,8 +1,7 @@
 #ifndef TSM_DATA_H_
 #define TSM_DATA_H_
 
-#include "Rte_Type.h"
-#include "data_type.h"
+#include "TSM_MODULE.h"
 
 // 可标定量
 static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
@@ -290,7 +289,7 @@ typedef struct
     ActionParam action_param;     // 行为参数
 } StateMachine;
 
-// 定义全局变量
-StateMachine tsm;
-uint8 brakeset_cnt;
+// 声明全局变量
+extern StateMachine tsm;
+extern uint8 brakeset_cnt;
 #endif

@@ -5,9 +5,6 @@
 /* TSM module worker */
 void TsmModulerWorker()
 {
-    
-    memset(&tsm, 0, sizeof(tsm));
-
     Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
     Dt_RECORD_Diag2TSM rt_in_diag_tsm;
     Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
@@ -24,14 +21,13 @@ void TsmModulerWorker()
     memset(&rt_out_tsm_deciarb, 0, sizeof(Dt_RECORD_TSM2DecisionArbitrator));
     memset(&rt_out_tsm_diag, 0, sizeof(Dt_RECORD_TSM2Diag));
 
-    // 计时器初始化
-    brakeset_cnt = 0;
     rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.VCU_AccDriverOrvd = 1;
 
+    MRM_TSM_MODULE_Init();
     while(1)
     {
         // 对应IFC环境的MRM_TSM_MODULE函数
-        MrmTsmModule(&rt_in_cangate_tsm, &rt_in_diag_tsm, &rt_in_planlite_tsm, &rt_out_tsm_planlite,
+        MRM_TSM_MODULE(&rt_in_cangate_tsm, &rt_in_diag_tsm, &rt_in_planlite_tsm, &rt_out_tsm_planlite,
             &rt_out_tsm_ctrlarb, &rt_out_tsm_deciarb, &rt_out_tsm_diag);
         usleep(20000);   // 休眠20ms
     }

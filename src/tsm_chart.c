@@ -1,7 +1,17 @@
 #include "tsm_chart.h"
-#include "tsm_signalhandling.h"
 
-void MrmTsmModule(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+// 全局变量的定义
+StateMachine tsm;
+uint8 brakeset_cnt;
+
+void MRM_TSM_MODULE_Init(void)
+{
+    memset(&tsm, 0, sizeof(tsm));
+    // 计时器初始化
+    brakeset_cnt = 0;
+}
+
+void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
     Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,

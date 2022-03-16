@@ -1,6 +1,8 @@
 #ifndef DATA_TYPE_H_
 #define DATA_TYPE_H_
 
+#include "Rte_Type.h"
+
 typedef signed char sint8;
 typedef unsigned char uint8;
 typedef short sint16;
@@ -26,4 +28,12 @@ typedef unsigned char boolean;
 #define false 0U
 #endif
 
+extern void MRM_TSM_MODULE_Init(void);
+extern void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
+    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
 #endif

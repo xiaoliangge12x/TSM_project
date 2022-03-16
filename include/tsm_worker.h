@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-#include "data_type.h"
 #include "tsm_data.h"
 
 void TsmModulerWorker();

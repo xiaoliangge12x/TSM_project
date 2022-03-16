@@ -61,7 +61,7 @@ typedef struct tagSoc_Info
     uint8_t                   NDA_Odc_Flag_Before_Active; // NDA激活前的ODD标志位
     uint8_t                   NDA_Odc_Flag_After_Active;  // NDA激活后的ODD标志位
     uint8_t                   NDA_Enable_State;           // NDA使能状态
-    uint8_t                   Planning_Start_Req;         // soc侧的planning起步请求
+    uint8_t                   Planning_DriveOff_Req;         // soc侧的planning起步请求
     uint8_t                   SD_Map_HD_Map_Match_St;     // SD地图和高精地图的匹配状态， from localMap
     uint8_t                   User_Set_Navi;              // 用户设置导航， from navi
 } Dt_RECORD_Soc_Info;
