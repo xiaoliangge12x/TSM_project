@@ -21,6 +21,10 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 {
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
     TsmChartManager();   // 运行状态机接口
+
+    // 输出信号的准备
+    rty_DeTSM2CtrlArb->lng_override_flag = tsm.action_param.lng_override_flag;
+    LOG("rty_DeTSM2CtrlArb->lng_override_flag: %d", rty_DeTSM2CtrlArb->lng_override_flag);
 }
 
 // ------------- 状态机 ---------------
