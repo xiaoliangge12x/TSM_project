@@ -18,4 +18,6 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 // 判断 刹车是否踩下
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+// 判断 驾驶员是否踩下油门
+void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 #endif

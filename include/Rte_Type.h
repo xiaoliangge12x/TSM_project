@@ -118,6 +118,8 @@ typedef struct tagVehicleSignal2TSM
     uint8_t DMS_InterestsRegion;  // DMS关注区域， enum DMSInterestsRegion
     uint16_t DMS_L3DriverFatigueSt;   // L3自动驾驶下级驾驶员疲劳状态， enum DMSL3DriverFatigueSt
     uint8_t BCS_VehicleStandStillSt;   // 车辆静止状态， enum BCSVehicleStandStillSt
+    uint8_t EMS_GasPedalActPstforMRRVD;  // 驾驶员踩油门开度VD标志位 
+    float EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
 } Dt_RECORD_VehicleSignal2TSM;
 
 typedef struct tagTSM2Soc

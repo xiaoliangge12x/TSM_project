@@ -2,13 +2,15 @@
 
 // 全局变量的定义
 StateMachine tsm;
-uint8 brakeset_cnt;
+uint8 brakeset_cnt;       // 刹车设定时间开度
+uint8 gasPedalPos_cnt;    // 油门开度时间计数
 
 void MRM_TSM_MODULE_Init(void)
 {
     memset(&tsm, 0, sizeof(tsm));
     // 计时器初始化
     brakeset_cnt = 0;
+    gasPedalPos_cnt = 0;
 }
 
 void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 

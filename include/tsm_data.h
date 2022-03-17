@@ -5,6 +5,8 @@
 
 // 可标定量
 static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
+static uint8 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
+static float32 K_GasPedalPosThresholdValue = 20.0;     // 油门开度阈值
 
 // 定义宏常量
 #define TOTAL_TRANS_NUM 23
@@ -268,6 +270,7 @@ typedef struct
     uint8 nda_need_phase_in;                            // nda 是否需要phase-in
     uint8 nda_passive_vd_flag;                          // nda passive的vd标志位， 1 为valid
     uint8 nda_handsfree_handson_flag;                   // HandsFree 和 HandsOn 的配置码
+    uint8 driver_acc_pedal_applied_flag;                // 驾驶员是否踩下油门
 } InterMediaMsg;
 
 typedef struct 
@@ -292,4 +295,5 @@ typedef struct
 // 声明全局变量
 extern StateMachine tsm;
 extern uint8 brakeset_cnt;
+extern uint8 gasPedalPos_cnt;
 #endif

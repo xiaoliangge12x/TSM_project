@@ -4,6 +4,7 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
 #ifdef _NEED_LOG
@@ -64,7 +65,9 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 // 判断 纵向超越标志位
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    if (vehicle_signal->VCU_AccDriverOrvd == (uint8)DRIVER_OVERRIDE) {
+    // 增加 驾驶员踩油门判断， 3.17测试新加
+    if ((vehicle_signal->VCU_AccDriverOrvd == (uint8)DRIVER_OVERRIDE) ||
+        (tsm.inter_media_msg.driver_acc_pedal_applied_flag)) {
         tsm.inter_media_msg.lng_override_st = OVERRIDE_SATISFY;
     } else {
         tsm.inter_media_msg.lng_override_st = OVERRIDE_NOT_SATISFY;
@@ -78,10 +81,11 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         if (tsm.inter_media_msg.brake_is_set) {
             tsm.inter_media_msg.brake_is_set = 1;
         } else {
-            if (brakeset_cnt > (uint8)K_BrakPedalAppliedThresholdTime_Cnt) {
+            if (brakeset_cnt > K_BrakPedalAppliedThresholdTime_Cnt) {
                 tsm.inter_media_msg.brake_is_set = 1;
                 brakeset_cnt = 0;
             } else {
+                tsm.inter_media_msg.brake_is_set = 0;
                 brakeset_cnt++;
             }
         }
@@ -90,6 +94,29 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         brakeset_cnt = 0;
     }
 }
+
+// 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
+void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+{
+    if ((vehicle_signal->EMS_GasPedalActPstforMRRVD == 1) && 
+        (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
+        if (tsm.inter_media_msg.driver_acc_pedal_applied_flag) {
+            tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
+        } else {
+            if (gasPedalPos_cnt > K_GasPedalAppliedThresholdTime_Cnt) {
+                tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
+                gasPedalPos_cnt = 0;
+            } else {
+                tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
+                gasPedalPos_cnt++;
+            }
+        }
+    } else {
+        tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
+        gasPedalPos_cnt = 0;
+    }
+}
+
 // 判断SOC侧跳转是否正常
 
 

@@ -22,6 +22,8 @@ void TsmModulerWorker()
     memset(&rt_out_tsm_diag, 0, sizeof(Dt_RECORD_TSM2Diag));
 
     rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.VCU_AccDriverOrvd = 0;
+    rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD = 0;
+    rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR = 21.0;
 
     MRM_TSM_MODULE_Init();
     while(1)
