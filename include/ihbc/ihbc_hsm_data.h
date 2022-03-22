@@ -13,11 +13,20 @@ enum IhbcState {
     PASSIVE,
     STANDBY,
     ACTIVE,
+    LOWBEAM,
+    HIGHBEAM,
 };
 
 enum IhbcEvent {
     IHBC_BRIGHTNESS = IHBC_USER_START + 1,
     IHBC_WORK,
     IHBC_DISABLE,
+    IHBC_ENABLE,
+    IHBC_PASSIVE,
+    IHBC_STANDBY,
+    IHBC_ACTIVE,
+    IHBC_LOW_BEAM,
+    IHBC_HIGH_BEAM,
+    IHBC_FAILURE,
 };
 #endif

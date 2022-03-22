@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "common.h"
+
 static const uint8_t MAX_HSM_DEPTH = 16U;
 enum {MAX_HSM_STATES = 20U};
 

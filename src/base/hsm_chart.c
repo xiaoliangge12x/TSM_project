@@ -2,9 +2,9 @@
 
 // 定义全局变量
 Hsm g_hsm;
-dispatch g_dispatchArray[MAX_HSM_STATES];
+dispatch g_dispatchArray[MAX_HSM_STATES] = {dispatchForRoot};
 
-void Dispatch(uint8_t event)
+void Dispatch(const uint8_t event)
 {
     // 存储当前状态
     uint8_t currentSt = g_hsm.currentSt;
@@ -15,12 +15,12 @@ void Dispatch(uint8_t event)
     // 返回当前状态句柄调用的结果
     enum HsmRet ret = HSM_SUPER;
 
-    // ？？
+    // 找其父状态
     do {
         sourceSt = g_hsm.currentSt;
         ret = g_dispatchArray[g_hsm.currentSt](event);
     } while (ret == HSM_SUPER);
-
+    LOG("[Dispatch] sourceSt: %d, g_hsm.currentSt: %d", sourceSt, g_hsm.currentSt);
     // 需要跳转
     if (ret == HSM_TRAN) {
         // 保存跳转的目标状态
@@ -36,7 +36,7 @@ void Dispatch(uint8_t event)
         }
 
         // 保存目标状态的状态数组
-        enum State routinePath[MAX_HSM_DEPTH];
+        uint8_t routinePath[MAX_HSM_DEPTH];
         uint8_t routinePathIndex = 0;
 
         routinePath[routinePathIndex++] = targetSt;
@@ -103,28 +103,72 @@ void Dispatch(uint8_t event)
             }
         }
 
-        for (uint8_t i = (routinePathIndex - 1); i >= 0; --i) {
+        for (int8_t i = (routinePathIndex - 1); i >= 0; --i) {
             currentSt = routinePath[i];
             EntryState(currentSt);
         }
+
+        g_hsm.currentSt = targetSt;
+
+        DoInitialTransition(false);
+
+        targetSt = g_hsm.currentSt;
     }
     g_hsm.currentSt = targetSt;
 }
 
+void DoInitialTransition(const bool topmost)
+{
+    uint8_t currentSt = g_hsm.currentSt;
+    
+    if (topmost) {
+        currentSt = ROOT;
+    }
+
+    uint8_t routinePath[MAX_HSM_DEPTH];
+    uint8_t routinePathIndex = 0;
+
+    uint8_t event = HSM_INITIAL;
+    while (g_dispatchArray[g_hsm.currentSt](event) == HSM_TRAN) {
+        routinePath[routinePathIndex++] = g_hsm.currentSt;
+
+        GoSuperState(g_hsm.currentSt);  // father of target state
+        while (g_hsm.currentSt != currentSt) {
+            routinePath[routinePathIndex++] = g_hsm.currentSt;
+            GoSuperState(g_hsm.currentSt);
+        }
+
+        for (int8_t i = (routinePathIndex - 1); i >= 0; --i) {
+            currentSt = routinePath[i];
+            EntryState(currentSt);
+        }
+
+        g_hsm.currentSt = currentSt;
+    }
+
+    g_hsm.currentSt = currentSt;
+}
+
 enum HsmRet ExitState(const uint8_t state)
 {
-    g_dispatchArray[state](HSM_EXIT);
-    return HSM_HANDLED;
+    enum HsmRet ret = g_dispatchArray[state](HSM_EXIT);
+    return ret;
 }
 
 enum HsmRet EntryState(const uint8_t state)
 {
-    g_dispatchArray[state](HSM_ENTRY);
-    return HSM_HANDLED;
+    enum HsmRet ret = g_dispatchArray[state](HSM_ENTRY);
+    return ret;
 }
 
 enum HsmRet GoSuperState(const uint8_t state)
 {
-    g_dispatchArray[state](HSM_NO_SIG);
-    return HSM_SUPER;
+    enum HsmRet ret = g_dispatchArray[state](HSM_NO_SIG);
+    return ret;
+}
+
+enum HsmRet dispatchForRoot(const uint8_t event)
+{
+    (void)event;
+    return HSM_IGNORED;
 }
