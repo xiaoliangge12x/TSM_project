@@ -63,8 +63,18 @@ typedef struct tagSoc_Info
     uint8_t                   NDA_Enable_State;           // NDA使能状态
     uint8_t                   Planning_DriveOff_Req;         // soc侧的planning起步请求
     uint8_t                   SD_Map_HD_Map_Match_St;     // SD地图和高精地图的匹配状态， from localMap
-    uint8_t                   User_Set_Navi;              // 用户设置导航， from navi
+    uint8_t                   EEA_Status;                  // 车辆是否处于电子围栏内
+    uint8_t                   User_Set_Navi_Status;              // 用户设置导航状态， from navi
+    uint8_t                   Global_Location_Accuracy;          // 全局定位精度
+    uint8_t                   Relative_Location_Accuracy;        // 相对定位精度
+    uint8_t                   HandsOn_HandsFree_Flag;            // handson_handsfree配置码
 } Dt_RECORD_Soc_Info;
+
+typedef struct
+{
+    Dt_RECORD_TimeStamp time_stamp; // tsm的timestamp
+    uint8_t MCU_MRM_status;    // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
+} Dt_RECORD_MCU2IFC;
 
 typedef struct tagVehicleSignal2TSM
 {
@@ -122,13 +132,19 @@ typedef struct tagVehicleSignal2TSM
     float EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
 } Dt_RECORD_VehicleSignal2TSM;
 
+typedef struct
+{
+    uint8_t Nda_St_Transition_Monitor_Flag;
+} Dt_RECORD_AutomatonTransitMonitorFlag;
+
 typedef struct tagTSM2Soc
 {
     // 把对应的时间戳一并收了转了，例如以下决策仲裁的时间戳 和 控制仲裁的时间戳
     uint32_t                             AS_Status;                   // AS 状态
     Dt_RECORD_Control_Arbitrator_Results Control_Arbitrator_Results;  // 控制仲裁结果
     uint8_t                              Lane_Change_Allow_Flag;      // 是否允许变道
-
+    uint8_t Parking_EPS_handshake_state;// 泊车握手的标志位, from ctrlarb,   新增
+    Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From tsm
 } Dt_RECORD_TSM2Soc;
 
 // ---------------- inside struct ------------------
@@ -182,12 +198,13 @@ typedef struct tagInsidePlanningLiteRelative
     - 融合   FUSN
 */
 // ControlArbitrator --> TSM
-typedef struct tagControlArbitrator2TSM
+typedef struct tagCtrlArb2TSM
 {
     Dt_RECORD_Control_Arbitrator_Results Control_Arbitrator_Results;  // 控制仲裁结果
     uint32_t                             AS_Status;                   // AS 状态
-    Dt_RECORD_TimeStamp                  Control_Arbitrator_TimeStamp;
-} Dt_RECORD_ControlArbitrator2TSM;
+    Dt_RECORD_TimeStamp                  timestamp;
+    uint8_t                              Parking_EPS_handshake_state;// 泊车握手的标志位, from ctrlarb,   新增
+} Dt_RECORD_CtrlArb2TSM;
 
 // DecisionArbitrator --> TSM
 typedef struct tagDecisionArbitrator2TSM
@@ -255,7 +272,9 @@ typedef struct tagTSM2Planninglite
 // tsm --> Control Arbitrator
 typedef struct tagTSM2CtrlArb
 {
-    Dt_RECORD_TimeStamp TimeStamp;   // 接收消息的时间戳
+    Dt_RECORD_TimeStamp DeTimeStamp;  // 自己创建的时间戳, 新增
+    Dt_RECORD_TimeStamp TimeStamp_PlannLite;   // 接收planning消息的时间戳， 新增
+    Dt_RECORD_TimeStamp TimeStamp_CanGate;     // 接受CanGate消息的时间戳
     uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
     uint8_t lng_override_flag;    // 纵向override状态， 1为 override
@@ -267,26 +286,31 @@ typedef struct tagTSM2CtrlArb
 //     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
 // } Dt_RECORD_TSM2ControlArbitrator;
 
+typedef struct
+{
+  uint8_t NDA_Lane_Change_Type;
+  uint8_t NDA_Lane_Change_Direction;
+  uint8_t NDA_Lane_Change_state;
+  uint8_t NDA_Split_state;
+  uint8_t NDA_behavior;
+  uint8_t NDA_Area_Type;
+  uint8_t NDA_road_type;
+  uint8_t NDA_lane_type;
+  uint8_t ADC_path_merge_type;
+} Dt_RECORD_ScenarioType;
+
 // tsm --> Decision Arbitrator
 typedef struct tagTSM2DecisionArbitrator
 {
-    Dt_RECORD_TimeStamp CAN_Switch_TimeStamp;   // 接收消息的时间戳
-    uint8_t NDA_Lane_Change_Type;
-    uint8_t NDA_Lane_Change_Direction;
-    uint8_t NDA_Lane_Change_State;
-    uint8_t NDA_Split_State;
-    uint8_t NDA_Behavior;
-    uint8_t NDA_Area_Type;
-    uint8_t NDA_Road_Type;
-    uint8_t NDA_Lane_Type;
-    uint8_t ADC_Path_Merge_Type;
+    Dt_RECORD_TimeStamp TimeStamp;   // 接收消息的时间戳
+    Dt_RECORD_ScenarioType DeScenarioType;
 } Dt_RECORD_TSM2DecisionArbitrator;
 
 // tsm --> Diag
 typedef struct tagTSM2Diag
 {
     Dt_RECORD_TimeStamp Tsm_TimeStamp;    // 自己创建的时间戳
-    uint8_t             Tsm_Status;  // 模块状态
+    uint8_t             Tsm_Status;  // 模块状态， 理解和给到ifc是一样的状态
 } Dt_RECORD_TSM2Diag;
 
 // tsm --> HMI
@@ -309,6 +333,17 @@ typedef struct tagTSM2CANSwitch
     uint8_t           Ecall_Request;         // 打电话请求
     uint8_t           Door_Unlock_Request;   // 车门解锁请求
     Dt_RECORD_TSM2Soc Tsm_To_Soc;            // 给到soc的消息
-} Dt_RECORD_TSM2CANSwitch;
+    Dt_RECORD_MCU2IFC Mcu_To_Ifc;            // mcu给到IFC的消息
+} Dt_RECORD_TSM2CANGATE;
 
+
+// Used only for Open Test
+typedef struct tagSimulinkData
+{
+    Dt_RECORD_CtrlArb2TSM rt_in_ctrlarb_tsm;
+    Dt_RECORD_DecisionArbitrator2TSM rt_in_deciarb_tsm;
+    Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
+    Dt_RECORD_Diag2TSM rt_in_diag_tsm;
+    Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
+} SimulinkData;
 #endif

@@ -14,20 +14,21 @@ void MRM_TSM_MODULE_Init(void)
 }
 
 void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
     Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
     Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
+    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
 {
-    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
-    TsmChartManager();   // 运行状态机接口
 
-    // 输出信号的准备
-    rty_DeTSM2CtrlArb->lng_override_flag = tsm.action_param.lng_override_flag;
+    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
+    TsmChartManager(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM);   // 运行状态机接口
+    WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
+        rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, rty_DeTSM2HMI, rty_DeTSM2CANGATE);
 #ifdef _NEED_LOG
-    LOG("rty_DeTSM2CtrlArb->lng_override_flag: %d", rty_DeTSM2CtrlArb->lng_override_flag);
+    LOG("rty_DeTSM2CtrlArb->MRM_Status: %d", rty_DeTsm2Planlite->MRM_Status);
 #endif
 }
 
@@ -36,13 +37,14 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 // 思路： 当前状态， 输入事件(跳转条件)， 下一状态， 具体行为    ---> 状态跳转
 // 维护一张 状态跳转表格， 在表格中找到对应的状态跳转(寻找方式是
 // 当前状态和输入事件匹配，则去赋值下一状态，进行具体行为)
-void TsmChartManager() {
+void TsmChartManager(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM) {
     enum EventID event_id_array[(uint8)EVENT_COUNT];
     uint8 size = 0;
     // 找到触发事件ID的数组,因为状态和事件有相关性，我们会先找到符合的事件，然后用事件去匹配状态的思想，
     // 并按优先级，找到跳转
     for (uint8 i = 0; i < (uint8)EVENT_COUNT; ++i) {
-        if (event[i](&tsm)) {
+        if (event[i](rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
             event_id_array[size++] = (enum EventID)i;
         }
     }
@@ -81,7 +83,8 @@ StateTransit* FindTrans(StateMachine* state_machine,
 }
 
 // event声明
-boolean IsMrmSystemFaultNotExist()
+boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     if (tsm.inter_media_msg.mrm_system_fault_level == NO_FAULT) {
         return true;
@@ -89,7 +92,8 @@ boolean IsMrmSystemFaultNotExist()
     return false;
 }
 
-boolean IsLightingConditionMeet()
+boolean IsLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
     /*
@@ -101,7 +105,8 @@ boolean IsLightingConditionMeet()
     */
 }
 
-boolean IsNoLightingConditionMeet()
+boolean IsNoLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
     /*
@@ -113,7 +118,8 @@ boolean IsNoLightingConditionMeet()
     */
 }
 
-boolean IsStandbyConditionMeet()
+boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return true;
     /*
@@ -143,58 +149,81 @@ boolean IsStandbyConditionMeet()
     */
 }
 
-boolean IsStandbyConditionNotMeet()
+boolean IsStandbyConditionNotMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     
     return false;
 }
 
-boolean IsMrmBothCtrlConditionMeet()
+boolean IsMrmBothCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
-    // TODO: 
-    if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
-        !tsm.inter_media_msg.brake_is_set) {
-        return true;        
+    // TO DO： 未考虑soc激活状态， MCU安全停车系统故障
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != STANDSTILL) &&
+        (!tsm.inter_media_msg.automaton_transit_normal_flag)) {
+        if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
+            (!tsm.inter_media_msg.brake_is_set)) {
+            return true;
+        }        
     }
     return false;
 }
 
-boolean IsMrmLatCtrlConditionMeet()
+boolean IsMrmLatCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
-    // TODO:
-    if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_SATISFY) ||
-        tsm.inter_media_msg.brake_is_set) {
+    // TODO: 未考虑soc激活状态， MCU安全停车系统故障
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != STANDSTILL) &&
+        (!tsm.inter_media_msg.automaton_transit_normal_flag)) {
+        if ((tsm.inter_media_msg.lng_override_st == OVERRIDE_SATISFY) ||
+            (tsm.inter_media_msg.brake_is_set)) {
+            return true;
+        }   
+    }
+    return false;
+}
+
+boolean IsEnterMrcFromStandby(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+{
+    // TODO: 未考虑soc激活状态， MCU安全停车系统故障
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == STANDSTILL) &&
+        (!tsm.inter_media_msg.automaton_transit_normal_flag)) {
+        return true;
+    }   
+    return false;
+}
+
+boolean IsEnterMrcFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+{
+    if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == STANDSTILL) {
         return true;
     }
     return false;
 }
 
-boolean IsEnterMrcFromStandby()
+boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
 }
 
-boolean IsEnterMrcFromMrm()
+boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
 }
 
-boolean IsEnterLightingFromMrm()
+boolean IsEnterLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
 }
 
-boolean IsEnterNoLightingFromMrm()
-{
-    return false;
-}
-
-boolean IsEnterLightingFromMrc()
-{
-    return false;
-}
-
-boolean IsEnterNoLightingFromMrc()
+boolean IsEnterNoLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
     return false;
 }
@@ -205,6 +234,7 @@ void ActionInPassive()
 #ifdef _NEED_LOG
     LOG("It's in Passive St.");
 #endif
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInFailureLighting()
@@ -213,6 +243,7 @@ void ActionInFailureLighting()
     LOG("It's in Failure Lighting St.");
 #endif
     tsm.action_param.lng_override_flag = 0;
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInFailureNoLighting()
@@ -220,6 +251,7 @@ void ActionInFailureNoLighting()
 #ifdef _NEED_LOG
     LOG("It's in Failure No Lighting St.");
 #endif
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInStandby()
@@ -227,6 +259,7 @@ void ActionInStandby()
 #ifdef _NEED_LOG
     LOG("It's in Standby St.");
 #endif
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInMrmBothCtrl()
@@ -236,6 +269,7 @@ void ActionInMrmBothCtrl()
 #endif
     // car test
     tsm.action_param.lng_override_flag = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInMrmLatCtrl()
@@ -245,6 +279,7 @@ void ActionInMrmLatCtrl()
 #endif
     // car test
     tsm.action_param.lng_override_flag = 1;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInMrc()
@@ -252,4 +287,100 @@ void ActionInMrc()
 #ifdef _NEED_LOG
     LOG("It's in Mrc St.");
 #endif
+    tsm.action_param.lng_override_flag = 0;
+    tsm.action_param.mrm_activation_st = 0;
+}
+
+
+// 组包并发送
+void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
+    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
+    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
+{
+    // 保存SOC状态
+    memcpy(&tsm.inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
+        sizeof(Dt_RECORD_Automaton_State));
+
+    // 组包发送相关
+    // ----- 给到planlite相关 ---------
+    memcpy(&rty_DeTsm2Planlite->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp, 
+        sizeof(Dt_RECORD_TimeStamp));
+    // to do: 状态机提供
+    memset(&rty_DeTsm2Planlite->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    rty_DeTsm2Planlite->NDA_Lane_Change_Type = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Type;
+    rty_DeTsm2Planlite->NDA_Lane_Change_Direction = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Direction;
+    rty_DeTsm2Planlite->NDA_Lane_Change_State = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_State;
+    // to do: 状态机提供
+    rty_DeTsm2Planlite->MRM_Status = tsm.action_param.mrm_activation_st;   // 1 激活， 0 取消
+
+    // ----- 给到CtrlArb相关 --------
+    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_CanGate, &rtu_DeCANGATE2TSM->TimeStamp, 
+        sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->Planning_Lite_TimeStamp,
+        sizeof(Dt_RECORD_TimeStamp));
+    // to do: 状态机提供
+    memset(&rty_DeTSM2CtrlArb->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // 状态机输出信号相关
+    rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->Planning_Control_State;
+    // to do: 是否需要封装一层状态
+    memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
+        sizeof(Dt_RECORD_Automaton_State));
+    rty_DeTSM2CtrlArb->lng_override_flag = tsm.action_param.lng_override_flag;
+
+    // ------- 给到DeciArb相关 ---------
+    memcpy(&rty_DeTSM2DecisionArbitrator->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp,
+        sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&rty_DeTSM2DecisionArbitrator->DeScenarioType, &rtu_DeCANGATE2TSM->Soc_Info,
+        sizeof(Dt_RECORD_ScenarioType));
+
+    // ------- 给到Diag诊断相关 --------
+    // to do: 状态机提供
+    memset(&rty_DeTSM2Diag->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // to do: 状态机提供， TSM故障状态
+    rty_DeTSM2Diag->Tsm_Status = 0;
+    
+    // -------- 给到HMI相关 --------
+    // to do: 状态机提供
+    memset(&rty_DeTSM2HMI->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // to do: 状态机提供
+    rty_DeTSM2HMI->Fault_Info = 0;     // 故障信息
+    // to do: 状态机提供
+    rty_DeTSM2HMI->Tor_Request = 0;    // tor请求
+
+    // -------- 给到CANgate相关 -------
+    // to do: 状态机提供
+    memset(&rty_DeTSM2CANGATE->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // to do: 缺少输入
+    memset(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // memcpy(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, &rtu_DeDecisionArbitrator2TSM->Decision_Arbitrator_TimeStamp,
+    //     sizeof(Dt_RECORD_TimeStamp));
+    // to do: 缺少输入
+    memset(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // memcpy(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, &rtu_DeCtrlArb2TSM->timestamp,
+    //     sizeof(Dt_RECORD_TimeStamp));
+    // to do: 状态机判断提供
+    rty_DeTSM2CANGATE->EPB_Request = 0;
+    // to do: 状态机判断提供
+    rty_DeTSM2CANGATE->Hazard_Light_Request = 0;
+    // to do: 状态机判断提供
+    rty_DeTSM2CANGATE->Ecall_Request = 0;
+    // to do: 状态机判断提供
+    rty_DeTSM2CANGATE->Door_Unlock_Request = 0;
+    // rty_DeTSM2CANGATE->Tsm_To_Soc.AS_Status = rtu_DeCtrlArb2TSM->AS_Status;
+    // memcpy(&rty_DeTSM2CANGATE->Tsm_To_Soc.Control_Arbitrator_Results, &rtu_DeCtrlArb2TSM->Control_Arbitrator_Results, 
+    //     sizeof(Dt_RECORD_Control_Arbitrator_Results));
+    // rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
+    // rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
+    // to do: 状态机提供状态跳转监控标志位
+    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Nda_St_Transition_Monitor_Flag = 
+        tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;
+    // to do: 状态机提供
+    memset(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // to do:
+    rty_DeTSM2CANGATE->Mcu_To_Ifc.MCU_MRM_status = 0;  // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
 }

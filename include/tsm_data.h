@@ -10,10 +10,14 @@ static float32 K_GasPedalPosThresholdValue = 20.0;     // 油门开度阈值
 
 // 定义宏常量
 #define TOTAL_TRANS_NUM 23
+#define MONITOR_ARRAY_SIZE 39
+#define MAX_FRAME_CNT   5
 
 // 函数指针的类型定义
 typedef void (*Action[])();
-typedef boolean (*TransitEvent[])();
+typedef boolean (*TransitEvent[])(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
+typedef boolean (*NdaTransitCondition)();
 
 // 定义外部枚举量
 typedef enum DMSDrvrDetSts
@@ -230,25 +234,83 @@ typedef enum State
 
 typedef enum EventID
 {
-    EVENT_1 = 0,
-    EVENT_2,
-    EVENT_3,
-    EVENT_4,
-    EVENT_5,
-    EVENT_6,
-    EVENT_7,
-    EVENT_8,
-    EVENT_9,
-    EVENT_10,
-    EVENT_11,
-    EVENT_12,
-    EVENT_13,
+    EVENT_FAULT_NOT_EXIST = 0,
+    EVENT_LIGHTING,
+    EVENT_NO_LIGHTING,
+    EVENT_STANDBY,
+    EVENT_NO_STANDBY,
+    EVENT_MRM_BOTH_CTRL,
+    EVENT_MRM_LAT_CTRL,
+    EVENT_MRC,
+    EVENT_MRC_FROM_MRM,
+    EVENT_LIGHTING_FROM_MRM,
+    EVENT_NO_LIGHTING_FROM_MRM,
+    EVENT_LIGHTING_FROM_MRC,
+    EVENT_NO_LIGHTING_FROM_MRC,
 
     EVENT_COUNT,
     EVENT_NONE = 0xFF
 };
+
+typedef enum NdaTransitEnableFlag
+{
+    NONE = 0,
+    STANDBY_HANDSFREE_NORMAL,
+    STANDBY_HANDSON_NORMAL,
+    STANDBY_HANDSFREE_STANDACTIVE,
+    HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE,
+    HANDSFREE_NORMAL_BOTH_OVERRIDE,
+    HANDSFREE_NORMAL_LAT_OVERRIDE,
+    HANDSFREE_NORMAL_LNG_OVERRIDE,
+    HANDSFREE_NORMAL_HANDSON_NORMAL,
+    HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL,
+    HANDSFREE_STANDACTIVE_LNG_OVERRIDE,
+    HANDSFREE_STANDACTIVE_BOTH_OVERRIDE,
+    HANDSFREE_STANDACTIVE_LAT_OVERRIDE,
+    HANDSFREE_STANDWAIT_LNG_OVERRIDE,
+    HANDSFREE_STANDWAIT_BOTH_OVERRIDE,
+    HANDSFREE_STANDWAIT_LAT_OVERRIDE,
+    HANDSON_NORMAL_HANDSON_STANDACTIVE,
+    HANDSON_NORMAL_BOTH_OVERRIDE,
+    HANDSON_NORMAL_LAT_OVERRIDE,
+    HANDSON_NORMAL_LNG_OVERRIDE,
+    HANDSON_NORMAL_HANDSFREE_NORMAL,
+    HANDSON_STANDACTIVE_HANDSON_NORMAL,
+    HANDSON_STANDACTIVE_LNG_OVERRIDE,
+    HANDSON_STANDACTIVE_BOTH_OVERRIDE,
+    HANDSON_STANDACTIVE_LAT_OVERRIDE,
+    HANDSON_STANDWAIT_LNG_OVERRIDE,
+    HANDSON_STANDWAIT_BOTH_OVERRIDE,
+    HANDSON_STANDWAIT_LAT_OVERRIDE,
+    LNG_OVERRIDE_HANDSFREE_NORMAL,
+    LNG_OVERRIDE_HANDSON_NORMAL,
+    LNG_OVERRIDE_BOTH_OVERRIDE,
+    LNG_OVERRIDE_LAT_OVERRIDE,
+    LAT_OVERRIDE_HANDSFREE_NORMAL,
+    LAT_OVERRIDE_HANDSON_NORMAL,
+    LAT_OVERRIDE_BOTH_OVERRIDE,
+    LAT_OVERRIDE_LNG_OVERRIDE,
+    BOTH_OVERRIDE_HANDSFREE_NORMAL,
+    BOTH_OVERRIDE_HANDSON_NORMAL,
+    BOTH_OVERRIDE_LNG_OVERRIDE,
+    BOTH_OVERRIDE_LAT_OVERRIDE,
+};
 // 定义内部结构体
 // ------------------ 中间变量 ---------------
+typedef struct
+{
+    enum NdaTransitEnableFlag nda_transit_enable_flag; 
+    uint8_t frame_cnt;   // 帧数计数器
+} NdaStTransitMonitor;
+
+typedef struct 
+{
+    enum NdaFunctionSt start_st;
+    enum NdaFunctionSt next_st;
+    enum NdaTransitEnableFlag transit_enable_flag;
+    NdaTransitCondition nda_transit_cond;
+} NdaStMonitorInfo;
+
 
 typedef struct
 {
@@ -256,7 +318,7 @@ typedef struct
     uint8 mrm_failure_lighting_flag;                   // mrm 故障点灯标志位
     Dt_RECORD_Automaton_State automaton_st;            // soc状态机状态 (option)
     enum MrmType mrm_type;                             // mrm 类型
-    uint8 automaton_transit_normal_flag;               // soc状态机跳转是否正常标志位
+    uint8 automaton_transit_normal_flag;               // soc状态机跳转是否正常标志位， 需要临时做标定
     enum OverrideSt driver_hand_torque_st;       // 驾驶员手力矩超越标志
     enum BrakeInterventionType brake_intervention_type; // 刹车介入类型
     enum OverrideSt lng_override_st;                 // 纵向超越标志位
@@ -271,6 +333,8 @@ typedef struct
     uint8 nda_passive_vd_flag;                          // nda passive的vd标志位， 1 为valid
     uint8 nda_handsfree_handson_flag;                   // HandsFree 和 HandsOn 的配置码
     uint8 driver_acc_pedal_applied_flag;                // 驾驶员是否踩下油门
+    NdaStTransitMonitor nda_st_transit_monitor;   // nda状态跳转使能标志位
+    Dt_RECORD_Automaton_State last_automaton_st;   // 上一帧soc侧automaton状态 
 } InterMediaMsg;
 
 typedef struct 
@@ -283,6 +347,7 @@ typedef struct
 typedef struct 
 {
     uint8 lng_override_flag;
+    uint8 mrm_activation_st;   // 给到planlite的激活信号
 } ActionParam;
 
 typedef struct 

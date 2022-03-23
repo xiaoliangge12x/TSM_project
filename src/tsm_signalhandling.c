@@ -3,18 +3,24 @@
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
+    // 判断驾驶员注意力状态
     DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
     DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 判断 纵向超越标志位
+    // LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 判断 刹车是否踩下
     BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 监控SOC侧跳转是否正常
+    MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
+    // 判断SOC侧跳转是否错误, TSM 需要使用, 前期强标定该参数，
+    // NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
 #ifdef _NEED_LOG
     LOG("Lng_override_st: %d, Brake_is_set: %d", (uint8)tsm.inter_media_msg.lng_override_st, 
         tsm.inter_media_msg.brake_is_set);
 #endif
 }
 
-
-// 判断驾驶员注意力状态
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     // 判断 清醒且未分神
@@ -62,7 +68,6 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
     tsm.inter_media_msg.driver_attention_st = UNKNOWN;
 }
 
-// 判断 纵向超越标志位
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     // 增加 驾驶员踩油门判断， 3.17测试新加
@@ -74,7 +79,6 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
     }
 }
 
-// 判断 刹车是否踩下
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     if (vehicle_signal->EBB_BrkPedalApplied == (uint8)BRAKE_PEDAL_APPLIED) {
@@ -95,7 +99,6 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
     }
 }
 
-// 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     if ((vehicle_signal->EMS_GasPedalActPstforMRRVD == 1) && 
@@ -117,6 +120,203 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
     }
 }
 
-// 判断SOC侧跳转是否正常
+void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
+{
+    // 此时在发5帧阶段，不用再去判断可跳转条件， 若5帧已发出，状态仍未跳转，则重新判断并刷新计数
+    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
+        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
+            if ((tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == 
+                    nda_st_transit_monitor_array[i].transit_enable_flag) && 
+                (tsm.inter_media_msg.nda_st_transit_monitor.frame_cnt != MAX_FRAME_CNT)) {
+                ++tsm.inter_media_msg.nda_st_transit_monitor.frame_cnt;
+                return;
+            }
+        }
+    }
 
+    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
+        // 此时为通过可跳转条件去判断该给SOC的标志， 由于跳转是唯一且独立的，只要满足跳转条件就跳，然后直接退出循环
+        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
+            if (nda_st_transit_monitor_array[i].nda_transit_cond()) {
+                tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = 
+                    nda_st_transit_monitor_array[i].transit_enable_flag;
+                tsm.inter_media_msg.nda_st_transit_monitor.frame_cnt = 1;
+                return;
+            }
+        }
+    }
+    // 如果上述情况都不满足，说明不满足可跳转，那么跳转标志位为NONE
+    tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = NONE;
+    tsm.inter_media_msg.nda_st_transit_monitor.frame_cnt = 0;
+}
+
+void NdaStTransitNormalJudge(const Dt_RECORD_Automaton_State* automaton_state) 
+{
+    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
+        if ((tsm.inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
+            (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
+            if (tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
+                tsm.inter_media_msg.automaton_transit_normal_flag = 0;
+                return;
+            }
+        }
+    }
+    tsm.inter_media_msg.automaton_transit_normal_flag = 1;
+}
+
+boolean TransitCondFromStandbyToHandsFreeNormal() {
+    return true;
+}
+
+boolean TransitCondFromStandbyToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromStandbyToHandsFreeStandActive() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeNormalToHandsFreeStandActive() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeNormalToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeNormalToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeNormalToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeNormalToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandActiveToHandsFreeNormal() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandActiveToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandActiveToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandActiveToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandWaitToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandWaitToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsFreeStandWaitToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnNormalToHandsOnStandActive() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnNormalToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnNormalToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnNormalToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnNormalToHandsFreeNormal() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandActiveToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandActiveToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandActiveToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandActiveToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandWaitToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandWaitToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromHandsOnStandWaitToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromLngOverrideToHandsFreeNormal() {
+    return false;
+}
+
+boolean TransitCondFromLngOverrideToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromLngOverrideToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromLngOverrideToLatOverride() {
+    return false;
+}
+
+boolean TransitCondFromLatOverrideToHandsFreeNormal() {
+    return false;
+}
+
+boolean TransitCondFromLatOverrideToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromLatOverrideToBothOverride() {
+    return false;
+}
+
+boolean TransitCondFromLatOverrideToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromBothOverrideToHandsFreeNormal() {
+    return false;
+}
+
+boolean TransitCondFromBothOverrideToHandsOnNormal() {
+    return false;
+}
+
+boolean TransitCondFromBothOverrideToLngOverride() {
+    return false;
+}
+
+boolean TransitCondFromBothOverrideToLatOverride() {
+    return false;
+}
 

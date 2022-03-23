@@ -19,8 +19,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/output/bin)
 # 调整编译模式
 set(CMAKE_BUILD_TYPE "Debug")
 
+# 设置开环测试开关字
+option(OPEN_TEST  "Build For Open_Loop Test" OFF)
+
 # 设置LOG打印
 add_compile_options(-D_NEED_LOG)
+
+# 
+if (OPEN_TEST)
+    add_compile_options(-D_OPEN_TEST)
+endif()
 
 # 添加选项
 add_definitions(-w)
