@@ -136,7 +136,9 @@ typedef struct tagVehicleSignal2TSM
 
 typedef struct
 {
-    uint8_t Nda_St_Transition_Monitor_Flag;
+    uint16_t Standby_HandsFree_St_Monitor_Flag;
+    uint16_t HandsOn_St_Monitor_Flag;
+    uint16_t Override_St_Monitor_Flag;
 } Dt_RECORD_AutomatonTransitMonitorFlag;
 
 typedef struct tagTSM2Soc
