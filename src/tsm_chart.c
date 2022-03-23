@@ -428,8 +428,10 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
     rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
     // to do: 状态机提供状态跳转监控标志位
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Nda_St_Transition_Monitor_Flag = 
-        tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;
+    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Standby_HandsFree_St_Monitor_Flag = 
+        tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;;
+    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.HandsOn_St_Monitor_Flag = 0;
+    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Override_St_Monitor_Flag = 0;
     // to do: 状态机提供
     memset(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, 0, sizeof(Dt_RECORD_TimeStamp));
     // to do:
