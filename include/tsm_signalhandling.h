@@ -19,6 +19,46 @@
 #include "common.h"
 #endif
 
+boolean TransitCondFromStandbyToHandsFreeNormal();
+boolean TransitCondFromStandbyToHandsOnNormal();
+boolean TransitCondFromStandbyToHandsFreeStandActive();
+boolean TransitCondFromHandsFreeNormalToHandsFreeStandActive();
+boolean TransitCondFromHandsFreeNormalToBothOverride();
+boolean TransitCondFromHandsFreeNormalToLatOverride();
+boolean TransitCondFromHandsFreeNormalToLngOverride();
+boolean TransitCondFromHandsFreeNormalToHandsOnNormal();
+boolean TransitCondFromHandsFreeStandActiveToHandsFreeNormal();
+boolean TransitCondFromHandsFreeStandActiveToLngOverride();
+boolean TransitCondFromHandsFreeStandActiveToBothOverride();
+boolean TransitCondFromHandsFreeStandActiveToLatOverride();
+boolean TransitCondFromHandsFreeStandWaitToLngOverride();
+boolean TransitCondFromHandsFreeStandWaitToBothOverride();
+boolean TransitCondFromHandsFreeStandWaitToLatOverride();
+boolean TransitCondFromHandsOnNormalToHandsOnStandActive();
+boolean TransitCondFromHandsOnNormalToBothOverride();
+boolean TransitCondFromHandsOnNormalToLatOverride();
+boolean TransitCondFromHandsOnNormalToLngOverride();
+boolean TransitCondFromHandsOnNormalToHandsFreeNormal();
+boolean TransitCondFromHandsOnStandActiveToHandsOnNormal();
+boolean TransitCondFromHandsOnStandActiveToLngOverride();
+boolean TransitCondFromHandsOnStandActiveToBothOverride();
+boolean TransitCondFromHandsOnStandActiveToLatOverride();
+boolean TransitCondFromHandsOnStandWaitToLngOverride();
+boolean TransitCondFromHandsOnStandWaitToBothOverride();
+boolean TransitCondFromHandsOnStandWaitToLatOverride();
+boolean TransitCondFromLngOverrideToHandsFreeNormal();
+boolean TransitCondFromLngOverrideToHandsOnNormal();
+boolean TransitCondFromLngOverrideToBothOverride();
+boolean TransitCondFromLngOverrideToLatOverride();
+boolean TransitCondFromLatOverrideToHandsFreeNormal();
+boolean TransitCondFromLatOverrideToHandsOnNormal();
+boolean TransitCondFromLatOverrideToBothOverride();
+boolean TransitCondFromLatOverrideToLngOverride();
+boolean TransitCondFromBothOverrideToHandsFreeNormal();
+boolean TransitCondFromBothOverrideToHandsOnNormal();
+boolean TransitCondFromBothOverrideToLngOverride();
+boolean TransitCondFromBothOverrideToLatOverride();
+
 // 总的信号处理入口
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
