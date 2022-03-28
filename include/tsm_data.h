@@ -7,6 +7,12 @@
 static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
 static uint8 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
 static uint16 K_LngOverrideTakeOverTime_Cnt      = 500U;  // 10s
+static float32 K_OverrideHandTorqThreshold_LessTwoZone = 0U;   // 少于2区的手力矩是否超越的手扶阈值
+static float32 K_OverrideHandTorqThreshold_TwoZone = 0U;    // 2区的是否超越的手力矩阈值
+static float32 K_OverrideHandTorqThreshold_ThreeZone = 0U;   // 3区的是否超越的手力矩阈值
+static float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone = 0U;   // 少于2区的具备接管能力的手扶阈值
+static float32 K_TakeOverAvailHandTorqThreshold_TwoZone = 0U;    // 2区的具备接管能力的手力矩阈值
+static float32 K_TakeOverAvailHandTorqThreshold_ThreeZone = 0U;   // 3区的具备接管能力的手力矩阈值
 static float32 K_GasPedalPosThresholdValue = 20.0;     // 油门开度阈值
 
 // 定义宏常量

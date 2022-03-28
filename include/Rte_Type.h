@@ -243,7 +243,7 @@ typedef struct tagDiag2TSM
 typedef struct tagPlanning2TSM
 {
     Dt_RECORD_TimeStamp Planning_Lite_TimeStamp;
-    uint8_t             Planning_Control_State;  // 规控能力
+    uint8_t             planningLite_control_state;  // 规控能力
 } Dt_RECORD_PLANLITE2TSM;
 
 //****************************************************** output *******************************************//

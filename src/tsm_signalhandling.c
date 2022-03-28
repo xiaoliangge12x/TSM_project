@@ -121,6 +121,26 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
     }
 }
 
+// 判断驾驶员手力矩超越标志位
+// void DriveHandTorqueOverrideStJudge()
+// {
+
+// }
+
+// Table of TorqueValue and TouchZone Range, 
+// float torqueValueThersholdJudge(const uint8 handsOnDetection)
+// {
+//     if (handsOnDetection == 3) {
+//         return K_
+//     } else if (handsOnDetection == 2) {
+
+//     } else if (handsOnDetection == 1) {
+
+//     } else {
+
+//     }
+// }
+
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
 {
     // 此时在发5帧阶段，不用再去判断可跳转条件， 若5帧已发出，状态仍未跳转，则重新判断并刷新计数

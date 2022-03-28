@@ -16,8 +16,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
     Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE);
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
 
 // event声明， 条件判断中可以不再加状态，实现状态和条件的解耦(如果真要状态，那么可以在中间条件里增加状态信号)
 boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 

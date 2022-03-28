@@ -16,14 +16,13 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
     Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
 
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  // 信号处理接口
     TsmChartManager(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM);   // 运行状态机接口
     WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
-        rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, rty_DeTSM2HMI, rty_DeTSM2CANGATE);
+        rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
 #ifdef _NEED_LOG
     LOG("rty_DeTSM2CtrlArb->MRM_Status: %d", rty_DeTsm2Planlite->MRM_Status);
 #endif
@@ -348,8 +347,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
     Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
     // 保存SOC状态
     memcpy(&tsm.inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
@@ -375,7 +373,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     // to do: 状态机提供
     memset(&rty_DeTSM2CtrlArb->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
     // 状态机输出信号相关
-    rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->Planning_Control_State;
+    rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
     // to do: 是否需要封装一层状态
     memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
         sizeof(Dt_RECORD_Automaton_State));
@@ -393,43 +391,43 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     // to do: 状态机提供， TSM故障状态
     rty_DeTSM2Diag->Tsm_Status = 0;
     
-    // -------- 给到HMI相关 --------
-    // to do: 状态机提供
-    memset(&rty_DeTSM2HMI->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机提供
-    rty_DeTSM2HMI->Fault_Info = 0;     // 故障信息
-    // to do: 状态机提供
-    rty_DeTSM2HMI->Tor_Request = 0;    // tor请求
+    // // -------- 给到HMI相关 --------
+    // // to do: 状态机提供
+    // memset(&rty_DeTSM2HMI->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // // to do: 状态机提供
+    // rty_DeTSM2HMI->Fault_Info = 0;     // 故障信息
+    // // to do: 状态机提供
+    // rty_DeTSM2HMI->Tor_Request = 0;    // tor请求
 
-    // -------- 给到CANgate相关 -------
-    // to do: 状态机提供
-    memset(&rty_DeTSM2CANGATE->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
-    // to do: 缺少输入
-    memset(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
-    // memcpy(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, &rtu_DeDecisionArbitrator2TSM->Decision_Arbitrator_TimeStamp,
-    //     sizeof(Dt_RECORD_TimeStamp));
-    // to do: 缺少输入
-    memset(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
-    // memcpy(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, &rtu_DeCtrlArb2TSM->timestamp,
-    //     sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->EPB_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Hazard_Light_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Ecall_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Door_Unlock_Request = 0;
-    // rty_DeTSM2CANGATE->Tsm_To_Soc.AS_Status = rtu_DeCtrlArb2TSM->AS_Status;
-    // memcpy(&rty_DeTSM2CANGATE->Tsm_To_Soc.Control_Arbitrator_Results, &rtu_DeCtrlArb2TSM->Control_Arbitrator_Results, 
-    //     sizeof(Dt_RECORD_Control_Arbitrator_Results));
-    // rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
-    // rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
-    // to do: 状态机提供状态跳转监控标志位
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Nda_St_Transition_Monitor_Flag = 
-        tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;
-    // to do: 状态机提供
-    memset(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, 0, sizeof(Dt_RECORD_TimeStamp));
-    // to do:
-    rty_DeTSM2CANGATE->Mcu_To_Ifc.MCU_MRM_status = 0;  // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
+    // // -------- 给到CANgate相关 -------
+    // // to do: 状态机提供
+    // memset(&rty_DeTSM2CANGATE->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // // to do: 缺少输入
+    // memset(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // // memcpy(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, &rtu_DeDecisionArbitrator2TSM->Decision_Arbitrator_TimeStamp,
+    // //     sizeof(Dt_RECORD_TimeStamp));
+    // // to do: 缺少输入
+    // memset(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // // memcpy(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, &rtu_DeCtrlArb2TSM->timestamp,
+    // //     sizeof(Dt_RECORD_TimeStamp));
+    // // to do: 状态机判断提供
+    // rty_DeTSM2CANGATE->EPB_Request = 0;
+    // // to do: 状态机判断提供
+    // rty_DeTSM2CANGATE->Hazard_Light_Request = 0;
+    // // to do: 状态机判断提供
+    // rty_DeTSM2CANGATE->Ecall_Request = 0;
+    // // to do: 状态机判断提供
+    // rty_DeTSM2CANGATE->Door_Unlock_Request = 0;
+    // // rty_DeTSM2CANGATE->Tsm_To_Soc.AS_Status = rtu_DeCtrlArb2TSM->AS_Status;
+    // // memcpy(&rty_DeTSM2CANGATE->Tsm_To_Soc.Control_Arbitrator_Results, &rtu_DeCtrlArb2TSM->Control_Arbitrator_Results, 
+    // //     sizeof(Dt_RECORD_Control_Arbitrator_Results));
+    // // rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
+    // // rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
+    // // to do: 状态机提供状态跳转监控标志位
+    // rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Nda_St_Transition_Monitor_Flag = 
+    //     tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;
+    // // to do: 状态机提供
+    // memset(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    // // to do:
+    // rty_DeTSM2CANGATE->Mcu_To_Ifc.MCU_MRM_status = 0;  // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
 }
