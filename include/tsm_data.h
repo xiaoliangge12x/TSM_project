@@ -7,6 +7,7 @@
 static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
 static uint8 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
 static uint16 K_LngOverrideTakeOverTime_Cnt      = 500U;  // 10s
+static uint16 K_BrakeTOR_TimeThreshold           = 150U;   // 刹车长时介入时间阈值， 3s
 static float32 K_OverrideHandTorqThreshold_LessTwoZone = 0U;   // 少于2区的手力矩是否超越的手扶阈值
 static float32 K_OverrideHandTorqThreshold_TwoZone = 0U;    // 2区的是否超越的手力矩阈值
 static float32 K_OverrideHandTorqThreshold_ThreeZone = 0U;   // 3区的是否超越的手力矩阈值
@@ -361,6 +362,7 @@ typedef struct
     uint8 brakeset_cnt;
     uint8 gasPedalPos_cnt;  // 油门开度持续时间
     uint16 lng_override_cnt; // 纵向超越持续时间
+    uint16 brake_intervation_cnt;   // 制动介入持续时间
 } TimerCnt;
 
 typedef struct 

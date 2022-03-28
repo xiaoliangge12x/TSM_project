@@ -203,7 +203,8 @@ boolean IsEnterMrcFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 // to do : 超出规控没给
 boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
-{
+{   
+    // to do : 跳转错误先摘掉
     // 驾驶员接管 && lighting && 跳转错误
     if (IsDriverTakeOver() &&
         tsm.inter_media_msg.mrm_failure_lighting_flag &&
@@ -216,6 +217,7 @@ boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
+    // to do: 跳转错误先摘掉
     // 驾驶员接管 && lighting && 跳转错误
     if (IsDriverTakeOver() &&
         !tsm.inter_media_msg.mrm_failure_lighting_flag &&

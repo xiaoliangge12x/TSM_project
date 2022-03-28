@@ -1,14 +1,15 @@
 # Origin Input
 Vehicle_Signal_To_Tsm:
-  BCS_VehicleStandStillSt: 0
+  BCS_VehicleStandStillSt: 1
   BCM_LeftTurnLampSt: 0
   BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 1
+  EBB_BrkPedalApplied: 1
 
 # InterMedia Input
 Inter_Media_Msg:
   automaton_transit_normal_flag: 0
   lng_override_st: 3
-  driver_hand_torque_st: 3
-  mrm_system_fault_level: 1
+  driver_hand_torque_st: 2
+  mrm_system_fault_level: 0
   

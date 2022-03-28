@@ -70,6 +70,9 @@ void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* sim
     } else if (!strcmp(key_str, "BCM_HazardLampSt")) {
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt =
             (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "EBB_BrkPedalApplied")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalApplied = 
+            (uint8_t)atoi(value_str);
     } else {
         // do nothing;
     }

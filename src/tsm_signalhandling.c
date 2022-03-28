@@ -11,15 +11,17 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 刹车是否踩下
     BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 判断 刹车长时介入标志位
+    BrakeInervationFlagJudge();
     // 监控SOC侧跳转是否正常
     MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
     // 判断SOC侧跳转是否错误,
     // 0328，初始版本，先用harzard light去判断跳转是否正常，
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("Lng_override_st: %d, automaton_transit_normal_flag: %d, hazard_lamp_st: %d", 
-        tsm.inter_media_msg.lng_override_st, tsm.inter_media_msg.automaton_transit_normal_flag,
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_HazardLampSt);
+    LOG("brake is set: %d, cnt: %d, brake intervation type: %d", 
+        tsm.inter_media_msg.brake_is_set, tsm.timer_cnt.brake_intervation_cnt,
+        tsm.inter_media_msg.brake_intervention_type);
 #endif
 }
 
@@ -83,7 +85,7 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    if (vehicle_signal->EBB_BrkPedalApplied == (uint8)BRAKE_PEDAL_APPLIED) {
+    if (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED) {
         if (tsm.inter_media_msg.brake_is_set) {
             tsm.inter_media_msg.brake_is_set = 1;
         } else {
@@ -178,9 +180,13 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     if ((vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) ||
         (vehicle_signal->BCM_HazardLampSt)) {
         tsm.inter_media_msg.automaton_transit_normal_flag = 0;
+        // 0328版本暂用，此时顺便把系统故障置为1，后续删除
+        tsm.inter_media_msg.mrm_system_fault_level = 1;
         return;
     }
     tsm.inter_media_msg.automaton_transit_normal_flag = 1;
+    // 0328版本暂用，后续删除
+    tsm.inter_media_msg.mrm_system_fault_level = 0;
 
 // 这段逻辑保留，后期使用
     // for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
@@ -193,6 +199,39 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     //     }
     // }
     // tsm.inter_media_msg.automaton_transit_normal_flag = 1;
+}
+
+// 判断 刹车介入标志位
+void BrakeInervationFlagJudge()
+{
+    // 无介入
+    if (!tsm.inter_media_msg.brake_is_set) {
+        tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
+        tsm.timer_cnt.brake_intervation_cnt = 0;
+    } else {
+        if ((tsm.state == MRM_LAT_CTRL) || (tsm.state == MRM_LNG_LAT_CTRL) || (tsm.state == MRC)) {
+            if (tsm.inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
+                tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
+            } else {
+                if (tsm.timer_cnt.brake_intervation_cnt >= K_BrakeTOR_TimeThreshold) {
+                    tsm.timer_cnt.brake_intervation_cnt = 0;
+                    tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
+                } else {
+                    if ((tsm.timer_cnt.brake_intervation_cnt < K_BrakeTOR_TimeThreshold) &&
+                        (tsm.timer_cnt.brake_intervation_cnt > 0)) {
+                        tsm.inter_media_msg.brake_intervention_type = SHORT_TERM_INTERVENTION;
+                    } else {
+                        tsm.timer_cnt.brake_intervation_cnt = 0;
+                        tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
+                    }
+                    tsm.timer_cnt.brake_intervation_cnt++;
+                }
+            }
+        } else {
+            tsm.timer_cnt.brake_intervation_cnt = 0;
+            tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
+        }
+    }
 }
 
 boolean TransitCondFromStandbyToHandsFreeNormal() {
