@@ -14,7 +14,7 @@
 #ifndef TSM_DATA_H_
 #define TSM_DATA_H_
 
-#include "TSM_MODULE.h"
+#include "TSM.h"
 
 // 可标定量
 static uint16 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
