@@ -13,8 +13,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 监控SOC侧跳转是否正常
     MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
-    // 判断SOC侧跳转是否错误, TSM 需要使用, 前期强标定该参数，
-    // NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
+    // 判断SOC侧跳转是否错误,
+    // 0328，初始版本，先用harzard light去判断跳转是否正常，
+    NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
     LOG("Lng_override_st: %d, Brake_is_set: %d", (uint8)tsm.inter_media_msg.lng_override_st, 
         tsm.inter_media_msg.brake_is_set);
@@ -85,17 +86,17 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         if (tsm.inter_media_msg.brake_is_set) {
             tsm.inter_media_msg.brake_is_set = 1;
         } else {
-            if (brakeset_cnt > K_BrakPedalAppliedThresholdTime_Cnt) {
+            if (tsm.timer_cnt.brakeset_cnt > K_BrakPedalAppliedThresholdTime_Cnt) {
                 tsm.inter_media_msg.brake_is_set = 1;
-                brakeset_cnt = 0;
+                tsm.timer_cnt.brakeset_cnt = 0;
             } else {
                 tsm.inter_media_msg.brake_is_set = 0;
-                brakeset_cnt++;
+                tsm.timer_cnt.brakeset_cnt++;
             }
         }
     } else {
         tsm.inter_media_msg.brake_is_set = 0;
-        brakeset_cnt = 0;
+        tsm.timer_cnt.brakeset_cnt = 0;
     }
 }
 
@@ -106,17 +107,17 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
         if (tsm.inter_media_msg.driver_acc_pedal_applied_flag) {
             tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
         } else {
-            if (gasPedalPos_cnt > K_GasPedalAppliedThresholdTime_Cnt) {
+            if (tsm.timer_cnt.gasPedalPos_cnt > K_GasPedalAppliedThresholdTime_Cnt) {
                 tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
-                gasPedalPos_cnt = 0;
+                tsm.timer_cnt.gasPedalPos_cnt = 0;
             } else {
                 tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
-                gasPedalPos_cnt++;
+                tsm.timer_cnt.gasPedalPos_cnt++;
             }
         }
     } else {
         tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
-        gasPedalPos_cnt = 0;
+        tsm.timer_cnt.gasPedalPos_cnt = 0;
     }
 }
 
@@ -150,18 +151,26 @@ void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
     tsm.inter_media_msg.nda_st_transit_monitor.frame_cnt = 0;
 }
 
-void NdaStTransitNormalJudge(const Dt_RECORD_Automaton_State* automaton_state) 
+void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info)
 {
-    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-        if ((tsm.inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
-            (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
-            if (tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
-                tsm.inter_media_msg.automaton_transit_normal_flag = 0;
-                return;
-            }
-        }
+// 0328版使用hazard light 作为判断条件
+    if ((vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) ||
+        (vehicle_signal->BCM_HazardLampSt)) {
+        tsm.inter_media_msg.automaton_transit_normal_flag = 0;
     }
     tsm.inter_media_msg.automaton_transit_normal_flag = 1;
+
+// 这段逻辑保留，后期使用
+    // for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
+    //     if ((tsm.inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
+    //         (soc_info->Automaton_State.NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
+    //         if (tsm.inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
+    //             tsm.inter_media_msg.automaton_transit_normal_flag = 0;
+    //             return;
+    //         }
+    //     }
+    // }
+    // tsm.inter_media_msg.automaton_transit_normal_flag = 1;
 }
 
 boolean TransitCondFromStandbyToHandsFreeNormal() {

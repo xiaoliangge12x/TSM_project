@@ -42,10 +42,10 @@ boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
 boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
-boolean IsEnterLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
-boolean IsEnterNoLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
+
+// user define
+boolean IsLngOverrideLongTerm();
+boolean IsDriverTakeOver();
 
 // action 声明
 void ActionInPassive();
@@ -78,8 +78,8 @@ static const StateTransit state_transit_array[TOTAL_TRANS_NUM] = {
     {MRM_LAT_CTRL, EVENT_MRC_FROM_MRM, MRC},
     {MRM_LAT_CTRL, EVENT_LIGHTING_FROM_MRM, FAILURE_LIGHTING},
     {MRM_LAT_CTRL, EVENT_NO_LIGHTING_FROM_MRM, FAILURE_NO_LIGHTING},
-    {MRC, EVENT_LIGHTING_FROM_MRC, FAILURE_LIGHTING},
-    {MRC, EVENT_NO_LIGHTING_FROM_MRC, FAILURE_NO_LIGHTING}
+    {MRC, EVENT_LIGHTING_FROM_MRM, FAILURE_LIGHTING},
+    {MRC, EVENT_NO_LIGHTING_FROM_MRM, FAILURE_NO_LIGHTING}
 };
 
 static const Action action = {
@@ -98,8 +98,7 @@ static const TransitEvent event = {
     IsStandbyConditionNotMeet, IsMrmBothCtrlConditionMeet,
     IsMrmLatCtrlConditionMeet, IsEnterMrcFromStandby,
     IsEnterMrcFromMrm, IsEnterLightingFromMrm,
-    IsEnterNoLightingFromMrm, IsEnterLightingFromMrc,
-    IsEnterNoLightingFromMrc
+    IsEnterNoLightingFromMrm
 };
 
 #endif

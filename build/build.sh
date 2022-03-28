@@ -17,7 +17,7 @@ function main()
         cmake .. -DOPEN_TEST=ON && make -j8
         exit 0
     fi
-    cmake .. && make -j8
+    cmake .. && make clean && make -j8
 }
 
 main $@

@@ -64,6 +64,8 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
 // soc侧状态机跳转监控判断
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state);
 
+void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info);
+
 static const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] = {
     {NDA_STANDBY_NORMAL, NDA_ACTIVE_HAND_FREE_NORMAL, STANDBY_HANDSFREE_NORMAL, TransitCondFromStandbyToHandsFreeNormal},
     {NDA_STANDBY_NORMAL, NDA_ACTIVE_HAND_ON_NORMAL, STANDBY_HANDSON_NORMAL, TransitCondFromStandbyToHandsOnNormal},
@@ -103,6 +105,6 @@ static const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] =
     {NDA_LAT_LNG_OVERRIDE, NDA_ACTIVE_HAND_FREE_NORMAL, BOTH_OVERRIDE_HANDSFREE_NORMAL, TransitCondFromBothOverrideToHandsFreeNormal},
     {NDA_LAT_LNG_OVERRIDE, NDA_ACTIVE_HAND_ON_NORMAL, BOTH_OVERRIDE_HANDSON_NORMAL, TransitCondFromBothOverrideToHandsOnNormal},
     {NDA_LAT_LNG_OVERRIDE, NDA_LNG_OVERRIDE_HANDS_ON, BOTH_OVERRIDE_LNG_OVERRIDE, TransitCondFromBothOverrideToLngOverride},
-    {NDA_LAT_LNG_OVERRIDE, NDA_LAT_OVERRIDE, BOTH_OVERRIDE_LAT_OVERRIDE, TransitCondFromBothOverrideToLatOverride},
+    {NDA_LAT_LNG_OVERRIDE, NDA_LAT_OVERRIDE, BOTH_OVERRIDE_LAT_OVERRIDE, TransitCondFromBothOverrideToLatOverride}
 };
 #endif

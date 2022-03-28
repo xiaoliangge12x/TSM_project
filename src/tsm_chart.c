@@ -2,15 +2,12 @@
 
 // 全局变量的定义
 StateMachine tsm;
-uint8 brakeset_cnt;       // 刹车设定时间开度
-uint8 gasPedalPos_cnt;    // 油门开度时间计数
 
 void MRM_TSM_MODULE_Init(void)
 {
     memset(&tsm, 0, sizeof(tsm));
-    // 计时器初始化
-    brakeset_cnt = 0;
-    gasPedalPos_cnt = 0;
+    // 默认该信号跳转正常，一定要注意
+    tsm.inter_media_msg.automaton_transit_normal_flag = 1;   // 1 跳转正常 ， 0 跳转异常
 }
 
 void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
@@ -204,27 +201,79 @@ boolean IsEnterMrcFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     return false;
 }
 
+// to do : 超出规控没给
 boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
-    return false;
+    // 驾驶员接管 && lighting && 跳转错误
+    if (IsDriverTakeOver() &&
+        tsm.inter_media_msg.mrm_failure_lighting_flag &&
+        !tsm.inter_media_msg.automaton_transit_normal_flag) {
+        return true;
+    }
 }
 
+// to do : 超出规控没给
 boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
 {
+    // 驾驶员接管 && lighting && 跳转错误
+    if (IsDriverTakeOver() &&
+        !tsm.inter_media_msg.mrm_failure_lighting_flag &&
+        !tsm.inter_media_msg.automaton_transit_normal_flag) {
+        return true;
+    }
     return false;
 }
 
-boolean IsEnterLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+boolean IsDriverTakeOver()
 {
+    if ((tsm.state == MRM_LAT_CTRL) || (tsm.state == MRC)) {
+        // 需要判断纵向的长时踩油门 和 踩刹车
+        if (tsm.inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
+            return true;
+        }
+
+        if ((tsm.inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
+            (IsLngOverrideLongTerm())) {
+            return true;
+        }
+
+        if ((tsm.inter_media_msg.driver_attention_st == AWAKE_AND_LOOK_REARVIEW_OR_HU) ||
+            (tsm.inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED) ||
+            (tsm.inter_media_msg.driver_attention_st == FATIGUE_DRIVER_ATTENTION_ST)) {
+            if (tsm.inter_media_msg.hands_can_takeover && IsLngOverrideLongTerm()) {
+                return true;
+            }
+        }
+    }
+
+    // 手是否具备接管
+    if ((tsm.inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
+        (tsm.inter_media_msg.hands_can_takeover)) {
+        return true;
+    }
+
+    // 手力矩超越判断
+    if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
+        return true;
+    }
     return false;
 }
 
-boolean IsEnterNoLightingFromMrc(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+boolean IsLngOverrideLongTerm()
 {
+    // todo: 未把变道状态放入
+    if (tsm.inter_media_msg.lng_override_st == OVERRIDE_SATISFY) {
+        if (tsm.timer_cnt.lng_override_cnt > K_LngOverrideTakeOverTime_Cnt) {
+            tsm.timer_cnt.lng_override_cnt = 0;
+            return true;
+        } else {
+            tsm.timer_cnt.lng_override_cnt++;
+        }
+    } else {
+        tsm.timer_cnt.lng_override_cnt = 0;
+    }
     return false;
 }
 

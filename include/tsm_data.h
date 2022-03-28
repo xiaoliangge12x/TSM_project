@@ -6,6 +6,7 @@
 // 可标定量
 static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
 static uint8 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
+static uint16 K_LngOverrideTakeOverTime_Cnt      = 500U;  // 10s
 static float32 K_GasPedalPosThresholdValue = 20.0;     // 油门开度阈值
 
 // 定义宏常量
@@ -245,8 +246,6 @@ typedef enum EventID
     EVENT_MRC_FROM_MRM,
     EVENT_LIGHTING_FROM_MRM,
     EVENT_NO_LIGHTING_FROM_MRM,
-    EVENT_LIGHTING_FROM_MRC,
-    EVENT_NO_LIGHTING_FROM_MRC,
 
     EVENT_COUNT,
     EVENT_NONE = 0xFF
@@ -350,15 +349,22 @@ typedef struct
     uint8 mrm_activation_st;   // 给到planlite的激活信号
 } ActionParam;
 
+// 计时器的计数形式
+typedef struct
+{
+    uint8 brakeset_cnt;
+    uint8 gasPedalPos_cnt;  // 油门开度持续时间
+    uint16 lng_override_cnt; // 纵向超越持续时间
+} TimerCnt;
+
 typedef struct 
 {
     enum State state;      // 当前状态
     InterMediaMsg inter_media_msg;   // 中间信号
     ActionParam action_param;     // 行为参数
+    TimerCnt timer_cnt;     // 计时器
 } StateMachine;
 
 // 声明全局变量
 extern StateMachine tsm;
-extern uint8 brakeset_cnt;
-extern uint8 gasPedalPos_cnt;
 #endif
