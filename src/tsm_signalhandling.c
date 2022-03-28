@@ -17,8 +17,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 0328，初始版本，先用harzard light去判断跳转是否正常，
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("Lng_override_st: %d, Brake_is_set: %d", (uint8)tsm.inter_media_msg.lng_override_st, 
-        tsm.inter_media_msg.brake_is_set);
+    LOG("Lng_override_st: %d, automaton_transit_normal_flag: %d, hazard_lamp_st: %d", 
+        tsm.inter_media_msg.lng_override_st, tsm.inter_media_msg.automaton_transit_normal_flag,
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_HazardLampSt);
 #endif
 }
 
@@ -177,6 +178,7 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     if ((vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) ||
         (vehicle_signal->BCM_HazardLampSt)) {
         tsm.inter_media_msg.automaton_transit_normal_flag = 0;
+        return;
     }
     tsm.inter_media_msg.automaton_transit_normal_flag = 1;
 

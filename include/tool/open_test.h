@@ -10,6 +10,8 @@
 
 void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data);
 
-void SimulinkDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data);
+void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data);
+
+void InterMediaMsgDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data);
 
 #endif

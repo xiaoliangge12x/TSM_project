@@ -37,7 +37,8 @@ void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data)
                 } else {
                     value_value = strdup(token.data.scalar.value);
                     keyFlag = 0;
-                    SimulinkDataSet(key_value, value_value, simulink_data); 
+                    OriginDataSet(key_value, value_value, simulink_data);
+                    InterMediaMsgDataSet(key_value, value_value, simulink_data);
                 }
             }
             /* Others */
@@ -55,17 +56,37 @@ void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data)
     fclose(f);
 }
 
-void SimulinkDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data)
+void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data) 
 {
-    
-    // printf("key_str: %s, value_str: %d\n", key_str, (uint8_t)atoi(value_str));
     if (!strcmp(key_str, "BCS_VehicleStandStillSt")) {
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt =
             (uint8_t)atoi(value_str);
-    } else if (!strcmp(key_str, "automaton_transit_normal_flag")) {
+    } else if (!strcmp(key_str, "BCM_LeftTurnLampSt")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt =
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "BCM_RightTurnLampSt")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt =
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "BCM_HazardLampSt")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt =
+            (uint8_t)atoi(value_str);
+    } else {
+        // do nothing;
+    }
+}
+
+void InterMediaMsgDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data)
+{
+    
+    // printf("key_str: %s, value_str: %d\n", key_str, (uint8_t)atoi(value_str));
+    if (!strcmp(key_str, "automaton_transit_normal_flag")) {
         tsm.inter_media_msg.automaton_transit_normal_flag = (uint8_t)atoi(value_str);
     } else if (!strcmp(key_str, "lng_override_st")) {
         tsm.inter_media_msg.lng_override_st = (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "driver_hand_torque_st")) {
+        tsm.inter_media_msg.driver_hand_torque_st = (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "mrm_system_fault_level")) {
+        tsm.inter_media_msg.mrm_system_fault_level = (uint8_t)atoi(value_str);
     } else {
         // do nothing;
     }
