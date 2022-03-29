@@ -62,17 +62,53 @@ void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* sim
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt =
             (uint8_t)atoi(value_str);
     } else if (!strcmp(key_str, "BCM_LeftTurnLampSt")) {
-        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt =
-            (uint8_t)atoi(value_str);
+        // temp comment
+        /* simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt =
+            (uint8_t)atoi(value_str); */
     } else if (!strcmp(key_str, "BCM_RightTurnLampSt")) {
-        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt =
-            (uint8_t)atoi(value_str);
+        // temp comment
+        /* simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt =
+            (uint8_t)atoi(value_str); */
     } else if (!strcmp(key_str, "BCM_HazardLampSt")) {
-        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt =
-            (uint8_t)atoi(value_str);
+        /* simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt =
+            (uint8_t)atoi(value_str); */
+        // 模拟车上环境
+        if (atoi(value_str) == 1) {
+            if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt) {
+                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
+                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
+            } else {
+                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 1;
+                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 1;
+            }
+        } else {
+            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
+            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
+        }
     } else if (!strcmp(key_str, "EBB_BrkPedalApplied")) {
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalApplied = 
             (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "HOD_TouchZone1")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone1 = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "HOD_TouchZone2")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone2 = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "HOD_TouchZone3")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone3 = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "HOD_CalibrationSt")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_CalibrationSt = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "HOD_FaultStatus")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_FaultStatus = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "EPS_StrngWhlTorqVD")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorqVD = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "EPS_StrngWhlTorq")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorq = 
+            (float32)atof(value_str);
     } else {
         // do nothing;
     }

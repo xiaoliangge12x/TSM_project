@@ -8,20 +8,21 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
     DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 纵向超越标志位
-    // LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 刹车是否踩下
     BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 刹车长时介入标志位
     BrakeInervationFlagJudge();
-    // 监控SOC侧跳转是否正常
+    // 判断 驾驶员手力矩超越标志位
+    DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 监控 SOC侧NDA的状态跳转
     MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
-    // 判断SOC侧跳转是否错误,
+    // 判断 SOC侧NDA的跳转是否错误
     // 0328，初始版本，先用harzard light去判断跳转是否正常，
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("brake is set: %d, cnt: %d, brake intervation type: %d", 
-        tsm.inter_media_msg.brake_is_set, tsm.timer_cnt.brake_intervation_cnt,
-        tsm.inter_media_msg.brake_intervention_type);
+    LOG("Left lamp st: %d, Right lamp st: %d", 
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt, rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt);
 #endif
 }
 
@@ -124,7 +125,6 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
     }
 }
 
-// 判断驾驶员手力矩超越标志位
 void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     if ((vehicle_signal->HOD_FaultStatus == 0) && (vehicle_signal->HOD_CalibrationSt == 1)) {
@@ -136,23 +136,19 @@ void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_s
 
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    static uint8 handsOnDetection = 0;
-    static const overrideHandTorqThresholdMap[3] = {K_OverrideHandTorqThreshold_LessTwoZone, 
-                                                    K_OverrideHandTorqThreshold_TwoZone, 
-                                                    K_OverrideHandTorqThreshold_ThreeZone};
+    static float32 overrideHandTorqThreshold = 0;
 
     if (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) {
-        handsOnDetection = 2;
+        overrideHandTorqThreshold = K_OverrideHandTorqThreshold_ThreeZone;
     } else if ((vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone1) || 
                (vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) || 
                (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone3)) {
-        handsOnDetection = 1;
+        overrideHandTorqThreshold = K_OverrideHandTorqThreshold_TwoZone;
     } else {
-        handsOnDetection = 0;   // 1区检测或无区检测
+        overrideHandTorqThreshold = K_OverrideHandTorqThreshold_LessTwoZone;   // 1区检测或无区检测
     }
 
-    // 
-    if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThresholdMap[handsOnDetection])) {
+    if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
         if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
             tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY;
         } else {
@@ -222,9 +218,30 @@ void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
 
 void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info)
 {
+// 增加延时判断， 判断200ms内是不是有flag置起, 下一个200ms到来时，会清0
+    static uint8 time_cnt = 0;
+    static uint8 flag_cnt = 0;
+    static uint8 hazardlight_on = 0;
+    if (time_cnt == 25) {
+        // hazardlight_on = 0;
+        if (flag_cnt) {
+            hazardlight_on = 1;
+        } else {
+            hazardlight_on = 0;
+        }
+        flag_cnt = 0;
+        time_cnt = 0;
+    } else {
+        time_cnt++;
+        if (vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) {
+            flag_cnt++;
+        }
+    }
+
 // 0328版使用hazard light 作为判断条件
-    if ((vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) ||
-        (vehicle_signal->BCM_HazardLampSt)) {
+    /*if ((vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) ||
+        (vehicle_signal->BCM_HazardLampSt)) */ 
+    if (hazardlight_on) {
         tsm.inter_media_msg.automaton_transit_normal_flag = 0;
         // 0328版本暂用，此时顺便把系统故障置为1，后续删除
         tsm.inter_media_msg.mrm_system_fault_level = 1;
@@ -247,7 +264,6 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     // tsm.inter_media_msg.automaton_transit_normal_flag = 1;
 }
 
-// 判断 刹车介入标志位
 void BrakeInervationFlagJudge()
 {
     // 无介入
@@ -280,159 +296,4 @@ void BrakeInervationFlagJudge()
     }
 }
 
-boolean TransitCondFromStandbyToHandsFreeNormal() {
-    return true;
-}
-
-boolean TransitCondFromStandbyToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromStandbyToHandsFreeStandActive() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeNormalToHandsFreeStandActive() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeNormalToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeNormalToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeNormalToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeNormalToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandActiveToHandsFreeNormal() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandActiveToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandActiveToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandActiveToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandWaitToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandWaitToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsFreeStandWaitToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnNormalToHandsOnStandActive() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnNormalToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnNormalToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnNormalToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnNormalToHandsFreeNormal() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandActiveToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandActiveToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandActiveToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandActiveToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandWaitToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandWaitToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromHandsOnStandWaitToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromLngOverrideToHandsFreeNormal() {
-    return false;
-}
-
-boolean TransitCondFromLngOverrideToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromLngOverrideToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromLngOverrideToLatOverride() {
-    return false;
-}
-
-boolean TransitCondFromLatOverrideToHandsFreeNormal() {
-    return false;
-}
-
-boolean TransitCondFromLatOverrideToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromLatOverrideToBothOverride() {
-    return false;
-}
-
-boolean TransitCondFromLatOverrideToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromBothOverrideToHandsFreeNormal() {
-    return false;
-}
-
-boolean TransitCondFromBothOverrideToHandsOnNormal() {
-    return false;
-}
-
-boolean TransitCondFromBothOverrideToLngOverride() {
-    return false;
-}
-
-boolean TransitCondFromBothOverrideToLatOverride() {
-    return false;
-}
 

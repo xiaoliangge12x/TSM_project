@@ -5,11 +5,18 @@ Vehicle_Signal_To_Tsm:
   BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 1
   EBB_BrkPedalApplied: 1
+  HOD_TouchZone1: 0
+  HOD_TouchZone2: 0
+  HOD_TouchZone3: 0
+  HOD_CalibrationSt: 0
+  HOD_FaultStatus: 0
+  EPS_StrngWhlTorqVD: 1
+  EPS_StrngWhlTorq: -0.1
 
 # InterMedia Input
 Inter_Media_Msg:
   automaton_transit_normal_flag: 0
-  lng_override_st: 3
-  driver_hand_torque_st: 2
+  # lng_override_st: 3
+  # driver_hand_torque_st: 2
   mrm_system_fault_level: 0
   
