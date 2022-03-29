@@ -131,7 +131,7 @@ typedef struct tagVehicleSignal2TSM
     uint8_t EMS_GasPedalActPstforMRRVD;  // 驾驶员踩油门开度VD标志位 
     float EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
     uint8_t BCM_LeftTurnLampSt;       // 左转向灯
-    uint8_t BCM_RightTurnLampSt       // 右转向灯
+    uint8_t BCM_RightTurnLampSt;       // 右转向灯
 } Dt_RECORD_VehicleSignal2TSM;
 
 typedef struct

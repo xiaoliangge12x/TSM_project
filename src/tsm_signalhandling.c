@@ -125,24 +125,70 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
 }
 
 // 判断驾驶员手力矩超越标志位
-// void DriveHandTorqueOverrideStJudge()
-// {
+void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+{
+    if ((vehicle_signal->HOD_FaultStatus == 0) && (vehicle_signal->HOD_CalibrationSt == 1)) {
+        TorqueOverrideStJudgeWithHodDetection(vehicle_signal);
+    } else {
+        TorqueOverrideStJudgeWithoutHodDetection(vehicle_signal);
+    }
+}
 
-// }
+void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+{
+    static uint8 handsOnDetection = 0;
+    static const overrideHandTorqThresholdMap[3] = {K_OverrideHandTorqThreshold_LessTwoZone, 
+                                                    K_OverrideHandTorqThreshold_TwoZone, 
+                                                    K_OverrideHandTorqThreshold_ThreeZone};
 
-// Table of TorqueValue and TouchZone Range, 
-// float torqueValueThersholdJudge(const uint8 handsOnDetection)
-// {
-//     if (handsOnDetection == 3) {
-//         return K_
-//     } else if (handsOnDetection == 2) {
+    if (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) {
+        handsOnDetection = 2;
+    } else if ((vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone1) || 
+               (vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) || 
+               (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone3)) {
+        handsOnDetection = 1;
+    } else {
+        handsOnDetection = 0;   // 1区检测或无区检测
+    }
 
-//     } else if (handsOnDetection == 1) {
+    // 
+    if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThresholdMap[handsOnDetection])) {
+        if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
+            tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY;
+        } else {
+            if (tsm.timer_cnt.lat_override_withHOD_cnt > K_OverrideHandTorqCheckTime_Cnt) {
+                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
+                tsm.timer_cnt.lat_override_withHOD_cnt = 0;
+            } else {
+                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
+                tsm.timer_cnt.lat_override_withHOD_cnt++;
+            }
+        }
+    } else {
+        tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
+        tsm.timer_cnt.lat_override_withHOD_cnt = 0;
+    }
+}
 
-//     } else {
-
-//     }
-// }
+void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+{
+    if ((vehicle_signal->EPS_StrngWhlTorqVD) && (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
+        if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
+            tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
+        } else {
+            if (tsm.timer_cnt.lat_override_withoutHOD_cnt > K_OverrideHandTorqCheckTime_Cnt) {
+                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
+                tsm.timer_cnt.lat_override_withoutHOD_cnt = 0;
+            } else {
+                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
+                tsm.timer_cnt.lat_override_withoutHOD_cnt++;
+            }
+        }
+    } else {
+        tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
+        tsm.timer_cnt.lat_override_withoutHOD_cnt = 0;
+    }
+}
 
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
 {
@@ -213,11 +259,11 @@ void BrakeInervationFlagJudge()
             if (tsm.inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
                 tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
             } else {
-                if (tsm.timer_cnt.brake_intervation_cnt >= K_BrakeTOR_TimeThreshold) {
+                if (tsm.timer_cnt.brake_intervation_cnt >= K_BrakeTOR_TimeThreshold_Cnt) {
                     tsm.timer_cnt.brake_intervation_cnt = 0;
                     tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
                 } else {
-                    if ((tsm.timer_cnt.brake_intervation_cnt < K_BrakeTOR_TimeThreshold) &&
+                    if ((tsm.timer_cnt.brake_intervation_cnt < K_BrakeTOR_TimeThreshold_Cnt) &&
                         (tsm.timer_cnt.brake_intervation_cnt > 0)) {
                         tsm.inter_media_msg.brake_intervention_type = SHORT_TERM_INTERVENTION;
                     } else {

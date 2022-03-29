@@ -8,6 +8,7 @@ void MRM_TSM_MODULE_Init(void)
     memset(&tsm, 0, sizeof(tsm));
     // 默认该信号跳转正常，一定要注意
     tsm.inter_media_msg.automaton_transit_normal_flag = 1;   // 1 跳转正常 ， 0 跳转异常
+    tsm.action_param.mrm_activation_st = 1;   // 1 exit  0 not exit
 }
 
 void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
@@ -284,7 +285,7 @@ void ActionInPassive()
 #ifdef _NEED_LOG
     LOG("It's in Passive St.");
 #endif
-    tsm.action_param.mrm_activation_st = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInFailureLighting()
@@ -293,7 +294,7 @@ void ActionInFailureLighting()
     LOG("It's in Failure Lighting St.");
 #endif
     tsm.action_param.lng_override_flag = 0;
-    tsm.action_param.mrm_activation_st = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInFailureNoLighting()
@@ -301,7 +302,7 @@ void ActionInFailureNoLighting()
 #ifdef _NEED_LOG
     LOG("It's in Failure No Lighting St.");
 #endif
-    tsm.action_param.mrm_activation_st = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInStandby()
@@ -309,7 +310,7 @@ void ActionInStandby()
 #ifdef _NEED_LOG
     LOG("It's in Standby St.");
 #endif
-    tsm.action_param.mrm_activation_st = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 void ActionInMrmBothCtrl()
@@ -319,7 +320,7 @@ void ActionInMrmBothCtrl()
 #endif
     // car test
     tsm.action_param.lng_override_flag = 0;
-    tsm.action_param.mrm_activation_st = 1;
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInMrmLatCtrl()
@@ -329,7 +330,7 @@ void ActionInMrmLatCtrl()
 #endif
     // car test
     tsm.action_param.lng_override_flag = 1;
-    tsm.action_param.mrm_activation_st = 1;
+    tsm.action_param.mrm_activation_st = 0;
 }
 
 void ActionInMrc()
@@ -338,7 +339,7 @@ void ActionInMrc()
     LOG("It's in Mrc St.");
 #endif
     tsm.action_param.lng_override_flag = 0;
-    tsm.action_param.mrm_activation_st = 0;
+    tsm.action_param.mrm_activation_st = 1;
 }
 
 

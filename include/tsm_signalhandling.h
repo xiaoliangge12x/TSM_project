@@ -60,6 +60,10 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 // 判断 驾驶员是否踩下油门
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+// 判断 刹车长时介入标志位
+void BrakeInervationFlagJudge();
+// 判断 驾驶员手力矩超越标志位
+void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 
 // soc侧状态机跳转监控判断
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state);
