@@ -138,15 +138,15 @@ boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     return true;
     /*
     if ((tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_EPB_PHASE_IN) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_NORMAL) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDACTIVE) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDWAIT) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_NORMAL) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDACTIVE) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDWAIT) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_ON_NORMAL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_ON_STAND_ACTIVE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_ON_STAND_WAIT) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_FREE_NORMAL) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_FREE_STAND_ACTIVE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HANDS_FREE_STAND_WAIT) ||
         (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_FREE) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_ON) ||
-        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_LNG_OVERRIDE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE) ||
+        (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_LAT_OVERRIDE) ||
         (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_OVERRIDE) ||
         (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_STAND) ||
         (tsm.inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_LAT_CONTROL) ||
@@ -386,6 +386,11 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
         sizeof(Dt_RECORD_Automaton_State));
     rty_DeTSM2CtrlArb->lng_override_flag = tsm.action_param.lng_override_flag;
+    // to do: 暂时全发0，逻辑还没定 
+    rty_DeTSM2CtrlArb->NDA_LatState = 0;
+    rty_DeTSM2CtrlArb->NDA_LongState = 0;
+    rty_DeTSM2CtrlArb->NDA_ILC_State = 0;
+
 
     // ------- 给到DeciArb相关 ---------
     memcpy(&rty_DeTSM2DecisionArbitrator->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp,

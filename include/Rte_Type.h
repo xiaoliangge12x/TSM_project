@@ -282,6 +282,9 @@ typedef struct tagTSM2CtrlArb
     uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
     uint8_t lng_override_flag;    // 纵向override状态， 1为 override
+    uint8_t NDA_LatState; 
+    uint8_t NDA_ILC_State;
+    uint8_t NDA_LongState;
 } Dt_RECORD_TSM2CtrlArb;
 // typedef struct tagTSM2ControlArbitrator
 // {
