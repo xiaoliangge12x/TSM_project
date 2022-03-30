@@ -357,7 +357,7 @@ typedef struct {
 typedef struct
 {
     enum NdaTransitEnableFlag nda_transit_enable_flag; 
-    uint8_t frame_cnt;   // 帧数计数器
+    uint8 frame_cnt;   // 帧数计数器
 } NdaStTransitMonitor;
 
 typedef struct 

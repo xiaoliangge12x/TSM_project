@@ -376,7 +376,7 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     // ----- 给到CtrlArb相关 --------
     memcpy(&rty_DeTSM2CtrlArb->TimeStamp_CanGate, &rtu_DeCANGATE2TSM->TimeStamp, 
         sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->Planning_Lite_TimeStamp,
+    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->DeTimeStamp,
         sizeof(Dt_RECORD_TimeStamp));
     // to do: 状态机提供
     memset(&rty_DeTSM2CtrlArb->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
