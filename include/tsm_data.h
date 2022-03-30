@@ -1,14 +1,27 @@
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  Necessary Data Needed by TSM definition
+ *  \author zengxiaoliang (zengxiaoliang@holomatic.com)
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
+
 #ifndef TSM_DATA_H_
 #define TSM_DATA_H_
 
 #include "TSM_MODULE.h"
 
 // 可标定量
-static uint8 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
-static uint8 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
+static uint16 K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(20ms周期)
+static uint16 K_GasPedalAppliedThresholdTime_Cnt = 10U;    // 油门踩下的持续时间
 static uint16 K_LngOverrideTakeOverTime_Cnt      = 500U;  // 10s
 static uint16 K_BrakeTOR_TimeThreshold_Cnt      = 150U;   // 刹车长时介入时间阈值， 3s
-static uint8 K_OverrideHandTorqCheckTime_Cnt     = 50U;    // 手力矩是否超越的持续时间， 暂定1s
+static uint16 K_OverrideHandTorqCheckTime_Cnt     = 50U;    // 手力矩是否超越的持续时间， 暂定1s
 static float32 K_OverrideHandTorqThreshold_LessTwoZone = 1.8;   // 少于2区的手力矩是否超越的手扶阈值
 static float32 K_OverrideHandTorqThreshold_TwoZone = 1.5;    // 2区的是否超越的手力矩阈值
 static float32 K_OverrideHandTorqThreshold_ThreeZone = 1.0;   // 3区的是否超越的手力矩阈值
@@ -224,11 +237,20 @@ typedef enum AccDriverOrvd
     DRIVER_OVERRIDE
 };
 
-typedef enum BrkPedalAppliedSt
+typedef enum BrkPedalApplied
 {
     BRAKE_PEDAL_NOT_APPLIED = 0,
     BRAKE_PEDAL_APPLIED
 };
+
+typedef enum
+{
+    NOT_INITIALIZED = 0,
+    NORMAL,
+    FAULTY,
+    RESERVED
+} BrkPedalAppliedSt;
+
 // 定义状态机枚举量
 typedef enum State
 {
@@ -303,6 +325,13 @@ typedef enum NdaTransitEnableFlag
     BOTH_OVERRIDE_LAT_OVERRIDE,
 };
 // 定义内部结构体
+// ------------------ 通用变量 --------------
+typedef struct {
+    uint8 flag_set_val;
+    uint8 flag_unset_val;
+    uint16 time_threshold_cnt;
+} VarValue;
+
 // ------------------ 中间变量 ---------------
 typedef struct
 {
@@ -318,36 +347,36 @@ typedef struct
     NdaTransitCondition nda_transit_cond;
 } NdaStMonitorInfo;
 
-
 typedef struct
 {
-    enum MrmSystemFaultLevel mrm_system_fault_level;   // mrm 系统故障等级
-    uint8 mrm_failure_lighting_flag;                   // mrm 故障点灯标志位
-    Dt_RECORD_Automaton_State automaton_st;            // soc状态机状态 (option)
-    enum MrmType mrm_type;                             // mrm 类型
-    uint8 automaton_transit_normal_flag;               // soc状态机跳转是否正常标志位， 需要临时做标定
-    enum OverrideSt driver_hand_torque_st;       // 驾驶员手力矩超越标志
+    enum MrmSystemFaultLevel mrm_system_fault_level;    // mrm 系统故障等级
+    uint8 mrm_failure_lighting_flag;                    // mrm 故障点灯标志位
+    Dt_RECORD_Automaton_State automaton_st;             // soc状态机状态 (option)
+    enum MrmType mrm_type;                              // mrm 类型
+    uint8 automaton_transit_normal_flag;                // soc状态机跳转是否正常标志位， 需要临时做标定
+    enum OverrideSt driver_hand_torque_st;              // 驾驶员手力矩超越标志
     enum BrakeInterventionType brake_intervention_type; // 刹车介入类型
-    enum OverrideSt lng_override_st;                 // 纵向超越标志位
+    enum OverrideSt lng_override_st;                    // 纵向超越标志位
+    uint8 lng_override_long_duration_flag;              // 纵向超越长时持续标志位
     enum LaneChangeState lane_change_st;                // 车辆变道状态(option)
     enum DrvrAttentionSt driver_attention_st;           // 驾驶员注意力状态
     uint8 hands_can_takeover;                           // 手可以接管标志位
-    uint8 planning_control_st;                                // 规控能力(option)
-    uint8 brake_is_set;                                       // 刹车是否踩下
-    uint8 vehicle_standstill_flag;                            // 车辆是否静止
+    uint8 planning_control_st;                          // 规控能力(option)
+    uint8 brake_is_set;                                 // 刹车是否踩下
+    uint8 vehicle_standstill_flag;                      // 车辆是否静止
     // 上述是给状态机的直接输入，以下是间接中间变量
     uint8 nda_need_phase_in;                            // nda 是否需要phase-in
     uint8 nda_passive_vd_flag;                          // nda passive的vd标志位， 1 为valid
     uint8 nda_handsfree_handson_flag;                   // HandsFree 和 HandsOn 的配置码
     uint8 driver_acc_pedal_applied_flag;                // 驾驶员是否踩下油门
-    NdaStTransitMonitor nda_st_transit_monitor;   // nda状态跳转使能标志位
-    Dt_RECORD_Automaton_State last_automaton_st;   // 上一帧soc侧automaton状态 
+    NdaStTransitMonitor nda_st_transit_monitor;         // nda状态跳转使能标志位
+    Dt_RECORD_Automaton_State last_automaton_st;        // 上一帧soc侧automaton状态 
 } InterMediaMsg;
 
 typedef struct 
 {
     enum State cur_st;     // 当前状态
-    enum EventID event_id;   // 触发事件, 共通的
+    enum EventID event_id; // 触发事件, 共通的
     enum State next_st;    // 下一状态
 } StateTransit;
 
@@ -357,23 +386,11 @@ typedef struct
     uint8 mrm_activation_st;   // 给到planlite的激活信号
 } ActionParam;
 
-// 计时器的计数形式
-typedef struct
-{
-    uint8 brakeset_cnt;
-    uint8 gasPedalPos_cnt;  // 油门开度持续时间
-    uint16 lng_override_cnt; // 纵向超越持续时间
-    uint16 brake_intervation_cnt;   // 制动介入持续时间
-    uint8  lat_override_withoutHOD_cnt;   // 无区域检测的横向超越持续时间
-    uint8  lat_override_withHOD_cnt;  // 有区域检测的横向超越持续时间
-} TimerCnt;
-
 typedef struct 
 {
-    enum State state;      // 当前状态
-    InterMediaMsg inter_media_msg;   // 中间信号
-    ActionParam action_param;     // 行为参数
-    TimerCnt timer_cnt;     // 计时器
+    enum State state;              // 当前状态
+    InterMediaMsg inter_media_msg; // 中间信号
+    ActionParam action_param;      // 行为参数
 } StateMachine;
 
 // 声明全局变量

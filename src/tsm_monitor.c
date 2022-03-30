@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  Monitor SOC NDA state transit implementation
+ *  \author zengxiaoliang (zengxiaoliang@holomatic.com)
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
+
 #include "tsm_monitor.h"
 
 boolean TransitCondFromStandbyToHandsFreeNormal() {

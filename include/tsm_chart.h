@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  MRM top state machine main structure definition
+ *  \author zengxiaoliang (zengxiaoliang@holomatic.com)
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
+
 #ifndef TSM_CHART_H_
 #define TSM_CHART_H_
 
@@ -43,7 +56,6 @@ boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
 
 // user define
-boolean IsLngOverrideLongTerm();
 boolean IsDriverTakeOver();
 
 // action 声明

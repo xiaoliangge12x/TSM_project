@@ -4,14 +4,17 @@ Vehicle_Signal_To_Tsm:
   BCM_LeftTurnLampSt: 0
   BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 1
-  EBB_BrkPedalApplied: 1
+  EBB_BrkPedalAppliedSt: 1
+  EBB_BrkPedalApplied: 0
   HOD_TouchZone1: 0
   HOD_TouchZone2: 0
   HOD_TouchZone3: 0
   HOD_CalibrationSt: 0
   HOD_FaultStatus: 0
   EPS_StrngWhlTorqVD: 1
-  EPS_StrngWhlTorq: -0.1
+  EPS_StrngWhlTorq: -1.7
+  EMS_GasPedalActPstforMRRVD: 1
+  EMS_GasPedalActPstforMRR: 21.0
 
 # InterMedia Input
 Inter_Media_Msg:

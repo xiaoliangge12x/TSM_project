@@ -1,10 +1,24 @@
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  Signal Preprocess for TSM implementation
+ *  \author zengxiaoliang (zengxiaoliang@holomatic.com)
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
+
+
 #include "tsm_signalhandling.h"
 
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     // 判断驾驶员注意力状态
-    DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
     DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 纵向超越标志位
@@ -21,8 +35,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 0328，初始版本，先用harzard light去判断跳转是否正常，
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("Left lamp st: %d, Right lamp st: %d", 
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt, rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt);
+    LOG("EMS_GasPedalActPstforMRRVD: %d, EMS_GasPedalActPstforMRR: %f", 
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD, 
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR);
 #endif
 }
 
@@ -75,53 +90,59 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
+    static uint16 lng_override_cnt = 0;
+    static VarValue var_value = {1, 0, 0};
+
+    var_value.time_threshold_cnt = K_LngOverrideTakeOverTime_Cnt;
+
+#ifdef _NEED_LOG
+    LOG("lng_override_cnt: %d", lng_override_cnt);
+#endif
+
+    // to do: 未加变道状态
     // 增加 驾驶员踩油门判断， 3.17测试新加
     if ((vehicle_signal->VCU_AccDriverOrvd == (uint8)DRIVER_OVERRIDE) ||
         (tsm.inter_media_msg.driver_acc_pedal_applied_flag)) {
         tsm.inter_media_msg.lng_override_st = OVERRIDE_SATISFY;
+        FlagSetWithTimeCount(&tsm.inter_media_msg.lng_override_long_duration_flag, &lng_override_cnt, &var_value);
     } else {
         tsm.inter_media_msg.lng_override_st = OVERRIDE_NOT_SATISFY;
+        lng_override_cnt = 0;
+        tsm.inter_media_msg.lng_override_long_duration_flag = var_value.flag_unset_val;
     }
 }
 
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    if (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED) {
-        if (tsm.inter_media_msg.brake_is_set) {
-            tsm.inter_media_msg.brake_is_set = 1;
-        } else {
-            if (tsm.timer_cnt.brakeset_cnt > K_BrakPedalAppliedThresholdTime_Cnt) {
-                tsm.inter_media_msg.brake_is_set = 1;
-                tsm.timer_cnt.brakeset_cnt = 0;
-            } else {
-                tsm.inter_media_msg.brake_is_set = 0;
-                tsm.timer_cnt.brakeset_cnt++;
-            }
-        }
+    static uint16 brakeset_cnt = 0;
+    static VarValue var_value = {1, 0, 0};
+
+    var_value.time_threshold_cnt = K_BrakPedalAppliedThresholdTime_Cnt;
+
+    if ((vehicle_signal->EBB_BrkPedalAppliedSt == NORMAL) && 
+        (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
+        FlagSetWithTimeCount(&tsm.inter_media_msg.brake_is_set, &brakeset_cnt, &var_value);
     } else {
-        tsm.inter_media_msg.brake_is_set = 0;
-        tsm.timer_cnt.brakeset_cnt = 0;
+        tsm.inter_media_msg.brake_is_set = var_value.flag_unset_val;
+        brakeset_cnt = 0;
     }
 }
 
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    if ((vehicle_signal->EMS_GasPedalActPstforMRRVD == 1) && 
+    static uint16 gasPedalPos_cnt = 0;
+    static VarValue var_value = {1, 0, 0};   // set flag, unset flag
+
+    var_value.time_threshold_cnt = K_GasPedalAppliedThresholdTime_Cnt;
+#ifdef _NEED_LOG
+    LOG("gasPedalPos_cnt: %d", gasPedalPos_cnt);
+#endif
+    if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
         (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
-        if (tsm.inter_media_msg.driver_acc_pedal_applied_flag) {
-            tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
-        } else {
-            if (tsm.timer_cnt.gasPedalPos_cnt > K_GasPedalAppliedThresholdTime_Cnt) {
-                tsm.inter_media_msg.driver_acc_pedal_applied_flag = 1;
-                tsm.timer_cnt.gasPedalPos_cnt = 0;
-            } else {
-                tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
-                tsm.timer_cnt.gasPedalPos_cnt++;
-            }
-        }
+        FlagSetWithTimeCount(&tsm.inter_media_msg.driver_acc_pedal_applied_flag, &gasPedalPos_cnt, &var_value);
     } else {
-        tsm.inter_media_msg.driver_acc_pedal_applied_flag = 0;
-        tsm.timer_cnt.gasPedalPos_cnt = 0;
+        tsm.inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
+        gasPedalPos_cnt = 0;
     }
 }
 
@@ -137,6 +158,8 @@ void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_s
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     static float32 overrideHandTorqThreshold = 0;
+    static uint16 lat_override_withHOD_cnt = 0;
+    static VarValue var_value = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
 
     if (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) {
         overrideHandTorqThreshold = K_OverrideHandTorqThreshold_ThreeZone;
@@ -148,41 +171,35 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
         overrideHandTorqThreshold = K_OverrideHandTorqThreshold_LessTwoZone;   // 1区检测或无区检测
     }
 
+    var_value.time_threshold_cnt = (uint16)K_OverrideHandTorqCheckTime_Cnt;
+#ifdef _NEED_LOG
+    LOG("lat_override_withHOD_cnt: %d", lat_override_withHOD_cnt);
+#endif
+
     if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
-        if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
-            tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY;
-        } else {
-            if (tsm.timer_cnt.lat_override_withHOD_cnt > K_OverrideHandTorqCheckTime_Cnt) {
-                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
-                tsm.timer_cnt.lat_override_withHOD_cnt = 0;
-            } else {
-                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
-                tsm.timer_cnt.lat_override_withHOD_cnt++;
-            }
-        }
+        FlagSetWithTimeCount(&tsm.inter_media_msg.driver_hand_torque_st, &lat_override_withHOD_cnt, &var_value);
     } else {
-        tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
-        tsm.timer_cnt.lat_override_withHOD_cnt = 0;
+        tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
+        lat_override_withHOD_cnt = 0;
     }
 }
 
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
-    if ((vehicle_signal->EPS_StrngWhlTorqVD) && (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
-        if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
-            tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
-        } else {
-            if (tsm.timer_cnt.lat_override_withoutHOD_cnt > K_OverrideHandTorqCheckTime_Cnt) {
-                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_SATISFY;
-                tsm.timer_cnt.lat_override_withoutHOD_cnt = 0;
-            } else {
-                tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
-                tsm.timer_cnt.lat_override_withoutHOD_cnt++;
-            }
-        }
+    static uint16 lat_override_withoutHOD_cnt = 0;
+    static VarValue var_value = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
+
+    var_value.time_threshold_cnt = (uint16)K_OverrideHandTorqCheckTime_Cnt;
+
+#ifdef _NEED_LOG
+    LOG("lat_override_withoutHOD_cnt: %d", lat_override_withoutHOD_cnt);
+#endif
+
+    if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
+        FlagSetWithTimeCount(&tsm.inter_media_msg.driver_hand_torque_st, &lat_override_withoutHOD_cnt, &var_value);
     } else {
-        tsm.inter_media_msg.driver_hand_torque_st = OVERRIDE_NOT_SATISFY;
-        tsm.timer_cnt.lat_override_withoutHOD_cnt = 0;
+        tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
+        lat_override_withoutHOD_cnt = 0;
     }
 }
 
@@ -266,34 +283,50 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
 
 void BrakeInervationFlagJudge()
 {
-    // 无介入
+    static uint16 brake_intervation_cnt = 0;
+    // 无制动介入
     if (!tsm.inter_media_msg.brake_is_set) {
         tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
-        tsm.timer_cnt.brake_intervation_cnt = 0;
+        brake_intervation_cnt = 0;
     } else {
+        // 制动有介入
         if ((tsm.state == MRM_LAT_CTRL) || (tsm.state == MRM_LNG_LAT_CTRL) || (tsm.state == MRC)) {
             if (tsm.inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
                 tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
             } else {
-                if (tsm.timer_cnt.brake_intervation_cnt >= K_BrakeTOR_TimeThreshold_Cnt) {
-                    tsm.timer_cnt.brake_intervation_cnt = 0;
+                if (brake_intervation_cnt >= K_BrakeTOR_TimeThreshold_Cnt) {
+                    brake_intervation_cnt = 0;
                     tsm.inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
                 } else {
-                    if ((tsm.timer_cnt.brake_intervation_cnt < K_BrakeTOR_TimeThreshold_Cnt) &&
-                        (tsm.timer_cnt.brake_intervation_cnt > 0)) {
+                    if ((brake_intervation_cnt < K_BrakeTOR_TimeThreshold_Cnt) &&
+                        (brake_intervation_cnt > 0)) {
                         tsm.inter_media_msg.brake_intervention_type = SHORT_TERM_INTERVENTION;
                     } else {
-                        tsm.timer_cnt.brake_intervation_cnt = 0;
+                        brake_intervation_cnt = 0;
                         tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
                     }
-                    tsm.timer_cnt.brake_intervation_cnt++;
+                    brake_intervation_cnt++;
                 }
             }
         } else {
-            tsm.timer_cnt.brake_intervation_cnt = 0;
+            brake_intervation_cnt = 0;
             tsm.inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
         }
     }
 }
 
+void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue* var_value) 
+{
+    if (*flag_set_var == var_value->flag_set_val) {
+        *flag_set_var = var_value->flag_set_val;
+    } else {
+        if (*time_cnt > var_value->time_threshold_cnt) {
+            *flag_set_var = var_value->flag_set_val;
+            *time_cnt = 0;
+        } else {
+            *flag_set_var = var_value->flag_unset_val;
+            (*time_cnt)++;
+        }
+    }
+}
 

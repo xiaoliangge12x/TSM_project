@@ -1,3 +1,16 @@
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  MRM top state machine main structure implementation
+ *  \author zengxiaoliang (zengxiaoliang@holomatic.com)
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
+
 #include "tsm_chart.h"
 
 // 全局变量的定义
@@ -237,14 +250,15 @@ boolean IsDriverTakeOver()
         }
 
         if ((tsm.inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-            (IsLngOverrideLongTerm())) {
+            tsm.inter_media_msg.lng_override_long_duration_flag) {
             return true;
         }
 
         if ((tsm.inter_media_msg.driver_attention_st == AWAKE_AND_LOOK_REARVIEW_OR_HU) ||
             (tsm.inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED) ||
             (tsm.inter_media_msg.driver_attention_st == FATIGUE_DRIVER_ATTENTION_ST)) {
-            if (tsm.inter_media_msg.hands_can_takeover && IsLngOverrideLongTerm()) {
+            if (tsm.inter_media_msg.hands_can_takeover && 
+                tsm.inter_media_msg.lng_override_long_duration_flag) {
                 return true;
             }
         }
@@ -259,22 +273,6 @@ boolean IsDriverTakeOver()
     // 手力矩超越判断
     if (tsm.inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
         return true;
-    }
-    return false;
-}
-
-boolean IsLngOverrideLongTerm()
-{
-    // todo: 未把变道状态放入
-    if (tsm.inter_media_msg.lng_override_st == OVERRIDE_SATISFY) {
-        if (tsm.timer_cnt.lng_override_cnt > K_LngOverrideTakeOverTime_Cnt) {
-            tsm.timer_cnt.lng_override_cnt = 0;
-            return true;
-        } else {
-            tsm.timer_cnt.lng_override_cnt++;
-        }
-    } else {
-        tsm.timer_cnt.lng_override_cnt = 0;
     }
     return false;
 }

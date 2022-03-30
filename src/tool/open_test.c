@@ -85,6 +85,9 @@ void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* sim
             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
         }
+    } else if (!strcmp(key_str, "EBB_BrkPedalAppliedSt")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalAppliedSt = 
+            (uint8_t)atoi(value_str);
     } else if (!strcmp(key_str, "EBB_BrkPedalApplied")) {
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalApplied = 
             (uint8_t)atoi(value_str);
@@ -108,6 +111,12 @@ void OriginDataSet(const char* key_str, const char* value_str, SimulinkData* sim
             (uint8_t)atoi(value_str);
     } else if (!strcmp(key_str, "EPS_StrngWhlTorq")) {
         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorq = 
+            (float32)atof(value_str);
+    } else if (!strcmp(key_str, "EMS_GasPedalActPstforMRRVD")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD = 
+            (uint8_t)atoi(value_str);
+    } else if (!strcmp(key_str, "EMS_GasPedalActPstforMRR")) {
+        simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR = 
             (float32)atof(value_str);
     } else {
         // do nothing;
