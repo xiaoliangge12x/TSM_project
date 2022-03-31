@@ -1,7 +1,7 @@
 #include "ihbc/ihbc_hsm.h"
 
 // 状态分发函数
-enum HsmRet dispatchForDisable(const uint8_t event)
+HsmRet dispatchForDisable(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -29,7 +29,7 @@ enum HsmRet dispatchForDisable(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForFailure(const uint8_t event)
+HsmRet dispatchForFailure(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -49,7 +49,7 @@ enum HsmRet dispatchForFailure(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForEnable(const uint8_t event)
+HsmRet dispatchForEnable(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -91,7 +91,7 @@ enum HsmRet dispatchForEnable(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForPassive(const uint8_t event)
+HsmRet dispatchForPassive(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -106,7 +106,7 @@ enum HsmRet dispatchForPassive(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForStandby(const uint8_t event)
+HsmRet dispatchForStandby(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -131,7 +131,7 @@ enum HsmRet dispatchForStandby(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForActive(const uint8_t event)
+HsmRet dispatchForActive(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -161,7 +161,7 @@ enum HsmRet dispatchForActive(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForLowBeamRunning(const uint8_t event)
+HsmRet dispatchForLowBeamRunning(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
@@ -176,7 +176,7 @@ enum HsmRet dispatchForLowBeamRunning(const uint8_t event)
     }
 }
 
-enum HsmRet dispatchForHighBeamRunning(const uint8_t event)
+HsmRet dispatchForHighBeamRunning(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {

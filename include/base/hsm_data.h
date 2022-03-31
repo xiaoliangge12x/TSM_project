@@ -9,26 +9,26 @@
 static const uint8_t MAX_HSM_DEPTH = 16U;
 enum {MAX_HSM_STATES = 20U};
 
-typedef enum HsmRet (*dispatch)(uint8_t event);
+typedef HsmRet (*dispatch)(uint8_t event);
 // ------------------------------- HSM枚举 ----------------
-enum Event {
+typedef enum {
     HSM_NO_SIG,
     HSM_ENTRY,
     HSM_EXIT,
     HSM_INITIAL,
     IHBC_USER_START = 10,
-};
+} Event;
 
-enum State {
+typedef enum {
     ROOT,     // topmost state
-};
+} State;
 
-enum HsmRet {
+typedef enum {
     HSM_IGNORED,
     HSM_HANDLED,
     HSM_TRAN,
     HSM_SUPER,
-};
+} HsmRet;
 
 // ------------------------------- HSM结构体 ---------------
 typedef struct {
