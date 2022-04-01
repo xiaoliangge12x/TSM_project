@@ -1,19 +1,20 @@
 # 源文件
 aux_source_directory(. SRC_FILE)
 
-if (OPEN_TEST)
-    FILE(GLOB TOOL_FILE "tool/*.c")
+if (NOT OPEN_TEST)
+    list(REMOVE_ITEM SRC_FILE "./open_test.c")
 endif()
 
-set(SRC_FILE ${SRC_FILE}
-             ${TOOL_FILE})
+message(${SRC_FILE})
+# set(SRC_FILE ${SRC_FILE}
+#              ${TOOL_FILE})
 
 # 指定头文件路径
 set(INCLUDE_PATH ${CMAKE_SOURCE_DIR}/include/)
 include_directories(${INCLUDE_PATH})
 
-add_executable(tsm ${SRC_FILE})
+add_executable(g_tsm ${SRC_FILE})
 
 if (OPEN_TEST)
-    target_link_libraries(tsm yaml)
+    target_link_libraries(g_tsm yaml)
 endif()

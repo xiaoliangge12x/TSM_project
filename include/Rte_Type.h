@@ -129,7 +129,7 @@ typedef struct tagVehicleSignal2TSM
     uint16_t DMS_L3DriverFatigueSt;   // L3自动驾驶下级驾驶员疲劳状态， enum DMSL3DriverFatigueSt
     uint8_t BCS_VehicleStandStillSt;   // 车辆静止状态， enum BCSVehicleStandStillSt
     uint8_t EMS_GasPedalActPstforMRRVD;  // 驾驶员踩油门开度VD标志位 
-    float EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
+    float   EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
     uint8_t BCM_LeftTurnLampSt;       // 左转向灯
     uint8_t BCM_RightTurnLampSt;       // 右转向灯
 } Dt_RECORD_VehicleSignal2TSM;
@@ -146,7 +146,7 @@ typedef struct tagTSM2Soc
     Dt_RECORD_Control_Arbitrator_Results Control_Arbitrator_Results;  // 控制仲裁结果
     uint8_t                              Lane_Change_Allow_Flag;      // 是否允许变道
     uint8_t Parking_EPS_handshake_state;// 泊车握手的标志位, from ctrlarb,   新增
-    Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From tsm
+    Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From g_tsm
 } Dt_RECORD_TSM2Soc;
 
 // ---------------- inside struct ------------------
@@ -271,7 +271,7 @@ typedef struct tagTSM2Planninglite
 //     uint8_t             MRM_Status;             // 告知planning lite 退出的标志位， 状态机 0 - 退出 ， 1 - 激活 
 // } Dt_RECORD_TSM2Planninglite;
 
-// tsm --> Control Arbitrator
+// g_tsm --> Control Arbitrator
 typedef struct tagTSM2CtrlArb
 {
     Dt_RECORD_TimeStamp DeTimeStamp;  // 自己创建的时间戳, 新增
@@ -301,21 +301,21 @@ typedef struct
   uint8_t ADC_path_merge_type;
 } Dt_RECORD_ScenarioType;
 
-// tsm --> Decision Arbitrator
+// g_tsm --> Decision Arbitrator
 typedef struct tagTSM2DecisionArbitrator
 {
     Dt_RECORD_TimeStamp TimeStamp;   // 接收消息的时间戳
     Dt_RECORD_ScenarioType DeScenarioType;
 } Dt_RECORD_TSM2DecisionArbitrator;
 
-// tsm --> Diag
+// g_tsm --> Diag
 typedef struct tagTSM2Diag
 {
     Dt_RECORD_TimeStamp Tsm_TimeStamp;    // 自己创建的时间戳
     uint8_t             Tsm_Status;  // 模块状态， 理解和给到ifc是一样的状态
 } Dt_RECORD_TSM2Diag;
 
-// tsm --> HMI
+// g_tsm --> HMI
 typedef struct tagTSM2HMI
 {
     Dt_RECORD_TimeStamp Tsm_TimeStamp;   // 自己创建的时间戳
@@ -323,7 +323,7 @@ typedef struct tagTSM2HMI
     uint8_t Tor_Request;  // 请求接管
 } Dt_RECORD_TSM2HMI;
 
-// tsm --> CANswitch
+// g_tsm --> CANswitch
 typedef struct tagTSM2CANSwitch
 {
     Dt_RECORD_TimeStamp Tsm_TimeStamp;   // 自己创建的时间戳

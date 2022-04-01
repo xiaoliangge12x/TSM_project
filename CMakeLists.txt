@@ -6,7 +6,7 @@ set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_COMPILER g++)
 
 # 工程名
-project(tsm)
+project(g_tsm)
 
 # 显示编译命令
 set(CMAKE_VERBOSE_MAKEFILE OFF)

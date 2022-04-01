@@ -1,6 +1,6 @@
 # Origin Input
 Vehicle_Signal_To_Tsm:
-  BCS_VehicleStandStillSt: 1
+  BCS_VehicleStandStillSt: 2
   BCM_LeftTurnLampSt: 0
   BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 1
@@ -14,7 +14,7 @@ Vehicle_Signal_To_Tsm:
   EPS_StrngWhlTorqVD: 1
   EPS_StrngWhlTorq: -1.7
   EMS_GasPedalActPstforMRRVD: 1
-  EMS_GasPedalActPstforMRR: 21.0
+  EMS_GasPedalActPstforMRR: 19.0
 
 # InterMedia Input
 Inter_Media_Msg:
