@@ -2,6 +2,9 @@
 #include "tsm_chart.h"
 #include "tsm_signalhandling.h"
 
+// --------------- global var def -------------------------
+struct timeval g_timeval;
+// --------------- func def -------------------------------
 /* TSM module worker */
 void TsmModulerWorker()
 {
@@ -24,6 +27,8 @@ void TsmModulerWorker()
     memset(&rt_out_tsm_diag,     0, sizeof(Dt_RECORD_TSM2Diag));
     memset(&rt_out_tsm_hmi,      0, sizeof(Dt_RECORD_TSM2HMI));
     memset(&rt_out_tsm_cangate,  0, sizeof(Dt_RECORD_TSM2CANGATE));
+
+    gettimeofday(&g_timeval, NULL);
 
     MRM_TSM_MODULE_Init();
 

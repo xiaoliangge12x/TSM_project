@@ -7,6 +7,9 @@
 
 #include "tsm_parameter.h"
 
+// --------------------- global declaration ------------------
+extern struct timeval g_timeval;
+
 void TsmModulerWorker();
 
 #endif

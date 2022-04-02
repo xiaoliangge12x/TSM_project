@@ -15,6 +15,9 @@
 #define TSM_PARAMETER_H_
 
 #include "TSM_MODULE.h"
+#ifdef _NEED_LOG
+#include "common.h"
+#endif
 
 // ---------------------------------- typedef   ------------------------------------------------
 typedef enum 
@@ -254,4 +257,8 @@ typedef struct
 
 // --------------------------------- global declaration ----------------------------
 extern StateMachine g_tsm;
+// --------------------------------- function declaration --------------------------
+void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
+void StopTiming(uint8* flag);    // 停止计时
+float32 GetTimeGapInSec(sint64 start_time, uint8* flag); // 计算持续时间
 #endif

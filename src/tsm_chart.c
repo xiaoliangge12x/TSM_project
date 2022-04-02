@@ -14,7 +14,7 @@
 #include "tsm_chart.h"
 
 // -------------------------------  global variable definition ----------------------------
-StateMachine g_tsm;
+StateMachine        g_tsm;
 // -------------------------------- driving table initilize -------------------------------
 static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM] = 
 {
@@ -69,12 +69,14 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
+    // TODO:
+    (void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     TsmChartManager(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM);
     WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
 #ifdef _NEED_LOG
-    LOG("rty_DeTSM2CtrlArb->MRM_Status: %d", rty_DeTsm2Planlite->MRM_Status);
+    // LOG("rty_DeTSM2CtrlArb->MRM_Status: %d", rty_DeTsm2Planlite->MRM_Status);
 #endif
 }
 
@@ -348,11 +350,55 @@ void ActionInMrc()
     g_tsm.action_param.mrm_activation_st = 1;
 }
 
+boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+{
+    static Dt_RECORD_TimeStamp timestamp_table[TIMESTAMP_MAX_NUM][2] = {0};  // 1st column is cur, 2nd columm is last
+    
+    memcpy(&timestamp_table[0][0], &(rtu_DeCANGATE2TSM->TimeStamp),                sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[1][0], &(rtu_DeDiag2TSM->Diag_TimeStamp),              sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[2][0], &(rtu_DePlanlite2Tsm->Planning_Lite_TimeStamp), sizeof(Dt_RECORD_TimeStamp));
+
+    for (uint8 i = 0; i < TIMESTAMP_MAX_NUM; ++i) {
+        return (IsTimeStampError(&timestamp_table[i][0], &timestamp_table[i][1]) || 
+            IsTimeStampLost(&timestamp_table[i][0], &timestamp_table[i][1]));
+    }
+
+    memcpy(&timestamp_table[0][1], &(rtu_DeCANGATE2TSM->TimeStamp),                sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[1][1], &(rtu_DeDiag2TSM->Diag_TimeStamp),              sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[2][1], &(rtu_DePlanlite2Tsm->Planning_Lite_TimeStamp), sizeof(Dt_RECORD_TimeStamp));
+}
+
+boolean IsTimeStampLost(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp)
+{
+    if (((float32)(cur_timestamp->nsec - last_timestamp->nsec) / NS_IN_MS) > UPPER_CYCLE ||
+        ((float32)(cur_timestamp->nsec - last_timestamp->nsec) / NS_IN_MS) < LOWER_CYCLE) {
+        return false;
+    }
+    return true;
+}
+boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp)
+{
+    if (!cur_timestamp->is_valid || cur_timestamp->sec < last_timestamp->sec) {
+        return false;
+    }
+    return true;
+}
+
 void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
+    static Dt_RECORD_TimeStamp tsm_timestamp  = {0};
+    static sint64              time_in_ten_ns = 0;
+    static uint32              TEN_NS_PER_S   = 100000000;
+    static uint32              NS_PER_TEN_NS  = 10;
+    tsm_timestamp.is_valid = 1;
+    hb_TimeSync_GetTime(&time_in_ten_ns);   // 10ns per
+    tsm_timestamp.nsec = (uint32)time_in_ten_ns * NS_PER_TEN_NS;
+    tsm_timestamp.sec  = (uint32)time_in_ten_ns / TEN_NS_PER_S;
+
     // 保存soc状态机状态
     memcpy(&g_tsm.inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
         sizeof(Dt_RECORD_Automaton_State));
@@ -360,7 +406,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
     //------------------------------------------- 给到planlite相关 -----------------------------------------
     memcpy(&rty_DeTsm2Planlite->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO: 状态机提供
-    memset(&rty_DeTsm2Planlite->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&rty_DeTsm2Planlite->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     rty_DeTsm2Planlite->NDA_Lane_Change_Type = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Type;
     rty_DeTsm2Planlite->NDA_Lane_Change_Direction = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Direction;
     rty_DeTsm2Planlite->NDA_Lane_Change_State = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_State;
@@ -371,7 +417,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
     memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->Planning_Lite_TimeStamp,
         sizeof(Dt_RECORD_TimeStamp));
     // TODO: 状态机提供
-    memset(&rty_DeTSM2CtrlArb->DeTimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&rty_DeTSM2CtrlArb->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
     memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
         sizeof(Dt_RECORD_Automaton_State));
@@ -383,7 +429,7 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
 
     //------------------------------------------- 给到Diag诊断相关  ----------------------------------------
     // TODO: 状态机提供
-    memset(&rty_DeTSM2Diag->Tsm_TimeStamp, 0, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&rty_DeTSM2Diag->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO: 状态机提供， TSM故障状态
     rty_DeTSM2Diag->Tsm_Status = 0;
     

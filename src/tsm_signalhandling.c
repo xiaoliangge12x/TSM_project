@@ -30,12 +30,13 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 判断 驾驶员手力矩超越标志位
     DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 监控 SOC侧NDA的状态跳转
-    MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
+    // MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
     // 判断 SOC侧NDA的跳转是否错误, 初始版本，先用harzard light去判断跳转是否正常
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("BCS_VehicleStandStillSt: %d, EMS_GasPedalActPstforMRR: %f", 
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt, 
+    LOG("EMS_GasPedalActPstforMRRVD: %d, EMS_GasPedalActPstforMRR: %f, driver_acc_pedal_applied_flag: %d", 
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD,
+        g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, 
         rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR);
 #endif
 }
@@ -120,6 +121,7 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
+#ifndef CONSUME_TIME
     static uint16   gasPedalPos_cnt = 0;
     static VarValue var_value       = {1, 0, 0};
 
@@ -129,8 +131,29 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
         FlagSetWithTimeCount(&g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, &gasPedalPos_cnt, &var_value);
     } else {
         g_tsm.inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
-        gasPedalPos_cnt                                   = 0;
+        gasPedalPos_cnt                                     = 0;
     }
+#else
+    static sint64         gasPedalPos                 = 0;
+    static VarValueInTime var_value                   = {1, 0, 0.0};
+    static uint8          gasPedalApplied_timing_flag = 0;
+
+#if _NEED_LOG
+    LOG("gasPedalPos_time: %ld", gasPedalPos);
+#endif
+    var_value.time_threshold = K_GasPedalAppliedThresholdTime;
+    if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
+        (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
+        if (!gasPedalApplied_timing_flag) {
+            StartTiming(&gasPedalPos, &gasPedalApplied_timing_flag);
+        }
+        FlagSetWithTime(&g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, gasPedalPos, 
+            &gasPedalApplied_timing_flag, &var_value);
+    } else {
+        StopTiming(&gasPedalApplied_timing_flag);
+        g_tsm.inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
+    }
+#endif
 }
 
 void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
@@ -299,6 +322,19 @@ void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue*
         } else {
             *flag_set_var = var_value->flag_unset_val;
             ++(*time_cnt);
+        }
+    }
+}
+
+void FlagSetWithTime(uint8* flag_set_var, float32 time, uint8* time_flag, const VarValueInTime* var_value)
+{
+    if (*flag_set_var == var_value->flag_set_val) {
+        *flag_set_var = var_value->flag_set_val;
+    } else {
+        if (GetTimeGapInSec(time, time_flag) > var_value->time_threshold) {
+            *flag_set_var = var_value->flag_set_val;
+        } else {
+            *flag_set_var = var_value->flag_unset_val;
         }
     }
 }

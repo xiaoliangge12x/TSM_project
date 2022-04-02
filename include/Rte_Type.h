@@ -9,7 +9,7 @@
 
 typedef struct tagTimeStamp
 {
-    bool is_valid;  // enum invalid
+    bool is_valid; 
     uint32_t sec;
     uint32_t nsec;
 } Dt_RECORD_TimeStamp;
