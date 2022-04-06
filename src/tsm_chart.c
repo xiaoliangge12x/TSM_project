@@ -371,15 +371,15 @@ boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 
 boolean IsTimeStampLost(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp)
 {
-    if (((float32)(cur_timestamp->nsec - last_timestamp->nsec) / NS_IN_MS) > UPPER_CYCLE ||
-        ((float32)(cur_timestamp->nsec - last_timestamp->nsec) / NS_IN_MS) < LOWER_CYCLE) {
+    if (((float32)(cur_timestamp->Timestamp_nsec - last_timestamp->Timestamp_nsec) / NS_IN_MS) > UPPER_CYCLE ||
+        ((float32)(cur_timestamp->Timestamp_nsec - last_timestamp->Timestamp_nsec) / NS_IN_MS) < LOWER_CYCLE) {
         return false;
     }
     return true;
 }
 boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp)
 {
-    if (!cur_timestamp->is_valid || cur_timestamp->sec < last_timestamp->sec) {
+    if (!cur_timestamp->Timestamp_valid || cur_timestamp->Timestamp_sec < last_timestamp->Timestamp_sec) {
         return false;
     }
     return true;
@@ -394,10 +394,10 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
     static sint64              time_in_ten_ns = 0;
     static uint32              TEN_NS_PER_S   = 100000000;
     static uint32              NS_PER_TEN_NS  = 10;
-    tsm_timestamp.is_valid = 1;
+    tsm_timestamp.Timestamp_valid = 1;
     hb_TimeSync_GetTime(&time_in_ten_ns);   // 10ns per
-    tsm_timestamp.nsec = (uint32)time_in_ten_ns * NS_PER_TEN_NS;
-    tsm_timestamp.sec  = (uint32)time_in_ten_ns / TEN_NS_PER_S;
+    tsm_timestamp.Timestamp_nsec = (uint32)time_in_ten_ns * NS_PER_TEN_NS;
+    tsm_timestamp.Timestamp_sec  = (uint32)time_in_ten_ns / TEN_NS_PER_S;
 
     // 保存soc状态机状态
     memcpy(&g_tsm.inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,

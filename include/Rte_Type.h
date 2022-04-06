@@ -9,9 +9,9 @@
 
 typedef struct tagTimeStamp
 {
-    bool is_valid; 
-    uint32_t sec;
-    uint32_t nsec;
+    bool      Timestamp_valid;
+    uint32_t  Timestamp_sec;
+    uint32_t  Timestamp_nsec;
 } Dt_RECORD_TimeStamp;
 
 typedef struct tagVehicleControlReq
