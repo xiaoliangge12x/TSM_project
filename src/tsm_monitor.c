@@ -14,7 +14,7 @@
 #include "tsm_monitor.h"
 
 // ------------------------------ driving table Initilize ----------------------------------------
-static const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] = 
+const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] = 
 {
     {NDA_STANDBY_NORMAL,                 NDA_ACTIVE_HANDS_FREE_NORMAL,       STANDBY_HANDSFREE_NORMAL, 
         TransitCondFromStandbyToHandsFreeNormal},

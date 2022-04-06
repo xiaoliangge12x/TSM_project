@@ -30,14 +30,14 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 判断 驾驶员手力矩超越标志位
     DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 监控 SOC侧NDA的状态跳转
-    // MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
+    MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
     // 判断 SOC侧NDA的跳转是否错误, 初始版本，先用harzard light去判断跳转是否正常
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("EMS_GasPedalActPstforMRRVD: %d, EMS_GasPedalActPstforMRR: %f, driver_acc_pedal_applied_flag: %d", 
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD,
-        g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, 
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR);
+    LOG("lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
+        "driver_hand_torque_st: %d", g_tsm.inter_media_msg.lng_override_long_duration_flag, 
+        g_tsm.inter_media_msg.brake_is_set, g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, 
+        g_tsm.inter_media_msg.driver_hand_torque_st);
 #endif
 }
 
@@ -87,6 +87,7 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
+#ifndef CONSUME_TIME
     static uint16   lng_override_cnt = 0;
     static VarValue var_value        = {1, 0, 0};
 
@@ -101,10 +102,28 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         lng_override_cnt                                    = 0;
         g_tsm.inter_media_msg.lng_override_long_duration_flag = var_value.flag_unset_val;
     }
+#else
+    static sint64         lngOverride_time        = 0;
+    static VarValueInTime var_value               = {1, 0, 0.0};
+    static uint8          lngOverride_timing_flag = 0;
+
+    var_value.time_threshold = K_LngOverrideTakeOverTime;
+    if ((vehicle_signal->VCU_AccDriverOrvd == DRIVER_OVERRIDE) || g_tsm.inter_media_msg.driver_acc_pedal_applied_flag) {
+        if (!lngOverride_timing_flag) {
+            StartTiming(&lngOverride_time, &lngOverride_timing_flag);
+        }
+        FlagSetWithTime(&g_tsm.inter_media_msg.lng_override_long_duration_flag, lngOverride_time, 
+            &lngOverride_timing_flag, &var_value);
+    } else {
+        StopTiming(&lngOverride_timing_flag);
+        g_tsm.inter_media_msg.lng_override_long_duration_flag = var_value.flag_unset_val;
+    }
+#endif
 }
 
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
+#ifndef CONSUME_TIME
     static uint16   brakeset_cnt = 0;
     static VarValue var_value    = {1, 0, 0};
 
@@ -117,6 +136,22 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         g_tsm.inter_media_msg.brake_is_set = var_value.flag_unset_val;
         brakeset_cnt                     = 0;
     }
+#else
+    static sint64         brakeset_time        = 0;
+    static VarValueInTime var_value            = {1, 0, 0.0};
+    static uint8          brakeset_timing_flag = 0;
+    var_value.time_threshold = K_BrakPedalAppliedThresholdTime;
+    if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && 
+        (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
+        if (!brakeset_timing_flag) {
+            StartTiming(&brakeset_time, &brakeset_timing_flag);
+        }
+        FlagSetWithTime(&g_tsm.inter_media_msg.brake_is_set, brakeset_time, &brakeset_timing_flag, &var_value);
+    } else {
+        StopTiming(&brakeset_timing_flag);
+        g_tsm.inter_media_msg.brake_is_set = var_value.flag_unset_val;
+    }
+#endif
 }
 
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
@@ -134,20 +169,17 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
         gasPedalPos_cnt                                     = 0;
     }
 #else
-    static sint64         gasPedalPos                 = 0;
+    static sint64         gasPedalPos_time            = 0;
     static VarValueInTime var_value                   = {1, 0, 0.0};
     static uint8          gasPedalApplied_timing_flag = 0;
 
-#if _NEED_LOG
-    LOG("gasPedalPos_time: %ld", gasPedalPos);
-#endif
     var_value.time_threshold = K_GasPedalAppliedThresholdTime;
     if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
         (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
         if (!gasPedalApplied_timing_flag) {
-            StartTiming(&gasPedalPos, &gasPedalApplied_timing_flag);
+            StartTiming(&gasPedalPos_time, &gasPedalApplied_timing_flag);
         }
-        FlagSetWithTime(&g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, gasPedalPos, 
+        FlagSetWithTime(&g_tsm.inter_media_msg.driver_acc_pedal_applied_flag, gasPedalPos_time, 
             &gasPedalApplied_timing_flag, &var_value);
     } else {
         StopTiming(&gasPedalApplied_timing_flag);
@@ -168,8 +200,6 @@ void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_s
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
     static float32  overrideHandTorqThreshold = 0;
-    static uint16   lat_override_withHOD_cnt  = 0;
-    static VarValue var_value                 = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
 
     if (vehicle_signal->HOD_TouchZone1 && vehicle_signal->HOD_TouchZone2 && vehicle_signal->HOD_TouchZone3) {
         overrideHandTorqThreshold = K_OverrideHandTorqThreshold_ThreeZone;
@@ -181,6 +211,9 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
         overrideHandTorqThreshold = K_OverrideHandTorqThreshold_LessTwoZone;
     }
 
+#ifndef CONSUME_TIME
+    static uint16   lat_override_withHOD_cnt  = 0;
+    static VarValue var_value                 = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
     var_value.time_threshold_cnt = (uint16)K_OverrideHandTorqCheckTime_Cnt;
     if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
         FlagSetWithTimeCount(&g_tsm.inter_media_msg.driver_hand_torque_st, &lat_override_withHOD_cnt, &var_value);
@@ -188,10 +221,28 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
         g_tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
         lat_override_withHOD_cnt                  = 0;
     }
+#else
+    static sint64         latOverrideWithHOD_time        = 0;
+    static VarValueInTime var_value                      = {1, 0, 0.0};
+    static uint8          latOverrideWithHOD_timing_flag = 0;
+
+    var_value.time_threshold = K_OverrideHandTorqCheckTime;
+    if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
+        if (!latOverrideWithHOD_timing_flag) {
+            StartTiming(&latOverrideWithHOD_time, &latOverrideWithHOD_timing_flag);
+        }
+        FlagSetWithTime(&g_tsm.inter_media_msg.driver_hand_torque_st, latOverrideWithHOD_time, 
+            &latOverrideWithHOD_timing_flag, &var_value);
+    } else {
+        StopTiming(&latOverrideWithHOD_timing_flag);
+        g_tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
+    }
+#endif
 }
 
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
+#ifndef CONSUME_TIME
     static uint16   lat_override_withoutHOD_cnt = 0;
     static VarValue var_value                   = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
 
@@ -203,6 +254,24 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
         g_tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
         lat_override_withoutHOD_cnt               = 0;
     }
+#else
+    static sint64         latOverrideWithoutHOD_time        = 0;
+    static VarValueInTime var_value                         = {1, 0, 0.0};
+    static uint8          latOverrideWithoutHOD_timing_flag = 0;
+
+    var_value.time_threshold = K_OverrideHandTorqCheckTime;
+    if (vehicle_signal->EPS_StrngWhlTorqVD && 
+        (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
+        if (!latOverrideWithoutHOD_timing_flag) {
+            StartTiming(&latOverrideWithoutHOD_time, &latOverrideWithoutHOD_timing_flag);
+        }
+        FlagSetWithTime(&g_tsm.inter_media_msg.driver_hand_torque_st, latOverrideWithoutHOD_time, 
+            &latOverrideWithoutHOD_timing_flag, &var_value);
+    } else {
+        StopTiming(&latOverrideWithoutHOD_timing_flag);
+        g_tsm.inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
+    }
+#endif
 }
 
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
@@ -331,6 +400,7 @@ void FlagSetWithTime(uint8* flag_set_var, float32 time, uint8* time_flag, const 
     if (*flag_set_var == var_value->flag_set_val) {
         *flag_set_var = var_value->flag_set_val;
     } else {
+
         if (GetTimeGapInSec(time, time_flag) > var_value->time_threshold) {
             *flag_set_var = var_value->flag_set_val;
         } else {

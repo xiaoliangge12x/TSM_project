@@ -24,7 +24,7 @@ typedef struct {
 } Signal;
 
 // -------------------------  driving table -----------------------------------
-static const Signal g_signal_table[];
+// static const Signal g_signal_table[];  // 此处非声明，而是定义
 
 // -------------------------  function declaration ----------------------------
 void  ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data);

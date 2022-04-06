@@ -30,7 +30,7 @@ typedef struct
     NdaTransitCondition  nda_transit_cond;
 } NdaStMonitorInfo;
 // ----------------------------- driving table declaration ----------------------------
-static const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE];
+extern const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE];  // 千万不能声明成static
 // ----------------------------- function declaration ---------------------------------
 boolean TransitCondFromStandbyToHandsFreeNormal();
 boolean TransitCondFromStandbyToHandsOnNormal();

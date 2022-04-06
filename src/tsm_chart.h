@@ -56,9 +56,9 @@ typedef struct
     MCUMRMFunctionSt  next_st; 
 } StateTransit;
 // ---------------------------------- driving table        --------------------------------------
-static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM];
-static const Action       g_action;
-static const TransitEvent g_event;
+// static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM];   // 此处非声明，而是定义
+// static const Action       g_action;                                 // 此处非声明，而是定义
+// static const TransitEvent g_event;                                  // 此处非声明，而是定义
 // ---------------------------------- function declaration --------------------------------------
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
