@@ -30,22 +30,32 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_FAILURE_LIGHTING,    EVENT_FAULT_NOT_EXIST,      MCU_MRM_PASSIVE},
         {MCU_MRM_FAILURE_NO_LIGHTING, EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
         {MCU_MRM_FAILURE_NO_LIGHTING, EVENT_FAULT_NOT_EXIST,      MCU_MRM_PASSIVE},
-        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
         {MCU_MRM_STANDBY,             EVENT_NO_LIGHTING,          MCU_MRM_FAILURE_NO_LIGHTING},
+        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRC,                  MCU_MRM_MRC},
+        {MCU_MRM_STANDBY,             EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
+        {MCU_MRM_STANDBY,             EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
+        {MCU_MRM_TOR_STAND,           EVENT_WAIT_EPB_RES,         MCU_MRM_PASSIVE},
         {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
-        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_MRC_FROM_MRM,         MCU_MRM_MRC},
-        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_LIGHTING_FROM_MRM,    MCU_MRM_FAILURE_LIGHTING},
-        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_NO_LIGHTING_FROM_MRM, MCU_MRM_FAILURE_NO_LIGHTING},
+        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_VEH_STANDSTILL,       MCU_MRM_MRC},
+        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
         {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
-        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_MRC_FROM_MRM,         MCU_MRM_MRC},
-        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_LIGHTING_FROM_MRM,    MCU_MRM_FAILURE_LIGHTING},
-        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_NO_LIGHTING_FROM_MRM, MCU_MRM_FAILURE_NO_LIGHTING},
-        {MCU_MRM_MRC,                 EVENT_LIGHTING_FROM_MRM,    MCU_MRM_FAILURE_LIGHTING},
-        {MCU_MRM_MRC,                 EVENT_NO_LIGHTING_FROM_MRM, MCU_MRM_FAILURE_NO_LIGHTING}
+        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_VEH_STANDSTILL,       MCU_MRM_MRC},
+        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
+        {MCU_MRM_MRC,                 EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE}
     },
     .state_transit_size = TOTAL_TSM_TRANS_NUM,
     .event_table =
@@ -57,10 +67,12 @@ static const StateMachine g_top_state_machine =
         {EVENT_NO_STANDBY,           IsStandbyConditionNotMeet},
         {EVENT_MRM_BOTH_CTRL,        IsMrmBothCtrlConditionMeet},
         {EVENT_MRM_LAT_CTRL,         IsMrmLatCtrlConditionMeet},
-        {EVENT_MRC,                  IsEnterMrcFromStandby},
-        {EVENT_MRC_FROM_MRM,         IsEnterMrcFromMrm},
-        {EVENT_LIGHTING_FROM_MRM,    IsEnterLightingFromMrm},
-        {EVENT_NO_LIGHTING_FROM_MRM, IsEnterNoLightingFromMrm}
+        {EVENT_MRC,                  IsCanEnterMrcFromStandby},
+        {EVENT_TOR_BOTH_CTRL,        IsTorBothCtrlCondMeet},
+        {EVENT_TOR_LAT_CTRL,         IsTorLatCtrlCondMeet},
+        {EVENT_VEH_STANDSTILL,       IsVehStandStillCondMeet},
+        {EVENT_FUNCTION_EXIT,        IsFuncExitCondMeet},
+        {EVENT_WAIT_EPB_RES,         IsWaitEpbSt}
     },
     .event_size = TOTAL_TSM_EVENT_NUM,
     .state_table = 
@@ -69,6 +81,9 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_STANDBY,             ActionInStandby},
         {MCU_MRM_FAILURE_LIGHTING,    ActionInFailureLighting},
         {MCU_MRM_FAILURE_NO_LIGHTING, ActionInFailureNoLighting},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    ActionInTorBothCtrl},
+        {MCU_MRM_TOR_LAT_CTRL,        ActionInTorLatCtrl},
+        {MCU_MRM_TOR_STAND,           ActionInTorStand},
         {MCU_MRM_ACTIVE_LNG_LAT_CTRL, ActionInMrmBothCtrl},
         {MCU_MRM_ACTIVE_LAT_CTRL,     ActionInMrmLatCtrl},
         {MCU_MRM_MRC,                 ActionInMrc}
@@ -94,7 +109,7 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // TODO:
     (void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
-    StateMachineWork(&g_top_state_machine, rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, &g_tsm.state);
+    StateMachineWork(&g_top_state_machine, rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, &g_tsm.state);
     WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
 #ifdef _NEED_LOG
@@ -103,7 +118,7 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 }
 
 boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
         return true;
@@ -112,7 +127,7 @@ boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 }
 
 boolean IsLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     return false;
     /*
@@ -125,7 +140,7 @@ boolean IsLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 }
 
 boolean IsNoLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     return false;
     /*
@@ -138,30 +153,30 @@ boolean IsNoLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM
 }
 
 boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     return true;
     /*
-    if ((g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_EPB_PHASE_IN) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_NORMAL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDACTIVE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_ON_STANDWAIT) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_NORMAL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDACTIVE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_ACTIVE_HAND_FREE_STANDWAIT) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_FREE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LNG_OVERRIDE_HANDS_ON) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_LNG_OVERRIDE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_LAT_OVERRIDE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_STAND) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_TOR_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EMERGENCY_LANE_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EMERGENCY_LANE_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == (uint8)NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_LNG_CONTROL)) {
+    if ((g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_EPB_PHASE_IN) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_NORMAL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_STANDACTIVE) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_STANDWAIT) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_NORMAL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_STANDACTIVE) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_STANDWAIT) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LNG_OVERRIDE_HANDS_FREE) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LNG_OVERRIDE_HANDS_ON) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LAT_LNG_OVERRIDE) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LAT_OVERRIDE) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_STAND) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_LAT_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_LAT_LNG_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EMERGENCY_LANE_WITH_LAT_LNG_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EMERGENCY_LANE_WITH_LAT_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_LNG_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_CONTROL) ||
+        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_LNG_CONTROL)) {
         return true;
     }
     return false;
@@ -169,50 +184,81 @@ boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
 }
 
 boolean IsStandbyConditionNotMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
-    return false;
+    return !IsStandbyConditionMeet(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
 }
 
 boolean IsMrmBothCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
-    // TODO： 未考虑soc激活状态， MCU安全停车系统故障
+    // TODO： MCU安全停车系统故障
     if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        !g_inter_media_msg.automaton_transit_normal_flag) {
-        if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) && !g_inter_media_msg.brake_is_set) {
-            return true;
-        }        
+        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
+        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
+            if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) && !g_inter_media_msg.brake_is_set) {
+                return true;
+            }
+        }     
     }
     return false;
 }
 
 boolean IsMrmLatCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
-    // TODO: 未考虑soc激活状态， MCU安全停车系统故障
+    // TODO: MCU安全停车系统故障
     if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        !g_inter_media_msg.automaton_transit_normal_flag) {
-        if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) {
-            return true;
-        }   
+        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
+        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
+            if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) {
+                return true;
+            }   
+        }
     }
     return false;
 }
 
-boolean IsEnterMrcFromStandby(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+boolean IsCanEnterMrcFromStandby(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
 {
-    // TODO: 未考虑soc激活状态， MCU安全停车系统故障
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) &&
-        !g_inter_media_msg.automaton_transit_normal_flag) {
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) && 
+        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
         return true;
-    }   
+    }
     return false;
 }
 
-boolean IsEnterMrcFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+boolean IsTorBothCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
+{
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
+        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
+        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
+            if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) {
+                return true;
+            }   
+        }
+    }
+    return false;
+}
+
+boolean IsTorLatCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
+{
+    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
+        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
+        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
+            if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) && !g_inter_media_msg.brake_is_set) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+boolean IsVehStandStillCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
 {
     if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
         return true;
@@ -220,23 +266,18 @@ boolean IsEnterMrcFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM,
     return false;
 }
 
-boolean IsEnterLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
-{   
-    if (IsDriverTakeOver() && g_inter_media_msg.mrm_failure_lighting_flag &&
-        !g_inter_media_msg.automaton_transit_normal_flag) {
+boolean IsFuncExitCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
+{
+    if (IsDriverTakeOver() || rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT) {
         return true;
     }
     return false;
 }
 
-boolean IsEnterNoLightingFromMrm(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM)
+boolean IsWaitEpbSt(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
+    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
-    if (IsDriverTakeOver() && !g_inter_media_msg.mrm_failure_lighting_flag &&
-        !g_inter_media_msg.automaton_transit_normal_flag) {
-        return true;
-    }
     return false;
 }
 
@@ -270,6 +311,13 @@ boolean IsDriverTakeOver()
     return false;
 }
 
+boolean IsInTorFault() 
+{
+    return ((g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) ||
+            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) ||
+            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT));
+}
+
 void ActionInPassive()
 {
 #ifdef _NEED_LOG
@@ -301,6 +349,27 @@ void ActionInStandby()
     LOG("It's in Standby St.");
 #endif
     g_tsm.tsm_action_param.mrm_activation_st = 1;
+}
+
+void ActionInTorBothCtrl()
+{
+#ifdef _NEED_LOG
+    LOG("It's in Tor Both Ctrl St.");
+#endif
+}
+
+void ActionInTorLatCtrl()
+{
+#ifdef _NEED_LOG
+    LOG("It's in Tor Lat Ctrl St.");
+#endif
+}
+
+void ActionInTorStand()
+{
+#ifdef _NEED_LOG
+    LOG("It's in Tor Stand St.");
+#endif
 }
 
 void ActionInMrmBothCtrl()

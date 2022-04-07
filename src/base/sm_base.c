@@ -14,13 +14,13 @@
 #include "base/sm_base.h"
 
 void StateMachineWork(const StateMachine* state_machine, const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, uint8* cur_state)
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, uint8* cur_state)
 {
     uint8 eventId_Table[MAX_EVENT_SIZE];
     uint8 size = 0;
     // 找到触发事件ID的数组
     for (uint8 i = 0; i < state_machine->event_size; ++i) {
-        if (state_machine->event_table[i].transit_event(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
+        if (state_machine->event_table[i].transit_event(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm)) {
             eventId_Table[size++] = state_machine->event_table[i].event_id;
         }
     }

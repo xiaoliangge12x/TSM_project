@@ -22,7 +22,7 @@
 // ------------------------ typedef ------------------------------------
 typedef void (*Action) ();
 typedef boolean (*TransitEvent) (const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 
 typedef struct 
 {
@@ -54,5 +54,5 @@ typedef struct
 } StateMachine;
 
 extern void StateMachineWork(const StateMachine* state_machine, const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, uint8* cur_state);
+    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, uint8* cur_state);
 #endif
