@@ -6,7 +6,7 @@ set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_COMPILER g++)
 
 # 工程名
-project(g_tsm)
+project(tsm)
 
 # 显示编译命令
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -29,6 +29,7 @@ add_compile_options(-D_NEED_LOG)
 if (OPEN_TEST)
     add_compile_options(-D_OPEN_TEST)
 endif()
+add_compile_options(-D_RUN_IN_LINUX)
 
 # 添加选项
 add_definitions(-w)

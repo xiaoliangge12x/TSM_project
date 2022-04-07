@@ -135,7 +135,21 @@ typedef enum
 
 typedef enum
 {
-    MCU_MRM_PASSIVE = 0,
+    BASE_ST_INITIAL       = 0,
+    BASE_ST_TSM_START     = 10,
+    BASE_ST_WARNING_START = 40,
+} BaseState;
+
+typedef enum
+{
+    BASE_EVENT_INITIAL       = 0,
+    BASE_EVENT_TSM_START     = 10,
+    BASE_EVENT_WARNING_START = 50,
+} BaseEvent;
+
+typedef enum
+{
+    MCU_MRM_PASSIVE = BASE_ST_TSM_START + 1,
     MCU_MRM_STANDBY,
     MCU_MRM_FAILURE_LIGHTING,
     MCU_MRM_FAILURE_NO_LIGHTING,
@@ -143,6 +157,16 @@ typedef enum
     MCU_MRM_ACTIVE_LAT_CTRL,
     MCU_MRM_MRC
 } MCUMRMFunctionSt;
+
+typedef enum
+{
+    NO_WARNING = BASE_ST_WARNING_START + 1,
+    WARNING_TOR_LEVEL_1,
+    WARNING_TOR_LEVEL_2,
+    WARNING_TOR_LEVEL_3,
+    WARNING_MRM_LEVEL_4,
+    WARNING_MRM_LEVEL_5,
+} WarningState;
 
 typedef enum
 {
@@ -246,17 +270,17 @@ typedef struct
 {
     uint8 lng_override_flag;
     uint8 mrm_activation_st;
-} ActionParam;
+} TSMActionParam;
 
 typedef struct 
 {
     MCUMRMFunctionSt state;             
-    InterMediaMsg    inter_media_msg; 
-    ActionParam      action_param;    
-} StateMachine;
+    TSMActionParam   tsm_action_param;
+} TSMParam;
 
 // --------------------------------- global declaration ----------------------------
-extern StateMachine g_tsm;
+extern InterMediaMsg g_inter_media_msg;
+extern TSMParam      g_tsm;
 // --------------------------------- function declaration --------------------------
 void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
 void StopTiming(uint8* flag);    // 停止计时

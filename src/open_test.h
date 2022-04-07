@@ -93,21 +93,21 @@ void* GetEMS_GasPedalActPstforMRR(SimulinkData* simulink_data)
 void* GetNDATransitNormalFlag(SimulinkData* simulink_data)
 {
     (void)simulink_data;
-    return &(g_tsm.inter_media_msg.automaton_transit_normal_flag);
+    return &(g_inter_media_msg.automaton_transit_normal_flag);
 }
 void* GetLngOverrideSt(SimulinkData* simulink_data)
 {
     (void)simulink_data;
-    return &(g_tsm.inter_media_msg.lng_override_st);
+    return &(g_inter_media_msg.lng_override_st);
 }
 void* GetDriverHandTorqueSt(SimulinkData* simulink_data)
 {
     (void)simulink_data;
-    return &(g_tsm.inter_media_msg.driver_hand_torque_st);
+    return &(g_inter_media_msg.driver_hand_torque_st);
 }
 void* GetMRMSystemFaultLevel(SimulinkData* simulink_data)
 {
     (void)simulink_data;
-    return &(g_tsm.inter_media_msg.mrm_system_fault_level);
+    return &(g_inter_media_msg.mrm_system_fault_level);
 }
 #endif
