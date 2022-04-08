@@ -13,7 +13,7 @@ void Dispatch(const uint8_t event)
     // 存储源状态
     uint8_t sourceSt = g_hsm.currentSt;
     // 返回当前状态句柄调用的结果
-    enum HsmRet ret = HSM_SUPER;
+    HsmRet ret = HSM_SUPER;
 
     // 找其父状态
     do {
@@ -149,25 +149,25 @@ void DoInitialTransition(const bool topmost)
     g_hsm.currentSt = currentSt;
 }
 
-enum HsmRet ExitState(const uint8_t state)
+HsmRet ExitState(const uint8_t state)
 {
-    enum HsmRet ret = g_dispatchArray[state](HSM_EXIT);
+    HsmRet ret = g_dispatchArray[state](HSM_EXIT);
     return ret;
 }
 
-enum HsmRet EntryState(const uint8_t state)
+HsmRet EntryState(const uint8_t state)
 {
-    enum HsmRet ret = g_dispatchArray[state](HSM_ENTRY);
+    HsmRet ret = g_dispatchArray[state](HSM_ENTRY);
     return ret;
 }
 
-enum HsmRet GoSuperState(const uint8_t state)
+HsmRet GoSuperState(const uint8_t state)
 {
-    enum HsmRet ret = g_dispatchArray[state](HSM_NO_SIG);
+    HsmRet ret = g_dispatchArray[state](HSM_NO_SIG);
     return ret;
 }
 
-enum HsmRet dispatchForRoot(const uint8_t event)
+HsmRet dispatchForRoot(const uint8_t event)
 {
     (void)event;
     return HSM_IGNORED;

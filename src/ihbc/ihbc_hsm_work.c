@@ -10,32 +10,52 @@ void workInFailure()
     LOG("Failure St.");
 }
 
-void workInEnable()
+void workInGlare()
 {
-    LOG("Enable St.");
+    LOG("Glare St.");
 }
 
-void workInPassive()
+void workInRoadlighting()
 {
-    LOG("Passive St.");
+    LOG("RoadLighting St.");
 }
 
-void workInStandby()
+void workInOvertaking()
 {
-    LOG("Standby St.");
+    LOG("OverTaking St.");
 }
 
-void workInActive()
+void workInBrightness()
 {
-    LOG("Active St.");
+    LOG("Brightnes St.");
 }
 
-void workInLowBeamRunning()
+void workInOncoming()
 {
-    LOG("LowBeam Running St.");
+    LOG("OnComing St.");
 }
 
-void workInHighBeamRuning()
+void workInPreceding()
 {
-    LOG("HighBeam Running St.");
+    LOG("Preceding St.");
+}
+
+void workInBlindness()
+{
+    LOG("Blindness St.");
+}
+
+void workInDrivePast()
+{
+    LOG("DrivePast St.");
+}
+
+void workInVehTooLow()
+{
+    LOG("Veh Too Low St.");
+}
+
+void workInNoTraffic()
+{
+    LOG("No Traffic st.");
 }

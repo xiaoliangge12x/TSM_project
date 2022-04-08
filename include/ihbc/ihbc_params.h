@@ -2,6 +2,7 @@
 #define IHBC_PARAMS_H_
 
 #include <stdbool.h>
+#include "rte_type_data.h"
 
 typedef struct {
     // 该处放一些需要转换的参数

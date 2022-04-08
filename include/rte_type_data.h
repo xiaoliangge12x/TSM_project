@@ -5,6 +5,7 @@
 
 #define TYPE_NAME_MAX_LEN 20U
 
+// ------------------------------ typedef ----------------------------------------
 typedef enum {
     LIGHT_SOURCE_HEADLIGHT = 0,    // 头灯
     LIGHT_SOURCE_TAILLIGHT,        // 尾灯
@@ -58,6 +59,12 @@ typedef enum {
     HMA_SWITCH_NOT_USED,
 } HMASwitchCmd;
 
+typedef enum {
+    CAM_SYS_CALI_SUCCESS = 0,
+    CAM_SYS_CALI_IN_PROCESS,
+    CAM_SYS_CALI_FAILED,
+} CamSysCaliSt; 
+
 // 参照J3 IHC输出
 typedef struct {
     float32 left;
@@ -101,10 +108,14 @@ typedef struct {
 } WorkCondition;
 
 typedef struct {
-    uint8 IFC_HMA_Enable;      // HMA 使能信号， 这个信号是我需要的
+    uint8   IFC_HMA_Enable;      // HMA 使能信号， 这个信号是我需要的
     // uint8 ACU_HMA_SwitchReq;   // HMA 开关信号， 这个可以理解为用户操作， 可能不需要这个信号
-    uint8 BCM_LowBeamSt;       // 近光灯状态, 0 - 未激活， 1 - 激活
-    uint8 BCM_HighBeamSt;      // 远光灯状态，0 - 未激活， 1 - 激活
+    uint8   BCM_LowBeamSt;       // 近光灯状态, 0 - 未激活， 1 - 激活
+    uint8   BCM_HighBeamSt;      // 远光灯状态，0 - 未激活， 1 - 激活
+    uint8   IFC_SysCalibrationSt; // 摄像头标定状态
+    uint8   IFC_CameraBlockageSt; // 摄像头被遮挡, 1 - block, 0 - no block
+    uint8   BCS_VehSpdVD;    // 车速有效位
+    float32 BCS_VehSpd;    // 车速
 } VehicleInfo;
 
 typedef struct {

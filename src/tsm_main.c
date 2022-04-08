@@ -4,12 +4,17 @@
 #ifdef _NEED_LOG
 #include "common.h"
 #endif
+// -------------------------- global variable definition ------------------------
+IHBCResult       ihbc_result;
+WorkCondition    work_condition;
+VehicleInfo      veh_info;
+IHBC2VehicleInfo output;
 
 void Worker()
-{
+{   
     InitUser();
     while (1) {
-      RunUser();
+      RunUser(&ihbc_result, &work_condition, &veh_info, &output);
       usleep(20000);
     }
 }

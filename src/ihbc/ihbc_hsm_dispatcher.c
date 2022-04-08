@@ -1,5 +1,75 @@
 #include "ihbc/ihbc_hsm.h"
 
+HsmRet dispatchForIHBCRunning(const uint8_t event)
+{
+    switch (event) {
+        case IHBC_EVENT_DISABLE: {
+            g_hsm.currentSt = IHBC_DISABLE;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_ERROR: {
+            g_hsm.currentSt = IHBC_FAILURE;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_GLARE: {
+            g_hsm.currentSt = IHBC_GLARE;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_ROADLIGHTING: {
+            g_hsm.currentSt = IHBC_ROADLIGHTING;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_OVERTAKING: {
+            g_hsm.currentSt = IHBC_OVERTAKING;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_DRIVEPAST: {
+            g_hsm.currentSt = IHBC_DRIVEPAST;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_BRIGHTNESS: {
+            g_hsm.currentSt = IHBC_BRIGHTNESS;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_ONCOMING: {
+            g_hsm.currentSt = IHBC_ONCOMING;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_PRECEDING: {
+            g_hsm.currentSt = IHBC_PRECEDING;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_BLINDNESS: {
+            g_hsm.currentSt = IHBC_BLINDNESS;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_VELTOOLOW: {
+            g_hsm.currentSt = IHBC_VELTOOLOW;
+            return HSM_TRAN;
+        }
+
+        case IHBC_EVENT_NOTRAFFIC: {
+            g_hsm.currentSt = IHBC_NOTRAFFIC;
+            return HSM_TRAN;
+        }
+
+        default: {
+            g_hsm.currentSt = ROOT;
+            return HSM_SUPER;
+        }
+    }
+}
+
 // 状态分发函数
 HsmRet dispatchForDisable(const uint8_t event)
 {
@@ -9,21 +79,8 @@ HsmRet dispatchForDisable(const uint8_t event)
             return HSM_HANDLED;
         }
 
-        case IHBC_PASSIVE:
-        case IHBC_STANDBY:
-        case IHBC_LOW_BEAM:
-        case IHBC_HIGH_BEAM: {
-            g_hsm.currentSt = ENABLE;
-            return HSM_TRAN;
-        }
-
-        case IHBC_FAILURE: {
-            g_hsm.currentSt = FAILURE;
-            return HSM_TRAN;
-        }
-
         default: {
-            g_hsm.currentSt = ROOT;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
         }
     }
@@ -33,160 +90,163 @@ HsmRet dispatchForFailure(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInFailure();    
-            return HSM_HANDLED;         
+            workInFailure();
+            return HSM_HANDLED;
         }
 
-        case IHBC_DISABLE: {
-            g_hsm.currentSt = DISABLE;
-            return HSM_TRAN;
-        }
-        
         default: {
-            g_hsm.currentSt = ROOT;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
         }
     }
 }
 
-HsmRet dispatchForEnable(const uint8_t event)
+HsmRet dispatchForGlare(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInEnable();    
-            return HSM_HANDLED;         
-        }
-
-        case IHBC_DISABLE: {
-            g_hsm.currentSt = DISABLE;
-            return HSM_TRAN;
-        }
-
-        case IHBC_FAILURE: {
-            g_hsm.currentSt = FAILURE;
-            return HSM_TRAN;
-        }
-
-        case IHBC_PASSIVE: {
-            g_hsm.currentSt = PASSIVE;
-            return HSM_TRAN;
-        }
-
-        case IHBC_STANDBY:
-        case IHBC_LOW_BEAM:
-        case IHBC_HIGH_BEAM: {
-            g_hsm.currentSt = STANDBY;
-            return HSM_TRAN;
-        }
-
-        case HSM_INITIAL: {
-            g_hsm.currentSt = PASSIVE;
-            return HSM_TRAN;
+            workInGlare();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ROOT;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
     }
 }
 
-HsmRet dispatchForPassive(const uint8_t event)
+HsmRet dispatchForRoadlighting(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInPassive();    
-            return HSM_HANDLED;         
+            workInRoadlighting();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ENABLE;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
     }
 }
 
-HsmRet dispatchForStandby(const uint8_t event)
+HsmRet dispatchForOvertaking(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInStandby();    
-            return HSM_HANDLED;         
-        }
-
-        case IHBC_LOW_BEAM: {
-            g_hsm.currentSt = LOWBEAM;
-            return HSM_TRAN;
-        }
-
-        case IHBC_HIGH_BEAM: {
-            g_hsm.currentSt = HIGHBEAM;
-            return HSM_TRAN;
+            workInOvertaking();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ENABLE;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
     }
 }
 
-HsmRet dispatchForActive(const uint8_t event)
+HsmRet dispatchForBrightness(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInActive();    
-            return HSM_HANDLED;         
-        }
-        
-        case IHBC_LOW_BEAM: {
-            g_hsm.currentSt = LOWBEAM;
-            return HSM_TRAN;
-        }
-
-        case IHBC_HIGH_BEAM: {
-            g_hsm.currentSt = HIGHBEAM;
-            return HSM_TRAN;
-        }
-
-        case HSM_INITIAL: {
-            g_hsm.currentSt = LOWBEAM;
-            return HSM_TRAN;
+            workInBrightness();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ENABLE;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
     }
 }
 
-HsmRet dispatchForLowBeamRunning(const uint8_t event)
+HsmRet dispatchForOncoming(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInLowBeamRunning();    
-            return HSM_HANDLED;         
+            workInOncoming();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ACTIVE;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
     }
 }
 
-HsmRet dispatchForHighBeamRunning(const uint8_t event)
+HsmRet dispatchForPreceding(const uint8_t event)
 {
     switch (event) {
         case IHBC_WORK: {
-            workInHighBeamRuning();    
-            return HSM_HANDLED;         
+            workInPreceding();
+            return HSM_HANDLED;
         }
 
         default: {
-            g_hsm.currentSt = ACTIVE;
+            g_hsm.currentSt = IHBC_RUNNING;
             return HSM_SUPER;
-        } 
+        }
+    }
+}
+
+HsmRet dispatchForBlindness(const uint8_t event)
+{
+    switch (event) {
+        case IHBC_WORK: {
+            workInBlindness();
+            return HSM_HANDLED;
+        }
+
+        default: {
+            g_hsm.currentSt = IHBC_RUNNING;
+            return HSM_SUPER;
+        }
+    }
+}
+
+HsmRet dispatchForDrivePast(const uint8_t event)
+{
+    switch (event) {
+        case IHBC_WORK: {
+            workInDrivePast();
+            return HSM_HANDLED;
+        }
+
+        default: {
+            g_hsm.currentSt = IHBC_RUNNING;
+            return HSM_SUPER;
+        }
+    }
+}
+
+HsmRet dispatchForVehTooLow(const uint8_t event)
+{
+    switch (event) {
+        case IHBC_WORK: {
+            workInVehTooLow();
+            return HSM_HANDLED;
+        }
+
+        default: {
+            g_hsm.currentSt = IHBC_RUNNING;
+            return HSM_SUPER;
+        }
+    }
+}
+
+HsmRet dispatchForNoTraffic(const uint8_t event)
+{
+    switch (event) {
+        case IHBC_WORK: {
+            workInNoTraffic();
+            return HSM_HANDLED;
+        }
+
+        default: {
+            g_hsm.currentSt = IHBC_RUNNING;
+            return HSM_SUPER;
+        }
     }
 }
