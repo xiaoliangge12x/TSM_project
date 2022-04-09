@@ -12,12 +12,14 @@
  */
 
 #include "tsm_chart.h"
+#include "tsm_warning.h"
 #ifndef _RUN_IN_LINUX
 #include "hb_TimeSync.h"
 #endif
 
 // -------------------------------  global variable definition ----------------------------
 TSMParam      g_tsm;
+static uint16 g_tsm_signal_bitfileds = 0U;
 // -------------------------------- driving table initilize -------------------------------
 static const StateMachine g_top_state_machine = 
 {
@@ -99,6 +101,7 @@ void MRM_TSM_MODULE_Init(void)
     g_inter_media_msg.automaton_transit_normal_flag = 1;
     g_tsm.tsm_action_param.mrm_activation_st        = 1;
     g_tsm.state                                     = MCU_MRM_PASSIVE;
+    g_warning_sm.warning_state                      = NO_WARNING;
 }
 
 void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
@@ -109,7 +112,10 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // TODO:
     (void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
-    StateMachineWork(&g_top_state_machine, rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, &g_tsm.state);
+    RunTsmSit(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+    RunWarningSit();
+    StateMachineWork(&g_top_state_machine, &g_tsm.state);
+    StateMachineWork(&g_warning_state_machine, &g_warning_sm.warning_state);
     WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
 #ifdef _NEED_LOG
@@ -117,168 +123,110 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 #endif
 }
 
-boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
+    
+    // TODO:
+    g_tsm_signal_bitfileds = 0;
     if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
-        return true;
+        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
     }
-    return false;
-}
-
-boolean IsLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    return false;
-    /*
-    if ((g_inter_media_msg.mrm_system_fault_level == FAILURE_FAULT) &&
-        g_inter_media_msg.mrm_failure_lighting_flag) {
-        return true;
-    }
-    return false;
-    */
-}
-
-boolean IsNoLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    return false;
-    /*
-    if ((g_inter_media_msg.mrm_system_fault_level == FAILURE_FAULT) &&
-        !g_inter_media_msg.mrm_failure_lighting_flag) {
-        return true;
-    }
-    return false;
-    */
-}
-
-boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    return true;
-    /*
-    if ((g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_EPB_PHASE_IN) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_NORMAL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_STANDACTIVE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_ON_STANDWAIT) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_NORMAL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_STANDACTIVE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_ACTIVE_HAND_FREE_STANDWAIT) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LNG_OVERRIDE_HANDS_FREE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LNG_OVERRIDE_HANDS_ON) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LAT_LNG_OVERRIDE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_LAT_OVERRIDE) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_STAND) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_TOR_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EMERGENCY_LANE_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EMERGENCY_LANE_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_COMFORTABLE_WITH_LAT_LNG_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_CONTROL) ||
-        (g_inter_media_msg.automaton_st.NDA_Function_State == NDA_MRM_EGO_LANE_EMERGENCY_WITH_LAT_LNG_CONTROL)) {
-        return true;
-    }
-    return false;
-    */
-}
-
-boolean IsStandbyConditionNotMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    return !IsStandbyConditionMeet(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
-}
-
-boolean IsMrmBothCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    // TODO： MCU安全停车系统故障
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
-        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
-            if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) && !g_inter_media_msg.brake_is_set) {
-                return true;
-            }
-        }     
-    }
-    return false;
-}
-
-boolean IsMrmLatCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
-{
-    // TODO: MCU安全停车系统故障
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
-        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
-            if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) {
-                return true;
-            }   
-        }
-    }
-    return false;
-}
-
-boolean IsCanEnterMrcFromStandby(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
-{
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) && 
-        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
-        return true;
-    }
-    return false;
-}
-
-boolean IsTorBothCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
-{
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
-        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
-            if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) {
-                return true;
-            }   
-        }
-    }
-    return false;
-}
-
-boolean IsTorLatCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
-{
-    if ((rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt != VEH_STANDSTILL_ST_STANDSTILL) &&
-        (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault())) {
-        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
-            if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) && !g_inter_media_msg.brake_is_set) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-boolean IsVehStandStillCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
-{
     if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-        return true;
+        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
     }
-    return false;
+
+    uint8 bit_no = (IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State)) ? 
+        BITNO_STANDBY: BITNO_NO_STANDBY;
+    // SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
+    SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_STANDBY);
+
+    if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+        if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_MRC);
+        } else {
+            if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
+                bit_no = ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ? 
+                   BITNO_TOR_LAT_CTRL : BITNO_TOR_BOTH_CTRL;
+                SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
+            } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
+                bit_no = ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ? 
+                   BITNO_MRM_LAT_CTRL : BITNO_MRM_BOTH_CTRL;
+                SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
+            } else {
+                // do nothing;
+            }
+        }
+    }
+
+    if (IsDriverTakeOver()) {
+        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
+    }
 }
 
-boolean IsFuncExitCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm) 
+boolean IsMrmSystemFaultNotExist()
 {
-    if (IsDriverTakeOver() || rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT) {
-        return true;
-    }
-    return false;
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
 }
 
-boolean IsWaitEpbSt(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+boolean IsLightingConditionMeet()
 {
-    return false;
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_LIGHTING);
+}
+
+boolean IsNoLightingConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
+}
+
+boolean IsStandbyConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_STANDBY);
+}
+
+boolean IsStandbyConditionNotMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_STANDBY);
+}
+
+boolean IsMrmBothCtrlConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL);
+}
+
+boolean IsMrmLatCtrlConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL);
+}
+
+boolean IsCanEnterMrcFromStandby() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRC);
+}
+
+boolean IsTorBothCtrlCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL);
+}
+
+boolean IsTorLatCtrlCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL);
+}
+
+boolean IsVehStandStillCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
+}
+
+boolean IsFuncExitCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
+}
+
+boolean IsWaitEpbSt()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_WAIT_EPB_RES);
 }
 
 boolean IsDriverTakeOver()
@@ -316,6 +264,21 @@ boolean IsInTorFault()
     return ((g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) ||
             (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) ||
             (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT));
+}
+
+boolean IsNDAInActiveSt(const uint8 nda_st)
+{
+    return ((nda_st == NDA_ACTIVE_EPB_PHASE_IN) || (nda_st == NDA_ACTIVE_HANDS_FREE_NORMAL) ||
+        (nda_st == NDA_ACTIVE_HANDS_FREE_STAND_ACTIVE) || (nda_st == NDA_ACTIVE_HANDS_FREE_STAND_WAIT) ||
+        (nda_st == NDA_ACTIVE_HANDS_ON_NORMAL) || (nda_st == NDA_ACTIVE_HANDS_ON_STAND_ACTIVE) ||
+        (nda_st == NDA_ACTIVE_HANDS_ON_STAND_WAIT) || (nda_st == NDA_ACTIVE_EPB_PHASE_IN) ||
+        (nda_st == NDA_LNG_OVERRIDE) || (nda_st == NDA_LNG_LAT_OVERRIDE) ||
+        (nda_st == NDA_LAT_OVERRIDE) || (nda_st == NDA_TOR_LAT_CTRL) ||
+        (nda_st == NDA_TOR_LNG_LAT_CTRL) || (nda_st == NDA_TOR_STAND) ||
+        (nda_st == NDA_MRM_ACTIVE_PO_LAT_CTRL) || (nda_st == NDA_MRM_ACTIVE_PO_LNG_LAT_CTRL) ||
+        (nda_st == NDA_MRM_ACTIVE_CP_LAT_CTRL) || (nda_st == NDA_MRM_ACTIVE_CP_LNG_LAT_CTRL) ||
+        (nda_st == NDA_MRM_ACTIVE_ES_LAT_CTRL) || (nda_st == NDA_MRM_ACTIVE_ES_LNG_LAT_CTRL) ||
+        (nda_st == NDA_MRC));
 }
 
 void ActionInPassive()

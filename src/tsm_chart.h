@@ -20,14 +20,14 @@
 #include "common.h"
 #endif
 // ---------------------------------- macro definition     --------------------------------------
-#define TOTAL_TSM_TRANS_NUM   34U
-#define TOTAL_TSM_EVENT_NUM   13U
-#define TOTAL_TSM_STATE_NUM   10U
+#define TOTAL_TSM_TRANS_NUM   23U
+#define TOTAL_TSM_EVENT_NUM   11U
+#define TOTAL_TSM_STATE_NUM   7U
 #define TIMESTAMP_MAX_NUM     3
-#define EPSINON_TIME      ((float32)0.00001)
-#define NS_IN_MS          ((float32)1000000.0)
-#define UPPER_CYCLE       ((float32)21.0)
-#define LOWER_CYCLE       ((float32)19.0)
+#define EPSINON_TIME          ((float32)0.00001)
+#define NS_IN_MS              ((float32)1000000.0)
+#define UPPER_CYCLE           ((float32)21.0)
+#define LOWER_CYCLE           ((float32)19.0)
 // ---------------------------------- typedef              --------------------------------------
 typedef enum
 {
@@ -43,7 +43,7 @@ typedef enum
     EVENT_TOR_LAT_CTRL,
     EVENT_VEH_STANDSTILL,
     EVENT_FUNCTION_EXIT,
-    EVENT_WAIT_EPB_RES
+    EVENT_WAIT_EPB_RES,
 } EventID;
 
 typedef enum
@@ -51,8 +51,24 @@ typedef enum
     PC_TOR = 0,
     PC_MRM,
     PC_EXIT,
-} PCState;
+} PCSt;
 
+typedef enum
+{
+    BITNO_FAULT_NOT_EXIST = 0,
+    BITNO_LIGHTING,
+    BITNO_NO_LIGHTING,
+    BITNO_STANDBY,
+    BITNO_NO_STANDBY,
+    BITNO_MRM_BOTH_CTRL,
+    BITNO_MRM_LAT_CTRL,
+    BITNO_MRC,
+    BITNO_TOR_BOTH_CTRL,
+    BITNO_TOR_LAT_CTRL,
+    BITNO_VEH_STANDSTILL,
+    BITNO_FUNCTION_EXIT,
+    BITNO_WAIT_EPB_RES,
+} TsmEventBitNo;
 // ---------------------------------- driving table        --------------------------------------
 // static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM];   // 此处非声明，而是定义
 // static const Action       g_action;                                 // 此处非声明，而是定义
@@ -66,42 +82,32 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
-boolean IsMrmSystemFaultNotExist(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm); 
-boolean IsLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsNoLightingConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsStandbyConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsStandbyConditionNotMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsMrmBothCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsMrmLatCtrlConditionMeet(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsCanEnterMrcFromStandby(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsTorBothCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsTorLatCtrlCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsVehStandStillCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsFuncExitCondMeet(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsWaitEpbSt(const Dt_RECORD_CANGATE2TSM* rtu_DeCANGATE2TSM,
-    const Dt_RECORD_Diag2TSM* rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
+void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
+boolean IsMrmSystemFaultNotExist(); 
+boolean IsLightingConditionMeet();
+boolean IsNoLightingConditionMeet();
+boolean IsStandbyConditionMeet();
+boolean IsStandbyConditionNotMeet();
+boolean IsMrmBothCtrlConditionMeet();
+boolean IsMrmLatCtrlConditionMeet();
+boolean IsCanEnterMrcFromStandby();
+boolean IsTorBothCtrlCondMeet();
+boolean IsTorLatCtrlCondMeet();
+boolean IsVehStandStillCondMeet();
+boolean IsFuncExitCondMeet();
+boolean IsWaitEpbSt();
 boolean IsDriverTakeOver();
-boolean IsInTorFault(); 
+boolean IsInTorFault();
+boolean IsNDAInActiveSt(const uint8 nda_st);
 void ActionInPassive();
+void ActionInStandby();   
 void ActionInFailureLighting();
 void ActionInFailureNoLighting();
-void ActionInStandby();
 void ActionInTorBothCtrl();
 void ActionInTorLatCtrl();
-void ActionInTorStand();
+void ActionInTorStand();  
 void ActionInMrmBothCtrl();
-void ActionInMrmLatCtrl();
+void ActionInMrmLatCtrl();     
 void ActionInMrc();
 #endif

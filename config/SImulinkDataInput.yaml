@@ -19,7 +19,7 @@ Vehicle_Signal_To_Tsm:
 # InterMedia Input
 Inter_Media_Msg:
   automaton_transit_normal_flag: 0
-  # lng_override_st: 3
-  # driver_hand_torque_st: 2
+  # lng_override_st: 0
+  # driver_hand_torque_st: 0
   mrm_system_fault_level: 0
   

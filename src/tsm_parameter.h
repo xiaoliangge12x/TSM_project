@@ -13,10 +13,12 @@
 
 #ifndef TSM_PARAMETER_H_
 #define TSM_PARAMETER_H_
-
 #include "TSM_MODULE.h"
 #ifdef _NEED_LOG
 #include "common.h"
+#endif
+#ifdef _DEBUG_MODE
+#include <assert.h>
 #endif
 
 // ---------------------------------- typedef   ------------------------------------------------
@@ -31,7 +33,7 @@ typedef enum
 
 typedef enum 
 {
-    OVERRIDE_NOT_SATISFY = 2,
+    OVERRIDE_NOT_SATISFY = 0,
     OVERRIDE_SATISFY,
 } OverrideSt;
 
@@ -291,4 +293,7 @@ extern TSMParam      g_tsm;
 void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
 void StopTiming(uint8* flag);    // 停止计时
 float32 GetTimeGapInSec(sint64 start_time, uint8* flag); // 计算持续时间
+boolean IsBitSet(const uint16 event_bitfields, const uint8 bit_no);
+void SetSignalBitFields(uint16* event_bitfields, const uint8 bit_no);
+void ResetSignalBitFields(uint16* event_bitfields, const uint8 bit_no);
 #endif

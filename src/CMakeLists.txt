@@ -1,7 +1,7 @@
 # 源文件
 aux_source_directory(. SRC_FILE)
 FILE(GLOB BASE_FILE "./base/*.c")
-list(REMOVE_ITEM SRC_FILE "./tsm_warning.c")
+# list(REMOVE_ITEM SRC_FILE "./tsm_warning.c")
 
 if (NOT OPEN_TEST)
     list(REMOVE_ITEM SRC_FILE "./open_test.c")

@@ -23,3 +23,18 @@ float32 GetTimeGapInSec(sint64 start_time, uint8* flag)
         return 0.0;
     }
 }
+
+boolean IsBitSet(const uint16 event_bitfields, const uint8 bit_no)
+{
+    return (event_bitfields & (1U << bit_no));
+}
+
+void SetSignalBitFields(uint16* event_bitfields, const uint8 bit_no)
+{
+    return (*event_bitfields | (1U << bit_no));
+}
+
+void ResetSignalBitFields(uint16* event_bitfields, const uint8 bit_no)
+{
+    return (*event_bitfields & (~(1U << bit_no)));
+}

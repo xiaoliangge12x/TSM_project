@@ -13,20 +13,25 @@
 
 #include "base/sm_base.h"
 
-void StateMachineWork(const StateMachine* state_machine, const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, uint8* cur_state)
+void StateMachineWork(const StateMachine* state_machine, uint8* cur_state)
 {
     uint8 eventId_Table[MAX_EVENT_SIZE];
     uint8 size = 0;
     // 找到触发事件ID的数组
     for (uint8 i = 0; i < state_machine->event_size; ++i) {
-        if (state_machine->event_table[i].transit_event(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm)) {
+#ifdef _DEBUG_MODE
+        assert(state_machine->event_table[i].transit_event != NULL_PTR);
+#endif
+        if (state_machine->event_table[i].transit_event()) {
             eventId_Table[size++] = state_machine->event_table[i].event_id;
         }
     }
 
     if (size != 0) {
         for (uint8 i = 0; i < state_machine->state_transit_size; ++i) {
+#ifdef _DEBUG_MODE
+            assert(state_machine->state_transit_table[i].cur_st != 0);
+#endif
             if (*cur_state == state_machine->state_transit_table[i].cur_st) {
                 uint8 is_found = 0;
                 for (uint8 j = 0; j < size; ++j) {
@@ -42,7 +47,11 @@ void StateMachineWork(const StateMachine* state_machine, const Dt_RECORD_CANGATE
             }
         }
     }
+
     for (uint8 i = 0; i < state_machine->state_size; ++i) {
+#ifdef _DEBUG_MODE
+        assert(state_machine->state_table[i].action != NULL_PTR);
+#endif
         if (*cur_state == state_machine->state_table[i].state) {
             state_machine->state_table[i].action();
         }
