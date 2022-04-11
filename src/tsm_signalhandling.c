@@ -37,7 +37,7 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 判断 SOC侧NDA的跳转是否错误, 初始版本，先用harzard light去判断跳转是否正常
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
-    LOG("lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
+    LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
         "driver_hand_torque_st: %d", g_inter_media_msg.lng_override_long_duration_flag, 
         g_inter_media_msg.brake_is_set, g_inter_media_msg.driver_acc_pedal_applied_flag, 
         g_inter_media_msg.driver_hand_torque_st);

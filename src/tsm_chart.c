@@ -109,6 +109,9 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
+#ifdef _NEED_LOG
+    LOG(GREEN_COLOR, "Pre tsm state: %d, Pre warning state: %d", g_tsm.state, g_warning_sm.warning_state);
+#endif
     // TODO:
     (void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
@@ -118,8 +121,9 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     StateMachineWork(&g_warning_state_machine, &g_warning_sm.warning_state);
     WrapAndSend(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
+    
 #ifdef _NEED_LOG
-    // LOG("rty_DeTSM2CtrlArb->MRM_Status: %d", rty_DeTsm2Planlite->MRM_Status);
+    LOG(GREEN_COLOR, "After tsm state: %d, After warning state: %d", g_tsm.state, g_warning_sm.warning_state);
 #endif
 }
 
@@ -162,6 +166,9 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     if (IsDriverTakeOver()) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "RunTsmSit g_tsm_signal_bitfileds: %d", g_tsm_signal_bitfileds);
+#endif
 }
 
 boolean IsMrmSystemFaultNotExist()
@@ -284,7 +291,7 @@ boolean IsNDAInActiveSt(const uint8 nda_st)
 void ActionInPassive()
 {
 #ifdef _NEED_LOG
-    LOG("It's in MCU_MRM_PASSIVE St.");
+    LOG(COLOR_NONE, "It's in MCU_MRM_PASSIVE St.");
 #endif
     g_tsm.tsm_action_param.mrm_activation_st = 1;
 }
@@ -292,7 +299,7 @@ void ActionInPassive()
 void ActionInFailureLighting()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Failure Lighting St.");
+    LOG(COLOR_NONE, "It's in Failure Lighting St.");
 #endif
     g_tsm.tsm_action_param.lng_override_flag = 0;
     g_tsm.tsm_action_param.mrm_activation_st = 1;
@@ -301,7 +308,7 @@ void ActionInFailureLighting()
 void ActionInFailureNoLighting()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Failure No Lighting St.");
+    LOG(COLOR_NONE, "It's in Failure No Lighting St.");
 #endif
     g_tsm.tsm_action_param.mrm_activation_st = 1;
 }
@@ -309,7 +316,7 @@ void ActionInFailureNoLighting()
 void ActionInStandby()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Standby St.");
+    LOG(COLOR_NONE, "It's in Standby St.");
 #endif
     g_tsm.tsm_action_param.mrm_activation_st = 1;
 }
@@ -317,28 +324,28 @@ void ActionInStandby()
 void ActionInTorBothCtrl()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Tor Both Ctrl St.");
+    LOG(COLOR_NONE, "It's in Tor Both Ctrl St.");
 #endif
 }
 
 void ActionInTorLatCtrl()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Tor Lat Ctrl St.");
+    LOG(COLOR_NONE, "It's in Tor Lat Ctrl St.");
 #endif
 }
 
 void ActionInTorStand()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Tor Stand St.");
+    LOG(COLOR_NONE, "It's in Tor Stand St.");
 #endif
 }
 
 void ActionInMrmBothCtrl()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Mrm Both Ctrl St.");
+    LOG(COLOR_NONE, "It's in Mrm Both Ctrl St.");
 #endif
     // car test
     g_tsm.tsm_action_param.lng_override_flag = 0;
@@ -348,7 +355,7 @@ void ActionInMrmBothCtrl()
 void ActionInMrmLatCtrl()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Mrm Lat Ctrl St.");
+    LOG(COLOR_NONE, "It's in Mrm Lat Ctrl St.");
 #endif
     // car test
     g_tsm.tsm_action_param.lng_override_flag = 1;
@@ -358,7 +365,7 @@ void ActionInMrmLatCtrl()
 void ActionInMrc()
 {
 #ifdef _NEED_LOG
-    LOG("It's in Mrc St.");
+    LOG(COLOR_NONE, "It's in Mrc St.");
 #endif
     g_tsm.tsm_action_param.lng_override_flag = 0;
     g_tsm.tsm_action_param.mrm_activation_st = 1;

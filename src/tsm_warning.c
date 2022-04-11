@@ -41,12 +41,12 @@ const StateMachine g_warning_state_machine =
     .state_transit_size = TOTAL_WARNING_TRANS_NUM,
     .event_table = 
     {
-        {EVENT_CHECK_IN_PASSIVE,         TorLevel1WarningCome},
-        {EVENT_COME_LEVEL_1,             TorLevel2WaningCome},
-        {EVENT_COME_LEVEL_2,             TorLevel3WarningCome},
-        {EVENT_COME_LEVEL_3,             CheckInMrmSt},
-        {EVENT_CHECK_IN_MRM,             CheckInMrcSt},
-        {EVENT_CHECK_IN_MRC,             CheckInPassiveSt},
+        {EVENT_CHECK_IN_PASSIVE,         CheckInPassiveSt},
+        {EVENT_COME_LEVEL_1,             TorLevel1WarningCome},
+        {EVENT_COME_LEVEL_2,             TorLevel2WaningCome},
+        {EVENT_COME_LEVEL_3,             TorLevel3WarningCome}, 
+        {EVENT_CHECK_IN_MRM,             CheckInMrmSt},
+        {EVENT_CHECK_IN_MRC,             CheckInMrcSt},
         {EVENT_RAMPUP_LEVEL_2,           RampUpToTorLevel2},
         {EVENT_RAMPUP_LEVEL_3,           RampUpToTorLevel3WithTiming},
         {EVENT_RAMPUP_LEVEL_3_WITH_TIME, RampUpToTorLevel3WithoutTiming},
@@ -71,87 +71,91 @@ void RunWarningSit()
     g_warning_signal_bitfileds = 0;
 
     if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
     }
     
     if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3);
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
     }
     // TODO: 1级TOR延时
     if (false) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
     }
     // TODO: 2级TOR延时
     if (false) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
     }
 
     // TODO: 3级TOR延时
     if (false) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
     }
 
     if ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) || (g_tsm.state == MCU_MRM_TOR_LAT_CTRL)) {
         if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) {
-            SetSignalBitFields(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_1_COME);
+            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_1_COME);
         } else if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) {
-            SetSignalBitFields(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_2_COME);
+            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_2_COME);
         } else if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
-            SetSignalBitFields(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_3_COME);
+            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_3_COME);
         } else {
             // do nothing;
         }
     } else if ((g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) || (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL)) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_CHECK_MRM_ST);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_MRM_ST);
     } else if (g_tsm.state == MCU_MRM_MRC) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
     } else if (g_tsm.state == MCU_MRM_PASSIVE) {
-        SetSignalBitFields(g_warning_signal_bitfileds, BITNO_CHECK_PASSIVE_ST);
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_PASSIVE_ST);
     } else {
         // do nothing;
     }
+
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "RunWarningSit g_warning_signal_bitfileds: %d", g_warning_signal_bitfileds);
+#endif
 }
 
 void ActionInNoWarning()
 {
 #ifdef _NEED_LOG
-    LOG("No warnng st");
+    LOG(COLOR_NONE, "No warnng st");
 #endif
 }
 
 void ActionInWarningTorLevel1()
 {
 #ifdef _NEED_LOG
-    LOG("Warning Tor Level_1 st");
+    LOG(COLOR_NONE, "Warning Tor Level_1 st");
 #endif
 }
 
 void ActionInWarningTorLevel2()
 {
 #ifdef _NEED_LOG
-    LOG("Warning Tor Level_2 st");
+    LOG(COLOR_NONE, "Warning Tor Level_2 st");
 #endif
 }
 
 void ActionInWarningTorLevel3()
 {
 #ifdef _NEED_LOG
-    LOG("Warning Tor Level_3 st");
+    LOG(COLOR_NONE, "Warning Tor Level_3 st");
 #endif
 }
 
 void ActionInWarningMrmLevel4()
 {
 #ifdef _NEED_LOG
-    LOG("Warning Mrm Level_4 st");
+    LOG(COLOR_NONE, "Warning Mrm Level_4 st");
 #endif
 }
 
 void ActionInWarningMrmLevel5()
 {
 #ifdef _NEED_LOG
-    LOG("Warning Mrm Level_5 st");
+    LOG(COLOR_NONE, "Warning Mrm Level_5 st");
 #endif
 }
 
@@ -177,6 +181,7 @@ boolean CheckInMrmSt()
 
 boolean CheckInMrcSt()
 {
+    LOG(COLOR_NONE, "CheckInMrcSt: %d", IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST));
     return IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
 }
 

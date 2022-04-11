@@ -14,12 +14,12 @@ sint32 main()
 
   if (ret_thrd != 0) {
 #ifdef _NEED_LOG
-    LOG("main thread create failed!");
+    LOG(COLOR_NONE, "main thread create failed!");
 #endif
     exit(-1);
   } else {
 #ifdef _NEED_LOG
-    LOG("main thread create success!");
+    LOG(COLOR_NONE, "main thread create success!");
 #endif
   }
 
