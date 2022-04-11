@@ -19,7 +19,7 @@
 
 // -------------------------------  global variable definition ----------------------------
 TSMParam      g_tsm;
-static uint16 g_tsm_signal_bitfileds = 0U;
+static uint32 g_tsm_signal_bitfileds = 0U;
 // -------------------------------- driving table initilize -------------------------------
 static const StateMachine g_top_state_machine = 
 {
@@ -40,26 +40,25 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_STANDBY,             EVENT_MRC,                  MCU_MRM_MRC},
         {MCU_MRM_STANDBY,             EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
-        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_LAT_CTRL_SWITCH,  MCU_MRM_TOR_LAT_CTRL},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
-        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
-        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_TO_MRM_BOTH,      MCU_MRM_ACTIVE_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_TO_MRM_LAT,       MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
-        {MCU_MRM_TOR_LAT_CTRL,        EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_TOR_BOTH_CTRL_SWITCH, MCU_MRM_TOR_LNG_LAT_CTRL},
         {MCU_MRM_TOR_LAT_CTRL,        EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
-        {MCU_MRM_TOR_LAT_CTRL,        EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
-        {MCU_MRM_TOR_LAT_CTRL,        EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_TOR_TO_MRM_BOTH,      MCU_MRM_ACTIVE_LNG_LAT_CTRL},
+        {MCU_MRM_TOR_LAT_CTRL,        EVENT_TOR_TO_MRM_LAT,       MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_TOR_LAT_CTRL,        EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
         {MCU_MRM_TOR_STAND,           EVENT_WAIT_EPB_RES,         MCU_MRM_PASSIVE},
-        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
+        {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_MRM_LAT_CTRL_SWITCH,  MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_VEH_STANDSTILL,       MCU_MRM_MRC},
         {MCU_MRM_ACTIVE_LNG_LAT_CTRL, EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
-        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
+        {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_MRM_BOTH_CTRL_SWITCH, MCU_MRM_ACTIVE_LNG_LAT_CTRL},
         {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_VEH_STANDSTILL,       MCU_MRM_MRC},
         {MCU_MRM_ACTIVE_LAT_CTRL,     EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE},
         {MCU_MRM_MRC,                 EVENT_FUNCTION_EXIT,        MCU_MRM_PASSIVE}
     },
-    .state_transit_size = TOTAL_TSM_TRANS_NUM,
     .event_table =
     {
         {EVENT_FAULT_NOT_EXIST,      IsMrmSystemFaultNotExist},
@@ -74,9 +73,14 @@ static const StateMachine g_top_state_machine =
         {EVENT_TOR_LAT_CTRL,         IsTorLatCtrlCondMeet},
         {EVENT_VEH_STANDSTILL,       IsVehStandStillCondMeet},
         {EVENT_FUNCTION_EXIT,        IsFuncExitCondMeet},
-        {EVENT_WAIT_EPB_RES,         IsWaitEpbSt}
+        {EVENT_WAIT_EPB_RES,         IsWaitEpbSt},
+        {EVENT_MRM_BOTH_CTRL_SWITCH, IsSwitchToMrmBothCtrl},
+        {EVENT_MRM_LAT_CTRL_SWITCH,  IsSwitchToMrmLatCtrl},
+        {EVENT_TOR_BOTH_CTRL_SWITCH, IsSwitchToTorBothCtrl},
+        {EVENT_TOR_LAT_CTRL_SWITCH,  IsSwitchToTorLatCtrl},
+        {EVENT_TOR_TO_MRM_BOTH,      IsTorToMrmBoth},
+        {EVENT_TOR_TO_MRM_LAT,       IsTorToMrmLat},
     },
-    .event_size = TOTAL_TSM_EVENT_NUM,
     .state_table = 
     {
         {MCU_MRM_PASSIVE,             ActionInPassive},
@@ -90,7 +94,6 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_ACTIVE_LAT_CTRL,     ActionInMrmLatCtrl},
         {MCU_MRM_MRC,                 ActionInMrc}
     }, 
-    .state_size = TOTAL_TSM_STATE_NUM
 };
 
 // -------------------------------- function definition   ---------------------------------
@@ -109,9 +112,6 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag)
 {
-#ifdef _NEED_LOG
-    LOG(GREEN_COLOR, "Pre tsm state: %d, Pre warning state: %d", g_tsm.state, g_warning_sm.warning_state);
-#endif
     // TODO:
     (void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
@@ -123,7 +123,7 @@ void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag);
     
 #ifdef _NEED_LOG
-    LOG(GREEN_COLOR, "After tsm state: %d, After warning state: %d", g_tsm.state, g_warning_sm.warning_state);
+    LOG(COLOR_GREEN, "tsm state: %d, warning state: %d", g_tsm.state, g_warning_sm.warning_state);
 #endif
 }
 
@@ -136,39 +136,41 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
     }
-    if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
-    }
 
-    uint8 bit_no = (IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State)) ? 
-        BITNO_STANDBY: BITNO_NO_STANDBY;
-    // SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
+    // IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State) ?
+    //     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_STANDBY) :
+    //     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_NO_STANDBY);
     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_STANDBY);
 
-    if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
-        if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+    if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
+        if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_MRC);
-        } else {
-            if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
-                bit_no = ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ? 
-                   BITNO_TOR_LAT_CTRL : BITNO_TOR_BOTH_CTRL;
-                SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
-            } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
-                bit_no = ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ? 
-                   BITNO_MRM_LAT_CTRL : BITNO_MRM_BOTH_CTRL;
-                SetSignalBitFields(&g_tsm_signal_bitfileds, bit_no);
-            } else {
-                // do nothing;
+        }
+    } else {
+        SetCtrlType(BITNO_MRM_BOTH_CTRL_SWITCH, BITNO_MRM_LAT_CTRL_SWITCH);
+        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
+            SetCtrlType(BITNO_TOR_BOTH_CTRL_SWITCH, BITNO_TOR_LAT_CTRL_SWITCH);
+            if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+                SetCtrlType(BITNO_TOR_BOTH_CTRL, BITNO_TOR_LAT_CTRL);
             }
+        } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
+            SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
+            if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+                SetCtrlType(BITNO_MRM_BOTH_CTRL, BITNO_MRM_LAT_CTRL);
+            }
+        } else {
+            // do nothing;
         }
     }
 
-    if (IsDriverTakeOver()) {
+    if (g_warning_sm.warning_state == WARNING_MRM_LEVEL_4) {
+        SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
+    }
+
+    if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT)) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "RunTsmSit g_tsm_signal_bitfileds: %d", g_tsm_signal_bitfileds);
-#endif
 }
 
 boolean IsMrmSystemFaultNotExist()
@@ -213,6 +215,9 @@ boolean IsCanEnterMrcFromStandby()
 
 boolean IsTorBothCtrlCondMeet() 
 {
+#ifdef _NEED_LOG
+    // LOG(COLOR_RED, "IsTorBothCtrlCondMeet: %d", IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL));
+#endif
     return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL);
 }
 
@@ -236,9 +241,40 @@ boolean IsWaitEpbSt()
     return IsBitSet(g_tsm_signal_bitfileds, BITNO_WAIT_EPB_RES);
 }
 
+boolean IsSwitchToMrmBothCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL_SWITCH);
+}
+
+boolean IsSwitchToMrmLatCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL_SWITCH);
+}
+
+boolean IsSwitchToTorBothCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL_SWITCH);
+}
+
+boolean IsSwitchToTorLatCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL_SWITCH);
+}
+
+boolean IsTorToMrmBoth()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_BOTH);
+}
+
+boolean IsTorToMrmLat()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_LAT);
+}
+
 boolean IsDriverTakeOver()
 {
-    if ((g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) || (g_tsm.state == MCU_MRM_MRC)) {
+    if ((g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) || (g_tsm.state == MCU_MRM_TOR_LAT_CTRL) || 
+        (g_tsm.state == MCU_MRM_MRC)) {
         if (g_inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
             return true;
         }
@@ -286,6 +322,13 @@ boolean IsNDAInActiveSt(const uint8 nda_st)
         (nda_st == NDA_MRM_ACTIVE_CP_LAT_CTRL) || (nda_st == NDA_MRM_ACTIVE_CP_LNG_LAT_CTRL) ||
         (nda_st == NDA_MRM_ACTIVE_ES_LAT_CTRL) || (nda_st == NDA_MRM_ACTIVE_ES_LNG_LAT_CTRL) ||
         (nda_st == NDA_MRC));
+}
+
+void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl)
+{
+    ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ?
+        SetSignalBitFields(&g_tsm_signal_bitfileds, lat_ctrl) :
+        SetSignalBitFields(&g_tsm_signal_bitfileds, both_ctrl);
 }
 
 void ActionInPassive()
@@ -345,7 +388,7 @@ void ActionInTorStand()
 void ActionInMrmBothCtrl()
 {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Mrm Both Ctrl St.");
+    LOG(COLOR_YELLOW, "It's in Mrm Both Ctrl St.");
 #endif
     // car test
     g_tsm.tsm_action_param.lng_override_flag = 0;

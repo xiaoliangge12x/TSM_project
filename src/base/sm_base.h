@@ -16,9 +16,9 @@
 
 #include "tsm_parameter.h"
 // ------------------------ macro   ------------------------------------
-#define MAX_STATE_TRANSIT_SIZE 50U
-#define MAX_EVENT_SIZE         30U
-#define MAX_STATE_SIZE         30U
+#define MAX_STATE_TRANSIT_SIZE 80U
+#define MAX_EVENT_SIZE         40U
+#define MAX_STATE_SIZE         40U
 // ------------------------ typedef ------------------------------------
 typedef void (*Action) ();
 typedef boolean (*TransitEvent) ();
@@ -45,11 +45,8 @@ typedef struct
 typedef struct 
 {
     StateTransit state_transit_table[MAX_STATE_TRANSIT_SIZE];
-    uint8        state_transit_size;
     Event        event_table[MAX_EVENT_SIZE];
-    uint8        event_size;
     State        state_table[MAX_STATE_SIZE];
-    uint8        state_size;
 } StateMachine;
 
 extern void StateMachineWork(const StateMachine* state_machine, uint8* cur_state);

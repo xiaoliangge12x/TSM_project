@@ -10,8 +10,9 @@
 #define S_TEN_NS_CONV_RATE  ((int64_t)100000000)
 #define US_TEN_NS_CONV_RATE ((int64_t)100)
 #define COLOR_NONE          "\033[0m"
-#define RED_COLOR           "\033[31m"
-#define GREEN_COLOR         "\033[32m"
+#define COLOR_RED           "\033[31m"
+#define COLOR_GREEN         "\033[32m"
+#define COLOR_YELLOW        "\033[33m"
 
 #define LOG(str_color, str, ...) { \
     time_t t_time; \

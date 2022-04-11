@@ -13,11 +13,20 @@ function main()
         exit 0
     fi
     find . ! \( -name '*.sh' -or -name '..'  -or -name '.' -or -name '.gitignore' \) | xargs rm -rf
-    if [[ $# -eq 1 && $1 == 'open_test' ]]; then
-        cmake .. -DOPEN_TEST=ON && make -j8
-        exit 0
+    if [ $# -eq 0 ]; then
+        cmake .. && make clean && make -j8
+    elif [ $# -eq 1 ]; then
+        if [ $1 == 'open_test' ]; then
+            cmake .. -DOPEN_TEST=ON && make -j8
+            exit 0
+        else
+            echo "wrong params value"
+            exit 1
+        fi
+    else
+        echo "wrong params num"
+        exit 1
     fi
-    cmake .. && make clean && make -j8
 }
 
 main $@

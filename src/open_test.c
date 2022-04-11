@@ -23,6 +23,7 @@ static const Signal g_signal_table[] =
     {TYPE_UINT8,   "lng_override_st",               GetLngOverrideSt},
     {TYPE_UINT8,   "driver_hand_torque_st",         GetDriverHandTorqueSt},
     {TYPE_UINT8,   "mrm_system_fault_level",        GetMRMSystemFaultLevel},
+    {TYPE_UINT8,   "planningLite_control_state",    GetPlanningLite_control_state},
 };
 // -------------------- function definition -----------------------------------------
 // 从yaml中读取数据并设置
@@ -99,28 +100,6 @@ void SimulinkDataSet(const char* key_str, const char* value_str, SimulinkData* s
                             }
                         } else {
                             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                        }
-                    } else if (!strcmp(key_str, "BCM_LeftTurnLampSt")) {
-                        // 模拟车上环境
-                        if (atoi(value_str) == 1) {
-                            if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt) {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                            } else {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 1;
-                            }
-                        } else {
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                        }
-                    } else if (!strcmp(key_str, "BCM_RightTurnLampSt")) {
-                        // 模拟车上环境
-                        if (atoi(value_str) == 1) {
-                            if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt) {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                            } else {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 1;
-                            }
-                        } else {
                             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
                         }
                     } else {

@@ -21,6 +21,32 @@
 #include <assert.h>
 #endif
 
+// ----------------------  macro ------------------------------------------------------
+#define CONSUME_TIME
+
+// ----------------------  global variable(calibration) -------------------------------
+extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
+extern uint16  K_GasPedalAppliedThresholdTime_Cnt;         
+extern uint16  K_LngOverrideTakeOverTime_Cnt;                
+extern uint16  K_BrakeTOR_TimeThreshold_Cnt;                 
+extern uint16  K_OverrideHandTorqCheckTime_Cnt;
+
+extern float32 K_BrakPedalAppliedThresholdTime;
+extern float32 K_GasPedalAppliedThresholdTime;
+extern float32 K_LngOverrideTakeOverTime;
+extern float32 K_BrakeTOR_TimeThreshold;
+extern float32 K_OverrideHandTorqCheckTime;
+extern float32 K_Tor3RampUpToMrm4Time;
+
+extern float32 K_OverrideHandTorqThreshold_LessTwoZone;
+extern float32 K_OverrideHandTorqThreshold_TwoZone;
+extern float32 K_OverrideHandTorqThreshold_ThreeZone;
+extern float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone;
+extern float32 K_TakeOverAvailHandTorqThreshold_TwoZone;
+extern float32 K_TakeOverAvailHandTorqThreshold_ThreeZone;
+extern float32 K_GasPedalPosThresholdValue;
+
+
 // ---------------------------------- typedef   ------------------------------------------------
 typedef enum 
 {
@@ -292,8 +318,8 @@ extern TSMParam      g_tsm;
 // --------------------------------- function declaration --------------------------
 void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
 void StopTiming(uint8* flag);    // 停止计时
-float32 GetTimeGapInSec(sint64 start_time, uint8* flag); // 计算持续时间
-boolean IsBitSet(const uint16 event_bitfields, const uint8 bit_no);
-void SetSignalBitFields(uint16* event_bitfields, const uint8 bit_no);
-void ResetSignalBitFields(uint16* event_bitfields, const uint8 bit_no);
+float32 GetTimeGapInSec(const sint64 start_time, const uint8 flag); // 计算持续时间
+boolean IsBitSet(const uint32 event_bitfields, const uint8 bit_no);
+void SetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
+void ResetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
 #endif

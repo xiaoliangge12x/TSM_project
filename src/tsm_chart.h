@@ -20,9 +20,6 @@
 #include "common.h"
 #endif
 // ---------------------------------- macro definition     --------------------------------------
-#define TOTAL_TSM_TRANS_NUM   23U
-#define TOTAL_TSM_EVENT_NUM   11U
-#define TOTAL_TSM_STATE_NUM   7U
 #define TIMESTAMP_MAX_NUM     3
 #define EPSINON_TIME          ((float32)0.00001)
 #define NS_IN_MS              ((float32)1000000.0)
@@ -41,6 +38,12 @@ typedef enum
     EVENT_MRC,
     EVENT_TOR_BOTH_CTRL,
     EVENT_TOR_LAT_CTRL,
+    EVENT_TOR_TO_MRM_BOTH,
+    EVENT_TOR_TO_MRM_LAT,
+    EVENT_MRM_BOTH_CTRL_SWITCH,
+    EVENT_MRM_LAT_CTRL_SWITCH,
+    EVENT_TOR_BOTH_CTRL_SWITCH,
+    EVENT_TOR_LAT_CTRL_SWITCH,
     EVENT_VEH_STANDSTILL,
     EVENT_FUNCTION_EXIT,
     EVENT_WAIT_EPB_RES,
@@ -65,6 +68,12 @@ typedef enum
     BITNO_MRC,
     BITNO_TOR_BOTH_CTRL,
     BITNO_TOR_LAT_CTRL,
+    BITNO_TOR_TO_MRM_BOTH,
+    BITNO_TOR_TO_MRM_LAT,
+    BITNO_MRM_BOTH_CTRL_SWITCH,
+    BITNO_MRM_LAT_CTRL_SWITCH,
+    BITNO_TOR_BOTH_CTRL_SWITCH,
+    BITNO_TOR_LAT_CTRL_SWITCH,
     BITNO_VEH_STANDSTILL,
     BITNO_FUNCTION_EXIT,
     BITNO_WAIT_EPB_RES,
@@ -97,9 +106,17 @@ boolean IsTorLatCtrlCondMeet();
 boolean IsVehStandStillCondMeet();
 boolean IsFuncExitCondMeet();
 boolean IsWaitEpbSt();
+boolean IsSwitchToMrmBothCtrl();
+boolean IsSwitchToMrmLatCtrl();
+boolean IsSwitchToTorBothCtrl();
+boolean IsSwitchToTorLatCtrl();
+boolean IsTorToMrmBoth();
+boolean IsTorToMrmLat();
 boolean IsDriverTakeOver();
 boolean IsInTorFault();
 boolean IsNDAInActiveSt(const uint8 nda_st);
+void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl);
+
 void ActionInPassive();
 void ActionInStandby();   
 void ActionInFailureLighting();

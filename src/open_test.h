@@ -89,6 +89,10 @@ void* GetEMS_GasPedalActPstforMRR(SimulinkData* simulink_data)
 {
     return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR);
 }
+void* GetPlanningLite_control_state(SimulinkData* simulink_data)
+{
+    return &(simulink_data->rt_in_planlite_tsm.planningLite_control_state);
+}
 
 void* GetNDATransitNormalFlag(SimulinkData* simulink_data)
 {

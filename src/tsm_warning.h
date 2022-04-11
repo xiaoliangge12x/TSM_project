@@ -17,9 +17,6 @@
 #include "tsm_parameter.h"
 #include "base/sm_base.h"
 // -----------------------  macro    -----------------------------------------
-#define TOTAL_WARNING_TRANS_NUM   17U
-#define TOTAL_WARNING_EVENT_NUM   10U
-#define TOTAL_WARNING_STATE_NUM   6U
 // ----------------------- typedef         -----------------------------------
 typedef enum
 {

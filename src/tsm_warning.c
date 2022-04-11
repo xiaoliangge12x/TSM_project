@@ -14,7 +14,9 @@
 #include "tsm_warning.h"
 
 // ------------------------------------ global variable definition -------------------------------
-static uint16      g_warning_signal_bitfileds = 0U;
+static uint32      g_warning_signal_bitfileds = 0U;
+static sint64      tor_level3_start_time = 0;
+static uint8       tor_level3_timing_flag = 0;
 WarningSMParam     g_warning_sm;
 const StateMachine g_warning_state_machine = 
 {
@@ -38,7 +40,6 @@ const StateMachine g_warning_state_machine =
         {WARNING_MRM_LEVEL_4, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
         {WARNING_MRM_LEVEL_5, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
     },
-    .state_transit_size = TOTAL_WARNING_TRANS_NUM,
     .event_table = 
     {
         {EVENT_CHECK_IN_PASSIVE,         CheckInPassiveSt},
@@ -52,7 +53,6 @@ const StateMachine g_warning_state_machine =
         {EVENT_RAMPUP_LEVEL_3_WITH_TIME, RampUpToTorLevel3WithoutTiming},
         {EVENT_RAMPUP_LEVEL_4,           RampUpToMrmLevel4WithTiming}
     },
-    .event_size = TOTAL_WARNING_EVENT_NUM,
     .state_table =
     {
         {NO_WARNING,          ActionInNoWarning},
@@ -62,7 +62,6 @@ const StateMachine g_warning_state_machine =
         {WARNING_MRM_LEVEL_4, ActionInWarningMrmLevel4},
         {WARNING_MRM_LEVEL_5, ActionInWarningMrmLevel5},
     },
-    .state_size = TOTAL_WARNING_STATE_NUM
 };
 
 // ------------------------------------ func def -----------------------------------------
@@ -87,8 +86,12 @@ void RunWarningSit()
         SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
     }
 
+#ifdef _NEED_LOG
+    LOG(COLOR_YELLOW, "tor_level3_start_time: %ld, tor3 warning time pass: %f", tor_level3_start_time, 
+        GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag));
+#endif
     // TODO: 3级TOR延时
-    if (false) {
+    if (GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag) > K_Tor3RampUpToMrm4Time) {
         SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
     }
 
@@ -111,16 +114,16 @@ void RunWarningSit()
     } else {
         // do nothing;
     }
-
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "RunWarningSit g_warning_signal_bitfileds: %d", g_warning_signal_bitfileds);
-#endif
 }
 
 void ActionInNoWarning()
 {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "No warnng st");
+#endif
+
+#ifdef CONSUME_TIME
+    StopTiming(&tor_level3_timing_flag);
 #endif
 }
 
@@ -143,12 +146,23 @@ void ActionInWarningTorLevel3()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "Warning Tor Level_3 st");
 #endif
+    
+#ifdef CONSUME_TIME
+    if (!tor_level3_timing_flag) {
+        StartTiming(&tor_level3_start_time, &tor_level3_timing_flag);
+    }
+    LOG(COLOR_YELLOW, "ActionInWarningTorLevel3 start time: %d", tor_level3_start_time);
+#endif
 }
 
 void ActionInWarningMrmLevel4()
 {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "Warning Mrm Level_4 st");
+#endif
+
+#ifdef CONSUME_TIME
+    StopTiming(&tor_level3_timing_flag);
 #endif
 }
 
@@ -181,7 +195,6 @@ boolean CheckInMrmSt()
 
 boolean CheckInMrcSt()
 {
-    LOG(COLOR_NONE, "CheckInMrcSt: %d", IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST));
     return IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
 }
 

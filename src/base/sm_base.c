@@ -18,25 +18,23 @@ void StateMachineWork(const StateMachine* state_machine, uint8* cur_state)
     uint8 eventId_Table[MAX_EVENT_SIZE];
     uint8 size = 0;
     // 找到触发事件ID的数组
-    for (uint8 i = 0; i < state_machine->event_size; ++i) {
-#ifdef _DEBUG_MODE
-        assert(state_machine->event_table[i].transit_event != NULL_PTR);
-#endif
-        if (state_machine->event_table[i].transit_event()) {
-            eventId_Table[size++] = state_machine->event_table[i].event_id;
+    uint8 event_index   = 0;
+    while ((event_index < MAX_EVENT_SIZE) && (state_machine->event_table[event_index].transit_event != NULL_PTR)) {
+        if (state_machine->event_table[event_index].transit_event()) {
+            eventId_Table[size++] = state_machine->event_table[event_index].event_id;
         }
+        ++event_index;
     }
 
+    uint8 transit_index = 0;
     if (size != 0) {
-        for (uint8 i = 0; i < state_machine->state_transit_size; ++i) {
-#ifdef _DEBUG_MODE
-            assert(state_machine->state_transit_table[i].cur_st != 0);
-#endif
-            if (*cur_state == state_machine->state_transit_table[i].cur_st) {
+        while ((transit_index < MAX_STATE_TRANSIT_SIZE) && 
+            (state_machine->state_transit_table[transit_index].cur_st != 0)) {
+            if (*cur_state == state_machine->state_transit_table[transit_index].cur_st) {
                 uint8 is_found = 0;
                 for (uint8 j = 0; j < size; ++j) {
-                    if (eventId_Table[j] == state_machine->state_transit_table[i].event_id) {
-                        *cur_state = state_machine->state_transit_table[i].next_st;
+                    if (eventId_Table[j] == state_machine->state_transit_table[transit_index].event_id) {
+                        *cur_state = state_machine->state_transit_table[transit_index].next_st;
                         is_found = 1;
                         break;
                     }
@@ -45,15 +43,16 @@ void StateMachineWork(const StateMachine* state_machine, uint8* cur_state)
                     break;
                 }
             }
+            ++transit_index;
         }
     }
 
-    for (uint8 i = 0; i < state_machine->state_size; ++i) {
-#ifdef _DEBUG_MODE
-        assert(state_machine->state_table[i].action != NULL_PTR);
-#endif
-        if (*cur_state == state_machine->state_table[i].state) {
-            state_machine->state_table[i].action();
+    uint8 state_index   = 0;
+    while ((state_index < MAX_STATE_SIZE) && state_machine->state_table[state_index].action != NULL_PTR) {
+        if (*cur_state == state_machine->state_table[state_index].state) {
+            state_machine->state_table[state_index].action();
+            break;
         }
+        ++state_index;
     }
 }

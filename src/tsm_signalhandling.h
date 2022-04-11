@@ -19,28 +19,6 @@
 #include "common.h"
 #endif
 // ---------------------- macro  ------------------------------------------------------------
-#define CONSUME_TIME
-
-// ---------------------- static global variable(calibration) -------------------------------
-static uint16  K_BrakPedalAppliedThresholdTime_Cnt          = 10U;    // 制动判断的持续时间(200ms周期)
-static uint16  K_GasPedalAppliedThresholdTime_Cnt           = 10U;    // 油门踩下的持续时间
-static uint16  K_LngOverrideTakeOverTime_Cnt                = 500U;   // 纵向超越至判断接管的持续时间(10s)
-static uint16  K_BrakeTOR_TimeThreshold_Cnt                 = 150U;   // 刹车长时介入时间阈值， 3s
-static uint16  K_OverrideHandTorqCheckTime_Cnt              = 50U;    // 手力矩是否超越的持续时间， 暂定1s
-
-static float32 K_BrakPedalAppliedThresholdTime              = 0.2;
-static float32 K_GasPedalAppliedThresholdTime               = 0.2;
-static float32 K_LngOverrideTakeOverTime                    = 10.0;
-static float32 K_BrakeTOR_TimeThreshold                     = 3.0;
-static float32 K_OverrideHandTorqCheckTime                  = 1.0;
-
-static float32 K_OverrideHandTorqThreshold_LessTwoZone      = 1.8;    // 少于2区的手力矩是否超越的手扶阈值
-static float32 K_OverrideHandTorqThreshold_TwoZone          = 1.5;    // 2区的是否超越的手力矩阈值
-static float32 K_OverrideHandTorqThreshold_ThreeZone        = 1.0;    // 3区的是否超越的手力矩阈值
-static float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone = 0;      // 少于2区的具备接管能力的手扶阈值
-static float32 K_TakeOverAvailHandTorqThreshold_TwoZone     = 0;      // 2区的具备接管能力的手力矩阈值
-static float32 K_TakeOverAvailHandTorqThreshold_ThreeZone   = 0;      // 3区的具备接管能力的手力矩阈值
-static float32 K_GasPedalPosThresholdValue                  = 20.0;   // 油门开度阈值
 
 // --------------------- typedef ------------------------------------------------------------
 typedef enum 
@@ -134,6 +112,9 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue* var_value);
-void FlagSetWithTime(uint8* flag_set_var, float32 time, uint8* time_flag, const VarValueInTime* var_value);
+void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value);
 
+boolean IsInMCUMRMActiveSt();
+
+void SetLaneChangeSt(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM);
 #endif

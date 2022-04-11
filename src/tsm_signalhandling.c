@@ -117,7 +117,7 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
             StartTiming(&lngOverride_time, &lngOverride_timing_flag);
         }
         FlagSetWithTime(&g_inter_media_msg.lng_override_long_duration_flag, lngOverride_time, 
-            &lngOverride_timing_flag, &var_value);
+            lngOverride_timing_flag, &var_value);
     } else {
         StopTiming(&lngOverride_timing_flag);
         g_inter_media_msg.lng_override_st                 = OVERRIDE_NOT_SATISFY;
@@ -151,7 +151,7 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         if (!brakeset_timing_flag) {
             StartTiming(&brakeset_time, &brakeset_timing_flag);
         }
-        FlagSetWithTime(&g_inter_media_msg.brake_is_set, brakeset_time, &brakeset_timing_flag, &var_value);
+        FlagSetWithTime(&g_inter_media_msg.brake_is_set, brakeset_time, brakeset_timing_flag, &var_value);
     } else {
         StopTiming(&brakeset_timing_flag);
         g_inter_media_msg.brake_is_set = var_value.flag_unset_val;
@@ -185,7 +185,7 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
             StartTiming(&gasPedalPos_time, &gasPedalApplied_timing_flag);
         }
         FlagSetWithTime(&g_inter_media_msg.driver_acc_pedal_applied_flag, gasPedalPos_time, 
-            &gasPedalApplied_timing_flag, &var_value);
+            gasPedalApplied_timing_flag, &var_value);
     } else {
         StopTiming(&gasPedalApplied_timing_flag);
         g_inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
@@ -237,7 +237,7 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
             StartTiming(&latOverrideWithHOD_time, &latOverrideWithHOD_timing_flag);
         }
         FlagSetWithTime(&g_inter_media_msg.driver_hand_torque_st, latOverrideWithHOD_time, 
-            &latOverrideWithHOD_timing_flag, &var_value);
+            latOverrideWithHOD_timing_flag, &var_value);
     } else {
         StopTiming(&latOverrideWithHOD_timing_flag);
         g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
@@ -271,7 +271,7 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
             StartTiming(&latOverrideWithoutHOD_time, &latOverrideWithoutHOD_timing_flag);
         }
         FlagSetWithTime(&g_inter_media_msg.driver_hand_torque_st, latOverrideWithoutHOD_time, 
-            &latOverrideWithoutHOD_timing_flag, &var_value);
+            latOverrideWithoutHOD_timing_flag, &var_value);
     } else {
         StopTiming(&latOverrideWithoutHOD_timing_flag);
         g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
@@ -331,8 +331,8 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
 
     if (hazardlight_on) {
         g_inter_media_msg.automaton_transit_normal_flag = 0;
-        // 0328版本暂用，此时顺便把系统故障置为1，后续删除
-        g_inter_media_msg.mrm_system_fault_level = 1;
+        // 0328版本暂用，此时顺便把系统故障置为TOR故障，后续删除
+        g_inter_media_msg.mrm_system_fault_level = TOR_LEVEL3_FAULT;
         return;
     }
     g_inter_media_msg.automaton_transit_normal_flag = 1;
@@ -359,8 +359,7 @@ void BrakeInervationFlagJudge()
         g_inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
         brake_intervation_cnt                       = 0;
     } else {
-        if ((g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) || (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) || 
-            (g_tsm.state == MCU_MRM_MRC)) {
+        if (IsInMCUMRMActiveSt()) {
             if (g_inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {
                 g_inter_media_msg.brake_intervention_type = LONG_TERM_INTERVENTION;
             } else {
@@ -400,12 +399,11 @@ void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue*
     }
 }
 
-void FlagSetWithTime(uint8* flag_set_var, float32 time, uint8* time_flag, const VarValueInTime* var_value)
+void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value)
 {
     if (*flag_set_var == var_value->flag_set_val) {
         *flag_set_var = var_value->flag_set_val;
     } else {
-
         if (GetTimeGapInSec(time, time_flag) > var_value->time_threshold) {
             *flag_set_var = var_value->flag_set_val;
         } else {
@@ -414,3 +412,13 @@ void FlagSetWithTime(uint8* flag_set_var, float32 time, uint8* time_flag, const 
     }
 }
 
+
+boolean IsInMCUMRMActiveSt()
+{
+    return ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_TOR_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_TOR_STAND) ||
+            (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_MRC));
+}
