@@ -9,9 +9,9 @@
 
 typedef struct tagTimeStamp
 {
-    bool is_valid;  // enum invalid
-    uint32_t sec;
-    uint32_t nsec;
+    bool Timestamp_valid;  // enum invalid
+    uint32_t Timestamp_sec;
+    uint32_t Timestamp_nsec;
 } Dt_RECORD_TimeStamp;
 
 typedef struct tagVehicleControlReq
@@ -281,7 +281,7 @@ typedef struct tagTSM2CtrlArb
     Dt_RECORD_TimeStamp TimeStamp_CanGate;     // 接受CanGate消息的时间戳
     uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
-    uint8_t lng_override_flag;    // 纵向override状态， 1为 override
+    uint8_t long_override_flag;    // 纵向override状态， 1为 override
     uint8_t NDA_LatState; 
     uint8_t NDA_ILC_State;
     uint8_t NDA_LongState;

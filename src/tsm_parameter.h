@@ -322,9 +322,13 @@ extern InterMediaMsg g_inter_media_msg;
 // 声明全局变量
 extern TSMParam g_tsm;
 // --------------------------------- function declaration --------------------------
+
+#ifdef CONSUME_TIME
 void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
 void StopTiming(uint8* flag);    // 停止计时
 float32 GetTimeGapInSec(const sint64 start_time, const uint8 flag); // 计算持续时间
+#endif
+
 boolean IsBitSet(const uint32 event_bitfields, const uint8 bit_no);
 void SetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
 void ResetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);

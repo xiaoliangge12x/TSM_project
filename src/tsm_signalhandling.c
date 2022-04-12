@@ -402,6 +402,8 @@ void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue*
     }
 }
 
+#ifdef CONSUME_TIME
+
 void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value)
 {
     if (*flag_set_var == var_value->flag_set_val) {
@@ -414,6 +416,8 @@ void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_fl
         }
     }
 }
+
+#endif
 
 
 boolean IsInMCUMRMActiveSt()

@@ -23,6 +23,7 @@ float32 K_TakeOverAvailHandTorqThreshold_TwoZone     = 0;      // 2区的具备�
 float32 K_TakeOverAvailHandTorqThreshold_ThreeZone   = 0;      // 3区的具备接管能力的手力矩阈值
 float32 K_GasPedalPosThresholdValue                  = 20.0;   // 油门开度阈值
 
+#ifdef CONSUME_TIME
 
 void StartTiming(sint64* cur_time, uint8* flag)
 {
@@ -47,6 +48,8 @@ float32 GetTimeGapInSec(const sint64 start_time, const uint8 flag)
         return 0.0;
     }
 }
+
+#endif
 
 boolean IsBitSet(const uint32 event_bitfields, const uint8 bit_no)
 {

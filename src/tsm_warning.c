@@ -89,8 +89,10 @@ void RunWarningSit()
     }
 
 #ifdef _NEED_LOG
+#ifdef CONSUME_TIME
     LOG(COLOR_YELLOW, "tor_level3_start_time: %ld, tor3 warning time pass: %f", tor_level3_start_time, 
         GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag));
+#endif
 #endif
 #ifdef CONSUME_TIME
     // TODO: 3级TOR延时
