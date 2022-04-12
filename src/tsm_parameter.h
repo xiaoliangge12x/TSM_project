@@ -305,6 +305,7 @@ typedef struct
 {
     uint8 lng_override_flag;
     uint8 mrm_activation_st;
+    uint8 control_arb_request;
 } TSMActionParam;
 
 typedef struct 

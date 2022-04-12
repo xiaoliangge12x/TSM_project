@@ -336,7 +336,9 @@ void ActionInPassive()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in MCU_MRM_PASSIVE St.");
 #endif
-    g_tsm.tsm_action_param.mrm_activation_st = 1;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInFailureLighting()
@@ -344,8 +346,9 @@ void ActionInFailureLighting()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Failure Lighting St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag = 0;
-    g_tsm.tsm_action_param.mrm_activation_st = 1;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInFailureNoLighting()
@@ -353,7 +356,9 @@ void ActionInFailureNoLighting()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Failure No Lighting St.");
 #endif
-    g_tsm.tsm_action_param.mrm_activation_st = 1;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInStandby()
@@ -361,7 +366,9 @@ void ActionInStandby()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Standby St.");
 #endif
-    g_tsm.tsm_action_param.mrm_activation_st = 1;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInTorBothCtrl()
@@ -369,6 +376,9 @@ void ActionInTorBothCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Both Ctrl St.");
 #endif
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 1;
 }
 
 void ActionInTorLatCtrl()
@@ -376,6 +386,9 @@ void ActionInTorLatCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Lat Ctrl St.");
 #endif
+    g_tsm.tsm_action_param.lng_override_flag   = 1;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 1;
 }
 
 void ActionInTorStand()
@@ -383,6 +396,9 @@ void ActionInTorStand()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Stand St.");
 #endif
+    g_tsm.tsm_action_param.lng_override_flag   = 1;
+    g_tsm.tsm_action_param.mrm_activation_st   = 1;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInMrmBothCtrl()
@@ -391,8 +407,9 @@ void ActionInMrmBothCtrl()
     LOG(COLOR_YELLOW, "It's in Mrm Both Ctrl St.");
 #endif
     // car test
-    g_tsm.tsm_action_param.lng_override_flag = 0;
-    g_tsm.tsm_action_param.mrm_activation_st = 0;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 0;
+    g_tsm.tsm_action_param.control_arb_request = 1;
 }
 
 void ActionInMrmLatCtrl()
@@ -401,8 +418,9 @@ void ActionInMrmLatCtrl()
     LOG(COLOR_NONE, "It's in Mrm Lat Ctrl St.");
 #endif
     // car test
-    g_tsm.tsm_action_param.lng_override_flag = 1;
-    g_tsm.tsm_action_param.mrm_activation_st = 0;
+    g_tsm.tsm_action_param.lng_override_flag   = 1;
+    g_tsm.tsm_action_param.mrm_activation_st   = 0;
+    g_tsm.tsm_action_param.control_arb_request = 1;
 }
 
 void ActionInMrc()
@@ -410,8 +428,9 @@ void ActionInMrc()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Mrc St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag = 0;
-    g_tsm.tsm_action_param.mrm_activation_st = 1;
+    g_tsm.tsm_action_param.lng_override_flag   = 0;
+    g_tsm.tsm_action_param.mrm_activation_st   = 0;
+    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
@@ -485,7 +504,8 @@ void WrapAndSend(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD
     rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
     memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
         sizeof(Dt_RECORD_Automaton_State));
-    rty_DeTSM2CtrlArb->lng_override_flag = g_tsm.tsm_action_param.lng_override_flag;
+    rty_DeTSM2CtrlArb->lng_override_flag   = g_tsm.tsm_action_param.lng_override_flag;
+    rty_DeTSM2CtrlArb->control_arb_request = g_tsm.tsm_action_param.control_arb_request;
 
     //------------------------------------------- 给到DeciArb相关  ----------------------------------------
     memcpy(&rty_DeTSM2DecisionArbitrator->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
