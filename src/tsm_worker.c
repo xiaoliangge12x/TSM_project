@@ -2,6 +2,9 @@
 #include "tsm_chart.h"
 #include "tsm_signalhandling.h"
 
+// --------------- global var def -------------------------
+struct timeval g_timeval;
+// --------------- func def -------------------------------
 /* TSM module worker */
 void TsmModulerWorker()
 {
@@ -9,21 +12,23 @@ void TsmModulerWorker()
     char* filename = "../../config/SImulinkDataInput.yaml";
 #endif
 
-    SimulinkData simulink_data;
-    Dt_RECORD_TSM2PLANLITE rt_out_tsm_planlite;
-    Dt_RECORD_TSM2CtrlArb rt_out_tsm_ctrlarb;
+    SimulinkData 					 simulink_data;
+    Dt_RECORD_TSM2PLANLITE 			 rt_out_tsm_planlite;
+    Dt_RECORD_TSM2CtrlArb 			 rt_out_tsm_ctrlarb;
     Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
-    Dt_RECORD_TSM2Diag rt_out_tsm_diag;
-    Dt_RECORD_TSM2HMI rt_out_tsm_hmi;
-    Dt_RECORD_TSM2CANGATE rt_out_tsm_cangate;
+    Dt_RECORD_TSM2Diag 				 rt_out_tsm_diag;
+    Dt_RECORD_TSM2HMI 				 rt_out_tsm_hmi;
+    Dt_RECORD_TSM2CANGATE 			 rt_out_tsm_cangate;
     // 外部信号初始化
-    memset(&simulink_data, 0, sizeof(SimulinkData));
+    memset(&simulink_data, 		 0, sizeof(SimulinkData));
     memset(&rt_out_tsm_planlite, 0, sizeof(Dt_RECORD_TSM2PLANLITE));
-    memset(&rt_out_tsm_ctrlarb, 0, sizeof(Dt_RECORD_TSM2CtrlArb));
-    memset(&rt_out_tsm_deciarb, 0, sizeof(Dt_RECORD_TSM2DecisionArbitrator));
-    memset(&rt_out_tsm_diag, 0, sizeof(Dt_RECORD_TSM2Diag));
-    memset(&rt_out_tsm_hmi, 0, sizeof(Dt_RECORD_TSM2HMI));
-    memset(&rt_out_tsm_cangate, 0, sizeof(Dt_RECORD_TSM2CANGATE));
+    memset(&rt_out_tsm_ctrlarb,  0, sizeof(Dt_RECORD_TSM2CtrlArb));
+    memset(&rt_out_tsm_deciarb,  0, sizeof(Dt_RECORD_TSM2DecisionArbitrator));
+    memset(&rt_out_tsm_diag, 	 0, sizeof(Dt_RECORD_TSM2Diag));
+    memset(&rt_out_tsm_hmi, 	 0, sizeof(Dt_RECORD_TSM2HMI));
+    memset(&rt_out_tsm_cangate,  0, sizeof(Dt_RECORD_TSM2CANGATE));
+
+    gettimeofday(&g_timeval, NULL);
 
     MRM_TSM_MODULE_Init();
 

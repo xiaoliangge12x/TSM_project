@@ -29,6 +29,8 @@ add_compile_options(-D_NEED_LOG)
 if (OPEN_TEST)
     add_compile_options(-D_OPEN_TEST)
 endif()
+add_compile_options(-D_RUN_IN_LINUX)
+add_compile_options(-D_DEBUG_MODE)
 
 # 添加选项
 add_definitions(-w)

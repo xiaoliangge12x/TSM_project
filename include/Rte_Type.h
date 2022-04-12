@@ -257,7 +257,7 @@ typedef struct tagTSM2Planninglite
     uint8_t             NDA_Lane_Change_Type;
     uint8_t             NDA_Lane_Change_Direction;
     uint8_t             NDA_Lane_Change_State;  // 包含变道请求
-    uint8_t             MRM_Status;             // 告知planning lite 退出的标志位， 状态机 0 - 退出 ， 1 - 激活 
+    uint8_t             MRM_Status;             // 告知planning lite 执行mrm还是tor, 状态机 0 - mrm  active ， 1 - tor active 
 } Dt_RECORD_TSM2PLANLITE;
 // typedef struct tagTSM2Planninglite
 // {
@@ -285,6 +285,7 @@ typedef struct tagTSM2CtrlArb
     uint8_t NDA_LatState; 
     uint8_t NDA_ILC_State;
     uint8_t NDA_LongState;
+	uint8_t control_arb_request;   // 0 - 响应soc  1 - 响应mcu
 } Dt_RECORD_TSM2CtrlArb;
 // typedef struct tagTSM2ControlArbitrator
 // {

@@ -18,12 +18,12 @@ sint32 main()
   // 线程创建失败
   if (ret_thrd != 0) {
 #ifdef _NEED_LOG
-    LOG("main thread create failed!");
+    LOG(COLOR_NONE, "main thread create failed!");
 #endif
     exit(-1);
   } else {
 #ifdef _NEED_LOG
-    LOG("main thread create success!");
+    LOG(COLOR_NONE, "main thread create success!");
 #endif
   }
   // 等待线程终止

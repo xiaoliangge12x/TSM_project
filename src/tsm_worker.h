@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-#include "tsm_data.h"
+#include "tsm_parameter.h"
+
+// --------------------- global declaration ------------------
+extern struct timeval g_timeval;
 
 void TsmModulerWorker();
 
