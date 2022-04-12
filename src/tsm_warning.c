@@ -17,6 +17,8 @@
 static uint32      g_warning_signal_bitfileds = 0U;
 static sint64      tor_level3_start_time = 0;
 static uint8       tor_level3_timing_flag = 0;
+
+static uint16      tor_level3_duration_cnt = 0;
 WarningSMParam     g_warning_sm;
 const StateMachine g_warning_state_machine = 
 {
@@ -90,10 +92,17 @@ void RunWarningSit()
     LOG(COLOR_YELLOW, "tor_level3_start_time: %ld, tor3 warning time pass: %f", tor_level3_start_time, 
         GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag));
 #endif
+#ifdef CONSUME_TIME
     // TODO: 3级TOR延时
     if (GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag) > K_Tor3RampUpToMrm4Time) {
         SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
     }
+#else
+    if (tor_level3_duration_cnt > K_Tor3RampUpToMrm4Time_Cnt) {
+        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
+        tor_level3_duration_cnt = 0;
+    }
+#endif
 
     if ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) || (g_tsm.state == MCU_MRM_TOR_LAT_CTRL)) {
         if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) {
@@ -152,6 +161,8 @@ void ActionInWarningTorLevel3()
         StartTiming(&tor_level3_start_time, &tor_level3_timing_flag);
     }
     LOG(COLOR_YELLOW, "ActionInWarningTorLevel3 start time: %d", tor_level3_start_time);
+#else
+    ++tor_level3_duration_cnt;
 #endif
 }
 

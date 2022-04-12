@@ -48,7 +48,7 @@ typedef enum
 
 typedef struct 
 {
-    /* data */
+    uint8 warning_level;    // for build pass
 } WarningActionParam;
 
 typedef struct 

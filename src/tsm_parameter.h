@@ -22,7 +22,7 @@
 #endif
 
 // ----------------------  macro ------------------------------------------------------
-#define CONSUME_TIME
+// #define CONSUME_TIME
 
 // ----------------------  global variable(calibration) -------------------------------
 extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
@@ -30,6 +30,7 @@ extern uint16  K_GasPedalAppliedThresholdTime_Cnt;
 extern uint16  K_LngOverrideTakeOverTime_Cnt;                
 extern uint16  K_BrakeTOR_TimeThreshold_Cnt;                 
 extern uint16  K_OverrideHandTorqCheckTime_Cnt;
+extern uint16  K_Tor3RampUpToMrm4Time_Cnt;
 
 extern float32 K_BrakPedalAppliedThresholdTime;
 extern float32 K_GasPedalAppliedThresholdTime;

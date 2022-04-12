@@ -6,6 +6,7 @@ uint16  K_GasPedalAppliedThresholdTime_Cnt           = 10U;    // 油门踩下�
 uint16  K_LngOverrideTakeOverTime_Cnt                = 500U;   // 纵向超越至判断接管的持续时间(10s)
 uint16  K_BrakeTOR_TimeThreshold_Cnt                 = 150U;   // 刹车长时介入时间阈值， 3s
 uint16  K_OverrideHandTorqCheckTime_Cnt              = 50U;    // 手力矩是否超越的持续时间， 暂定1s
+uint16  K_Tor3RampUpToMrm4Time_Cnt                   = 500U;
 
 float32 K_BrakPedalAppliedThresholdTime              = 0.2;
 float32 K_GasPedalAppliedThresholdTime               = 0.2;
