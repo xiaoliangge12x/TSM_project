@@ -299,6 +299,8 @@ typedef struct
     uint8                     driver_acc_pedal_applied_flag;   // 驾驶员是否踩下油门
     NdaStTransitMonitor       nda_st_transit_monitor;          // nda状态跳转使能标志位
     Dt_RECORD_Automaton_State last_automaton_st;               // 上一帧soc侧automaton状态 
+    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位
+    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位
 } InterMediaMsg;
 
 typedef struct 

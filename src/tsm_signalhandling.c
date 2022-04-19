@@ -22,6 +22,8 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 {
     // 判断驾驶员注意力状态
     DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // 判断NDA是否可用
+    CheckNdaAvailableSt(&rtu_DeCANGATE2TSM->Soc_Info);
     // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
     DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 纵向超越标志位
@@ -86,6 +88,38 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         }
     }
     g_inter_media_msg.driver_attention_st = UNKNOWN;
+}
+
+void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info)
+{
+    if (soc_info == NULL_PTR) {
+        return;
+    }
+
+    g_inter_media_msg.is_nda_avl_before_activation = 
+    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_Before_Active && 
+    (g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED)) ? 1 : 0;
+
+    g_inter_media_msg.is_nda_avl_after_activation =
+    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_After_Active && 
+    IsDriverNotFatigue()) ? 1 : 0;
+}
+
+boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info) 
+{
+    return (g_inter_media_msg.nda_passive_vd_flag && 
+        (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) &&
+        soc_info->NDA_Enable_State &&
+        !g_inter_media_msg.nda_need_phase_in && 
+        soc_info->SD_Map_HD_Map_Match_St && 
+        soc_info->User_Set_Navi_Status);
+}
+
+boolean IsDriverNotFatigue() 
+{
+    return ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) ||
+            (g_inter_media_msg.driver_attention_st == AWAKE_AND_LOOK_REARVIEW_OR_HU) ||
+            (g_inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED));
 }
 
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)

@@ -102,6 +102,9 @@ typedef struct
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info);
+boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info);
+boolean IsDriverNotFatigue();
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void BrakeInervationFlagJudge();
