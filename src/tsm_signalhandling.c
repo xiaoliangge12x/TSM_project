@@ -446,6 +446,83 @@ void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_fl
     }
 }
 
+void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
+{
+    memset(&g_monitor_bitfields, 0, sizeof(MonitorBitfields));
+
+    if (g_inter_media_msg.is_nda_avl_before_activation) {
+        if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
+            (soc_info->HandsOn_HandsFree_Flag) ? 
+            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL)) : 
+            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_NORMAL));
+        } else if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+            if (!soc_info->HandsOn_HandsFree_Flag) {
+                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_STANDACTIVE);
+            }
+        } else {
+            // do nothing
+        }
+    }
+
+    if (g_inter_media_msg.is_nda_avl_after_activation) {
+        if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
+            (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_BOTH_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_BOTH_OVERRIDE);
+        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
+                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_NOT_SATISFY)) {
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_LNG_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LNG_OVERRIDE);
+        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
+                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_LAT_OVERRIDE);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LAT_OVERRIDE);
+        } else {
+            if (soc_info->HandsOn_HandsFree_Flag) {
+                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSON_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSON_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSON_NORMAL);
+                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+                    SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE);
+                }
+            } else {
+                SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL);
+                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL);
+                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+                    SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE);
+                }
+            }
+        }
+
+        // TODO: planning driveoff req
+        if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
+            (soc_info->NDA_Planning_Request == DRIVEOFF_REQUEST)) {
+            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
+            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
+        }
+    }
+}
 
 boolean IsInMCUMRMActiveSt()
 {

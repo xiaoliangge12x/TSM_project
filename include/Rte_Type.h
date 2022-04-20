@@ -68,6 +68,7 @@ typedef struct tagSoc_Info
     uint8_t                   Global_Location_Accuracy;          // 全局定位精度
     uint8_t                   Relative_Location_Accuracy;        // 相对定位精度
     uint8_t                   HandsOn_HandsFree_Flag;            // handson_handsfree配置码
+    uint8_t                   NDA_Planning_Request;       // 新增，NDA planning的请求， 同 holo::gh02::PlanningState::PlanningRequest
 } Dt_RECORD_Soc_Info;
 
 typedef struct

@@ -219,6 +219,15 @@ typedef enum
 
 typedef enum
 {
+    NO_REQUEST = 0U,
+    DRIVEOFF_REQUEST,
+    LANE_CHANGE_LEFT_REQUEST,
+    LANE_CHANGE_RIGHT_REQUEST,
+    LANE_CHANGE_CANCEL_REQUEST,
+} NdaPlanningRequest;
+
+typedef enum
+{
     NO_LANE_CHANGE = 0U,
     REQUEST_LANE_CHANGE_LEFT,
     REQUEST_LANE_CHANGE_RIGHT,
@@ -293,7 +302,6 @@ typedef struct
     DrvrAttentionSt           driver_attention_st;             // 驾驶员注意力状态
     uint8                     hands_can_takeover;              // 手可以接管标志位
     uint8                     brake_is_set;                    // 刹车是否踩下
-    uint8                     vehicle_standstill_flag;         // 车辆是否静止
     uint8                     nda_need_phase_in;               // nda 是否需要phase-in
     uint8                     nda_passive_vd_flag;             // nda passive的vd标志位， 1 为valid
     uint8                     driver_acc_pedal_applied_flag;   // 驾驶员是否踩下油门
