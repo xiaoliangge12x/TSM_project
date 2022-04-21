@@ -12,7 +12,8 @@
  */
 
 #include "tsm_monitor.h"
-
+// ------------------------------- global variable def ------------------------------------------
+MonitorBitfields       g_monitor_bitfields;
 // ------------------------------ driving table Initilize ----------------------------------------
 const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] = 
 {
