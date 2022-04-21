@@ -24,7 +24,7 @@ typedef boolean (*NdaTransitCondition) ();
 
 typedef enum
 {
-    BITNO_STANDBY_HANDSFREE_NORMAL,
+    BITNO_STANDBY_HANDSFREE_NORMAL = 0U,
     BITNO_STANDBY_HANDSON_NORMAL,
     BITNO_STANDBY_HANDSFREE_STANDACTIVE,
     BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE,
@@ -43,7 +43,7 @@ typedef enum
 
 typedef enum
 {
-    BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE,
+    BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE = 0U,
     BITNO_HANDSON_NORMAL_BOTH_OVERRIDE,
     BITNO_HANDSON_NORMAL_LAT_OVERRIDE,
     BITNO_HANDSON_NORMAL_LNG_OVERRIDE,
@@ -59,7 +59,7 @@ typedef enum
 
 typedef enum
 {
-    BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL,
+    BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL = 0U,
     BITNO_LNG_OVERRIDE_HANDSON_NORMAL,
     BITNO_LNG_OVERRIDE_BOTH_OVERRIDE,
     BITNO_LNG_OVERRIDE_LAT_OVERRIDE,
@@ -131,5 +131,5 @@ boolean TransitCondFromBothOverrideToHandsOnNormal();
 boolean TransitCondFromBothOverrideToLngOverride();
 boolean TransitCondFromBothOverrideToLatOverride();
 
-boolean IsNdaAvailable()
+boolean IsNdaAvailable();
 #endif

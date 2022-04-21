@@ -116,7 +116,7 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue* var_value);
 void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value);
-void CheckNdaActiveTransitCond(const Dt_RECORD_Soc_Info* soc_info);
+void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
 
 boolean IsInMCUMRMActiveSt();
 
