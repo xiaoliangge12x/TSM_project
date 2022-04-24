@@ -91,6 +91,14 @@ typedef enum
     CTRLARB_RESPOND_TO_SOC = 0,
     CTRLARB_RESPOND_TO_MCU,
 } CtrlArbRequest;
+
+typedef enum 
+{
+    BITNO_ADC_FAILURE = 0,
+    BITNO_SOC_FAILURE,
+    BITNO_MCU_FAILURE,
+    BITNO_OTHER_FAILURE,
+} BitNoAdcSt;
 // ---------------------------------- driving table        --------------------------------------
 // static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM];   // 此处非声明，而是定义
 // static const Action       g_action;                                 // 此处非声明，而是定义
@@ -126,7 +134,7 @@ boolean IsSwitchToTorLatCtrl();
 boolean IsTorToMrmBoth();
 boolean IsTorToMrmLat();
 boolean IsDriverTakeOver();
-boolean IsInTorFault();
+boolean IsInTorFault(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
 boolean IsNDAInActiveSt(const uint8 nda_st);
 void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl);
 

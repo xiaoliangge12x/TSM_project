@@ -34,12 +34,12 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_FAILURE_NO_LIGHTING, EVENT_FAULT_NOT_EXIST,      MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
         {MCU_MRM_STANDBY,             EVENT_NO_LIGHTING,          MCU_MRM_FAILURE_NO_LIGHTING},
-        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRC,                  MCU_MRM_MRC},
         {MCU_MRM_STANDBY,             EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
+        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_LAT_CTRL_SWITCH,  MCU_MRM_TOR_LAT_CTRL},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_TO_MRM_BOTH,      MCU_MRM_ACTIVE_LNG_LAT_CTRL},
@@ -132,8 +132,17 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     
     // TODO:
     g_tsm_signal_bitfileds = 0;
-    if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
-        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
+    // TODO: delete mrm_system_fault_level judge
+    if (rtu_DeDiag2TSM->Fault_Level == NO_FAULT) {
+        if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
+        }
+    } else {
+        if (g_inter_media_msg.mrm_failure_lighting_flag) {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_LIGHTING);
+        } else {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
+        }
     }
 
     // IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State) ?
@@ -143,19 +152,19 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
 
     if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
-        if (IsInTorFault()) {
+        if (IsInTorFault(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_MRC);
         }
     } else {
         SetCtrlType(BITNO_MRM_BOTH_CTRL_SWITCH, BITNO_MRM_LAT_CTRL_SWITCH);
         if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
             SetCtrlType(BITNO_TOR_BOTH_CTRL_SWITCH, BITNO_TOR_LAT_CTRL_SWITCH);
-            if (IsInTorFault()) {
+            if (IsInTorFault(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
                 SetCtrlType(BITNO_TOR_BOTH_CTRL, BITNO_TOR_LAT_CTRL);
             }
         } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
             SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
-            if (IsInTorFault()) {
+            if (IsInTorFault(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
                 SetCtrlType(BITNO_MRM_BOTH_CTRL, BITNO_MRM_LAT_CTRL);
             }
         } else {
@@ -167,7 +176,9 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
         SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
     }
 
-    if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT)) {
+    // TODO: MCU此处需要对Faulte_Level的判断增加request_mrm的判断
+    if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT) ||
+        (rtu_DeDiag2TSM->Fault_Level != NO_FAULT) ) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
 }
@@ -301,11 +312,35 @@ boolean IsDriverTakeOver()
     return false;
 }
 
-boolean IsInTorFault() 
+boolean IsInTorFault(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM) 
 {
-    return ((g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) ||
-            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) ||
-            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT));
+    // TODO:
+    // ADC失效
+    if (IsBitSet((uint32)rtu_DeCANGATE2TSM->SOC_ADCFailureSt, BITNO_ADC_FAILURE) ||
+        IsBitSet((uint32)rtu_DeCANGATE2TSM->MCU_ADCFailureSt, BITNO_ADC_FAILURE)) {
+        return true;
+    }
+    // 和ADC通讯故障
+    if (rtu_DeDiag2TSM->Com_Fault_with_ADC) {
+        return true;
+    }
+    // MCU失效，SOC安全停车时突然失效
+    if (IsBitSet((uint32)rtu_DeCANGATE2TSM->SOC_ADCFailureSt, BITNO_MCU_FAILURE)) {
+        if (rtu_DeCANGATE2TSM->Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Request_Mrm_From_SOC) {
+            return true;
+        }
+    }
+    // SOC失效， MCU安全停车时突然失效
+    if (IsBitSet((uint32)rtu_DeCANGATE2TSM->MCU_ADCFailureSt, BITNO_SOC_FAILURE)) {
+        if (rtu_DeCANGATE2TSM->Request_Mrm_From_MCU) {
+            return true;
+        }
+    }
+
+    // for debug
+    if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
+        return true;
+    }
 }
 
 boolean IsNDAInActiveSt(const uint8 nda_st)

@@ -19,7 +19,6 @@ static const Signal g_signal_table[] =
     {TYPE_UINT8,   "EMS_GasPedalActPstforMRRVD",    GetEMS_GasPedalActPstforMRRVD},
     {TYPE_FLOAT32, "EMS_GasPedalActPstforMRR",      GetEMS_GasPedalActPstforMRR},
 // -------------------- seperate line -----------------------------------------------    
-    {TYPE_UINT8,   "automaton_transit_normal_flag", GetNDATransitNormalFlag},
     {TYPE_UINT8,   "lng_override_st",               GetLngOverrideSt},
     {TYPE_UINT8,   "driver_hand_torque_st",         GetDriverHandTorqueSt},
     {TYPE_UINT8,   "mrm_system_fault_level",        GetMRMSystemFaultLevel},

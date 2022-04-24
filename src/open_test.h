@@ -94,11 +94,6 @@ void* GetPlanningLite_control_state(SimulinkData* simulink_data)
     return &(simulink_data->rt_in_planlite_tsm.planningLite_control_state);
 }
 
-void* GetNDATransitNormalFlag(SimulinkData* simulink_data)
-{
-    (void)simulink_data;
-    return &(g_inter_media_msg.automaton_transit_normal_flag);
-}
 void* GetLngOverrideSt(SimulinkData* simulink_data)
 {
     (void)simulink_data;

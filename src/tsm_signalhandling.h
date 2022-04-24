@@ -117,4 +117,7 @@ void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_fl
 boolean IsInMCUMRMActiveSt();
 
 void SetLaneChangeSt(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM);
+
+// for debug use
+void DebugActivateFunction(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal);
 #endif

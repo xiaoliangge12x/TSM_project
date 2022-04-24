@@ -32,6 +32,8 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     BrakeInervationFlagJudge();
     // 判断 驾驶员手力矩超越标志位
     DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // Debug Function
+    DebugActivateFunction(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
         "driver_hand_torque_st: %d", g_inter_media_msg.lng_override_long_duration_flag, 
@@ -350,4 +352,33 @@ boolean IsInMCUMRMActiveSt()
             (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
             (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) ||
             (g_tsm.state == MCU_MRM_MRC));
+}
+
+void DebugActivateFunction(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
+{
+    // 延时
+    static uint8 time_cnt       = 0;
+    static uint8 flag_cnt       = 0;
+    static uint8 hazardlight_on = 0;
+    if (time_cnt == 25) {
+        if (flag_cnt) {
+            hazardlight_on = 1;
+        } else {
+            hazardlight_on = 0;
+        }
+        flag_cnt = 0;
+        time_cnt = 0;
+    } else {
+        ++time_cnt;
+        if (vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) {
+            ++flag_cnt;
+        }
+    }
+
+    if (hazardlight_on) {
+        g_inter_media_msg.mrm_system_fault_level = TOR_LEVEL3_FAULT;
+    } else {
+        g_inter_media_msg.mrm_system_fault_level = NO_FAULT;
+    }
+
 }
