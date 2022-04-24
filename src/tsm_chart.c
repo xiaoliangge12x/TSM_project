@@ -425,10 +425,6 @@ void ActionInTorStand()
     OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
     OutputMrmStatus(MRM_ST_TOR);
     OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-
-    g_tsm.tsm_action_param.lng_override_flag   = 1;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
 }
 
 void ActionInMrmBothCtrl()
