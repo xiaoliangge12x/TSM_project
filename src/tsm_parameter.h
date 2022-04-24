@@ -211,6 +211,13 @@ typedef enum
     OTHER
 } MrmSystemFaultLevel;
 
+typedef enum
+{
+    MDC_SOC_FAILURE = 0,
+    MDC_MCU_FAILURE,
+    MDC_ADC_FAILURE,
+} MdcSystemFailureLevel;
+
 typedef enum 
 {
     COMFORTABLE_STOP = 0,
@@ -294,7 +301,8 @@ typedef struct
     MrmSystemFaultLevel       mrm_system_fault_level;          // mrm 系统故障等级
     uint8                     mrm_failure_lighting_flag;       // mrm 故障点灯标志位
     MrmType                   mrm_type;                        // mrm 类型
-    uint8                     automaton_transit_normal_flag;   // soc状态机跳转是否正常标志位
+    // TODO
+    MdcSystemFailureLevel    mdc_system_failure_level;         // mdc 系统失效类型
     OverrideSt                driver_hand_torque_st;           // 驾驶员手力矩超越标志
     BrakeInterventionType     brake_intervention_type;         // 刹车介入类型
     OverrideSt                lng_override_st;                 // 纵向超越标志位
@@ -306,14 +314,12 @@ typedef struct
     uint8                     nda_passive_vd_flag;             // nda passive的vd标志位， 1 为valid
     uint8                     driver_acc_pedal_applied_flag;   // 驾驶员是否踩下油门
     NdaStTransitMonitor       nda_st_transit_monitor;          // nda状态跳转使能标志位
-    Dt_RECORD_Automaton_State last_automaton_st;               // 上一帧soc侧automaton状态 
-    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位
-    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位
 } InterMediaMsg;
 
 typedef struct 
 {
     uint8 lng_override_flag;
+    uint8 lat_override_flag;
     uint8 mrm_activation_st;
     uint8 control_arb_request;
 } TSMActionParam;

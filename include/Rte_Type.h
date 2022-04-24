@@ -150,6 +150,16 @@ typedef struct tagTSM2Soc
     Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From g_tsm
 } Dt_RECORD_TSM2Soc;
 
+typedef struct 
+{
+   uint8_t             ADC_status;
+   uint8_t             MCU_MRM_status;
+   uint32_t            MCU_Timestamp_nsec;
+   uint32_t            MCU_Timestamp_sec;
+   bool                MCU_Timestamp_valid;
+   Dt_RECORD_TimeStamp IfcTimestamp;
+} Dt_RECORD_ADC_Status;
+
 // ---------------- inside struct ------------------
 typedef struct tagInsideTimeStamp
 {
@@ -223,6 +233,7 @@ typedef struct tagDeCANGATE2TSM
     Dt_RECORD_TimeStamp         TimeStamp;
     Dt_RECORD_VehicleSignal2TSM Vehicle_Signal_To_Tsm;   // 车身信号
     Dt_RECORD_Soc_Info          Soc_Info;                // soc的消息
+    Dt_RECORD_ADC_Status        Adc_Status;              // 来自MCU的状态和MCU时间戳，显示SOC和MCU状态的ADC status
 } Dt_RECORD_CANGATE2TSM;
 // typedef struct tagDeCANSwitch2TSM
 // {
@@ -256,7 +267,7 @@ typedef struct tagTSM2Planninglite
     uint8_t             NDA_Lane_Change_Type;
     uint8_t             NDA_Lane_Change_Direction;
     uint8_t             NDA_Lane_Change_State;  // 包含变道请求
-    uint8_t             MRM_Status;             // 告知planning lite 执行mrm还是tor, 状态机 0 - mrm  active ， 1 - tor active 
+    uint8_t             MRM_Status;             // 告知planning lite 执行mrm还是tor, 状态机 0 - tor  active ， 1 - mrm active, 2 invalid 
 } Dt_RECORD_TSM2PLANLITE;
 // typedef struct tagTSM2Planninglite
 // {
@@ -281,6 +292,7 @@ typedef struct tagTSM2CtrlArb
     uint8_t holo_planning_control_status;   // from PlanLite  归控能力
     Dt_RECORD_Automaton_State Automaton_State;  // soc状态机状态
     uint8_t lng_override_flag;    // 纵向override状态， 1为 override
+    uint8_t lat_override_flag;    // 横向override状态， 1为 override
     uint8_t control_arb_request;   // 0 - 响应soc   1 -- 响应mcu
 } Dt_RECORD_TSM2CtrlArb;
 // typedef struct tagTSM2ControlArbitrator

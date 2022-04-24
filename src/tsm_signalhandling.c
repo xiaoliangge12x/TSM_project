@@ -22,8 +22,6 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 {
     // 判断驾驶员注意力状态
     DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 判断NDA是否可用
-    CheckNdaAvailableSt(&rtu_DeCANGATE2TSM->Soc_Info);
     // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
     DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 纵向超越标志位
@@ -34,11 +32,6 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     BrakeInervationFlagJudge();
     // 判断 驾驶员手力矩超越标志位
     DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    CheckNdaActiveTransitCond(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
-    // 监控 SOC侧NDA的状态跳转
-    MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
-    // 判断 SOC侧NDA的跳转是否错误, 初始版本，先用harzard light去判断跳转是否正常
-    NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
         "driver_hand_torque_st: %d", g_inter_media_msg.lng_override_long_duration_flag, 
@@ -89,31 +82,6 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         }
     }
     g_inter_media_msg.driver_attention_st = UNKNOWN;
-}
-
-void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info)
-{
-    if (soc_info == NULL_PTR) {
-        return;
-    }
-
-    g_inter_media_msg.is_nda_avl_before_activation = 
-    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_Before_Active && 
-    (g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED)) ? 1 : 0;
-
-    g_inter_media_msg.is_nda_avl_after_activation =
-    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_After_Active && 
-    IsDriverNotFatigue()) ? 1 : 0;
-}
-
-boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info) 
-{
-    return (g_inter_media_msg.nda_passive_vd_flag && 
-        (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) &&
-        soc_info->NDA_Enable_State &&
-        !g_inter_media_msg.nda_need_phase_in && 
-        soc_info->SD_Map_HD_Map_Match_St && 
-        soc_info->User_Set_Navi_Status);
 }
 
 boolean IsDriverNotFatigue() 
@@ -314,79 +282,6 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
 #endif
 }
 
-void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
-{
-    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
-            if ((g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == 
-                nda_st_transit_monitor_array[i].transit_enable_flag) && 
-                (g_inter_media_msg.nda_st_transit_monitor.frame_cnt != MAX_FRAME_CNT)) {
-                ++g_inter_media_msg.nda_st_transit_monitor.frame_cnt;
-                return;
-            }
-        }
-    }
-
-    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-        // 此时为通过可跳转条件去判断该给SOC的标志， 由于跳转是唯一且独立的，只要满足跳转条件就跳，然后直接退出循环
-        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
-            if (nda_st_transit_monitor_array[i].nda_transit_cond()) {
-                g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = 
-                    nda_st_transit_monitor_array[i].transit_enable_flag;
-                g_inter_media_msg.nda_st_transit_monitor.frame_cnt = 1;
-                return;
-            }
-        }
-    }
-    // 如果上述情况都不满足，说明不满足可跳转，那么跳转标志位为NONE
-    g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = NONE;
-    g_inter_media_msg.nda_st_transit_monitor.frame_cnt               = 0;
-}
-
-void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info)
-{
-    // 延时
-    static uint8 time_cnt       = 0;
-    static uint8 flag_cnt       = 0;
-    static uint8 hazardlight_on = 0;
-    if (time_cnt == 25) {
-        if (flag_cnt) {
-            hazardlight_on = 1;
-        } else {
-            hazardlight_on = 0;
-        }
-        flag_cnt = 0;
-        time_cnt = 0;
-    } else {
-        ++time_cnt;
-        if (vehicle_signal->BCM_LeftTurnLampSt && vehicle_signal->BCM_RightTurnLampSt) {
-            ++flag_cnt;
-        }
-    }
-
-    if (hazardlight_on) {
-        g_inter_media_msg.automaton_transit_normal_flag = 0;
-        // 0328版本暂用，此时顺便把系统故障置为TOR故障，后续删除
-        g_inter_media_msg.mrm_system_fault_level = TOR_LEVEL3_FAULT;
-        return;
-    }
-    g_inter_media_msg.automaton_transit_normal_flag = 1;
-    // 0328版本暂用，后续删除
-    g_inter_media_msg.mrm_system_fault_level = 0;
-
-    // 这段逻辑保留，后期使用
-    // for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-    //     if ((g_inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
-    //         (soc_info->Automaton_State.NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
-    //         if (g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
-    //             g_inter_media_msg.automaton_transit_normal_flag = 0;
-    //             return;
-    //         }
-    //     }
-    // }
-    // g_inter_media_msg.automaton_transit_normal_flag = 1;
-}
-
 void BrakeInervationFlagJudge()
 {
     static uint16 brake_intervation_cnt = 0;
@@ -443,84 +338,6 @@ void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_fl
             *flag_set_var = var_value->flag_set_val;
         } else {
             *flag_set_var = var_value->flag_unset_val;
-        }
-    }
-}
-
-void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
-{
-    memset(&g_monitor_bitfields, 0, sizeof(MonitorBitfields));
-
-    if (g_inter_media_msg.is_nda_avl_before_activation) {
-        if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
-            (soc_info->HandsOn_HandsFree_Flag) ? 
-            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL)) : 
-            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_NORMAL));
-        } else if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-            if (!soc_info->HandsOn_HandsFree_Flag) {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_STANDACTIVE);
-            }
-        } else {
-            // do nothing
-        }
-    }
-
-    if (g_inter_media_msg.is_nda_avl_after_activation) {
-        if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
-            (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_BOTH_OVERRIDE);
-        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
-                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_NOT_SATISFY)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LNG_OVERRIDE);
-        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
-                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LAT_OVERRIDE);
-        } else {
-            if (soc_info->HandsOn_HandsFree_Flag) {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSON_NORMAL);
-                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-                    SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE);
-                }
-            } else {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL);
-                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-                    SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE);
-                }
-            }
-        }
-
-        // TODO: planning driveoff req
-        if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-            (soc_info->NDA_Planning_Request == DRIVEOFF_REQUEST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
         }
     }
 }

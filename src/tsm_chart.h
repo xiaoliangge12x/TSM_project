@@ -78,6 +78,19 @@ typedef enum
     BITNO_FUNCTION_EXIT,
     BITNO_WAIT_EPB_RES,
 } TsmEventBitNo;
+
+typedef enum
+{
+    MRM_ST_TOR = 0,
+    MRM_ST_ACTIVE,
+    MRM_ST_INVALID,
+} MrmStateToPlanning;
+
+typedef enum
+{
+    CTRLARB_RESPOND_TO_SOC = 0,
+    CTRLARB_RESPOND_TO_MCU,
+} CtrlArbRequest;
 // ---------------------------------- driving table        --------------------------------------
 // static const StateTransit g_state_transit_table[TOTAL_TRANS_NUM];   // 此处非声明，而是定义
 // static const Action       g_action;                                 // 此处非声明，而是定义
@@ -127,4 +140,9 @@ void ActionInTorStand();
 void ActionInMrmBothCtrl();
 void ActionInMrmLatCtrl();     
 void ActionInMrc();
+
+void DoNoFunctionWork();
+void OutputLatLngOverrideStatus(const OverrideSt lng_override_st, const OverrideSt lat_override_st);
+void OutputMrmStatus(const MrmStateToPlanning mrm_st);
+void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req);
 #endif
