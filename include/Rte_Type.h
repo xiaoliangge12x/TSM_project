@@ -68,12 +68,16 @@ typedef struct tagSoc_Info
     uint8_t                   Global_Location_Accuracy;          // 全局定位精度
     uint8_t                   Relative_Location_Accuracy;        // 相对定位精度
     uint8_t                   HandsOn_HandsFree_Flag;            // handson_handsfree配置码
+    uint8_t                   Request_Mrm_From_SOC;    // 来自SOC侧的请求MRM
+    uint8_t                   Tor_Fault_From_SOC;      // 来自SOC侧FRC的tor故障
+    uint8_t                   NDA_Planning_Request;       // 新增，NDA planning的请求， 同 holo::gh02::PlanningState::PlanningRequest
 } Dt_RECORD_Soc_Info;
 
 typedef struct
 {
     Dt_RECORD_TimeStamp time_stamp; // tsm的timestamp
     uint8_t MCU_MRM_status;    // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
+    uint8_t Request_Mrm_From_MCU;    // 来自MCU侧的请求MRM
 } Dt_RECORD_MCU2IFC;
 
 typedef struct tagVehicleSignal2TSM
@@ -147,8 +151,11 @@ typedef struct tagTSM2Soc
     uint32_t                             AS_Status;                   // AS 状态
     Dt_RECORD_Control_Arbitrator_Results Control_Arbitrator_Results;  // 控制仲裁结果
     uint8_t                              Lane_Change_Allow_Flag;      // 是否允许变道
+    uint8_t                              AS_HandsoffTimerRequest;     // AS脱手计时检测
+    Dt_RECORD_TimeStamp                  tsm_timestamp;               // tsm的时间戳
     uint8_t Parking_EPS_handshake_state;// 泊车握手的标志位, from ctrlarb,   新增
     Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From tsm
+    uint8_t                               Is_MCU_MRM_Active;           // 是否MCU的MRM激活
 } Dt_RECORD_TSM2Soc;
 
 // ---------------- inside struct ------------------
@@ -236,9 +243,8 @@ typedef struct tagDeCANGATE2TSM
 typedef struct tagDiag2TSM
 {
     Dt_RECORD_TimeStamp Diag_TimeStamp;
-    uint8_t             Fault_Level;       // 故障等级
-    uint8_t             Soc_Fault_Status;  // soc故障状态   0 - 未故障   1 - 故障
-    uint8_t             NDA_System_Fault_Level; // NDA系统故障等级， enum NDASystemFaultLevel
+    uint8_t             Fault_Level;       // 故障等级 0 - 无故障 ，待诊断确定
+    uint8_t             Com_Fault_with_SOC;     // 和SOC的 通信故障
 } Dt_RECORD_Diag2TSM;
 
 // PlanningLite --> TSM

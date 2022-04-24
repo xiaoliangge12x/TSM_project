@@ -79,6 +79,18 @@ typedef enum
     BITNO_WAIT_EPB_RES,
 } TsmEventBitNo;
 
+typedef enum
+{
+    MRM_ST_TOR = 0,
+    MRM_ST_ACTIVE,
+    MRM_ST_INVALID,
+} MrmStateToPlanning;
+
+typedef enum
+{
+    CTRLARB_RESPOND_TO_SOC = 0,
+    CTRLARB_RESPOND_TO_MCU,
+} CtrlArbRequest;
 // ---------------------------------- function declaration --------------------------------------
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
@@ -122,6 +134,10 @@ boolean IsDriverTakeOver();
 boolean IsInTorFault();
 boolean IsNDAInActiveSt(const uint8 nda_st);
 void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl);
+void DoNoFunctionWork();
+void OutputLatLngOverrideStatus(const OverrideSt lng_override_st, const OverrideSt lat_override_st);
+void OutputMrmStatus(const MrmStateToPlanning mrm_st);
+void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req);
 
 void ActionInPassive();
 void ActionInStandby();   
@@ -133,6 +149,4 @@ void ActionInTorStand();
 void ActionInMrmBothCtrl();
 void ActionInMrmLatCtrl();     
 void ActionInMrc();
-
-
 #endif

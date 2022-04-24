@@ -221,6 +221,15 @@ typedef enum
     EMERGENCY_STOP
 } MrmType;
 
+typedef enum
+{
+    NO_REQUEST = 0U,
+    DRIVEOFF_REQUEST,
+    LANE_CHANGE_LEFT_REQUEST,
+    LANE_CHANGE_RIGHT_REQUEST,
+    LANE_CHANGE_CANCEL_REQUEST,
+} NdaPlanningRequest;
+
 typedef enum 
 {
     NO_LANE_CHANGE = 0U,
@@ -295,20 +304,23 @@ typedef struct
     DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态
     uint8                     hands_can_takeover;               // 手可以接管标志位
     uint8                     brake_is_set;                     // 刹车是否踩下
-    uint8                     vehicle_standstill_flag;          // 车辆是否静止
     uint8                     nda_need_phase_in;                // nda 是否需要phase-in
     uint8                     nda_passive_vd_flag;              // nda passive的vd标志位， 1 为valid
     uint8                     driver_acc_pedal_applied_flag;    // 驾驶员是否踩下油门
     NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位
-    Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态 
+    Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
+    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位
+    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位 
 } InterMediaMsg;
 
 
 typedef struct 
 {
     uint8 lng_override_flag;
+    uint8 lat_override_flag;
     uint8 mrm_activation_st;
     uint8 control_arb_request;
+    uint8 request_mrm;
 } TSMActionParam;
 
 typedef struct 

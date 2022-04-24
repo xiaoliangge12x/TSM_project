@@ -22,6 +22,57 @@
 // ----------------------------- typedef          -------------------------------------
 typedef boolean (*NdaTransitCondition) ();
 
+typedef enum
+{
+    BITNO_STANDBY_HANDSFREE_NORMAL = 0,
+    BITNO_STANDBY_HANDSON_NORMAL,
+    BITNO_STANDBY_HANDSFREE_STANDACTIVE,
+    BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE,
+    BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE,
+    BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE,
+    BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE,
+    BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL,
+    BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL,
+    BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE,
+    BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE,
+    BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE,
+    BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE,
+    BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE,
+    BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE,
+} StandbyHandsFreeBitNo;
+
+typedef enum
+{
+    BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE = 0,
+    BITNO_HANDSON_NORMAL_BOTH_OVERRIDE,
+    BITNO_HANDSON_NORMAL_LAT_OVERRIDE,
+    BITNO_HANDSON_NORMAL_LNG_OVERRIDE,
+    BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL,
+    BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL,
+    BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE,
+    BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE,
+    BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE,
+    BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE,
+    BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE,
+    BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE,
+} HandsOnBitNo;
+
+typedef enum
+{
+    BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL = 0,
+    BITNO_LNG_OVERRIDE_HANDSON_NORMAL,
+    BITNO_LNG_OVERRIDE_BOTH_OVERRIDE,
+    BITNO_LNG_OVERRIDE_LAT_OVERRIDE,
+    BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL,
+    BITNO_LAT_OVERRIDE_HANDSON_NORMAL,
+    BITNO_LAT_OVERRIDE_BOTH_OVERRIDE,
+    BITNO_LAT_OVERRIDE_LNG_OVERRIDE,
+    BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL,
+    BITNO_BOTH_OVERRIDE_HANDSON_NORMAL,
+    BITNO_BOTH_OVERRIDE_LNG_OVERRIDE,
+    BITNO_BOTH_OVERRIDE_LAT_OVERRIDE,
+} OverrideBitNo;
+
 typedef struct 
 {
     NdaFunctionSt        start_st;
@@ -29,8 +80,16 @@ typedef struct
     NdaTransitEnableFlag transit_enable_flag;
     NdaTransitCondition  nda_transit_cond;
 } NdaStMonitorInfo;
+
+typedef struct
+{
+    uint32 monitor_standby_handsfree_bitfields;
+    uint32 monitor_handson_bitfields;
+    uint32 monitor_override_bitfields;
+} MonitorBitfields;
 // ----------------------------- driving table declaration ----------------------------
 extern const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE];  // 千万不能声明成static
+extern MonitorBitfields       g_monitor_bitfields;
 // ----------------------------- function declaration ---------------------------------
 boolean TransitCondFromStandbyToHandsFreeNormal();
 boolean TransitCondFromStandbyToHandsOnNormal();
@@ -71,4 +130,6 @@ boolean TransitCondFromBothOverrideToHandsFreeNormal();
 boolean TransitCondFromBothOverrideToHandsOnNormal();
 boolean TransitCondFromBothOverrideToLngOverride();
 boolean TransitCondFromBothOverrideToLatOverride();
+
+boolean IsNdaAvailable();
 #endif

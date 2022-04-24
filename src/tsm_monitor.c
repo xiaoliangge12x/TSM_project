@@ -13,6 +13,9 @@
 
 #include "tsm_monitor.h"
 
+// ------------------------------ global variable def -------------------------------------------
+MonitorBitfields       g_monitor_bitfields;
+
 // ------------------------------ driving table Initilize ----------------------------------------
 const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] = 
 {
@@ -98,195 +101,195 @@ const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE] =
 // ----------------------------------- function -------------------------------------------------
 boolean TransitCondFromStandbyToHandsFreeNormal() 
 {
-    return true;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromStandbyToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromStandbyToHandsFreeStandActive() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_STANDACTIVE);
 }
 
 boolean TransitCondFromHandsFreeNormalToHandsFreeStandActive() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE);
 }
 
 boolean TransitCondFromHandsFreeNormalToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeNormalToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeNormalToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeNormalToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromHandsFreeStandActiveToHandsFreeNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromHandsFreeStandActiveToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeStandActiveToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeStandActiveToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeStandWaitToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeStandWaitToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsFreeStandWaitToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnNormalToHandsOnStandActive() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE);
 }
 
 boolean TransitCondFromHandsOnNormalToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnNormalToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnNormalToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnNormalToHandsFreeNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromHandsOnStandActiveToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromHandsOnStandActiveToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnStandActiveToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnStandActiveToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnStandWaitToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnStandWaitToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromHandsOnStandWaitToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromLngOverrideToHandsFreeNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromLngOverrideToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromLngOverrideToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromLngOverrideToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_LAT_OVERRIDE);
 }
 
 boolean TransitCondFromLatOverrideToHandsFreeNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromLatOverrideToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromLatOverrideToBothOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_BOTH_OVERRIDE);
 }
 
 boolean TransitCondFromLatOverrideToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromBothOverrideToHandsFreeNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL);
 }
 
 boolean TransitCondFromBothOverrideToHandsOnNormal() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSON_NORMAL);
 }
 
 boolean TransitCondFromBothOverrideToLngOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LNG_OVERRIDE);
 }
 
 boolean TransitCondFromBothOverrideToLatOverride() 
 {
-    return false;
+    return IsBitSet(g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LAT_OVERRIDE);
 }

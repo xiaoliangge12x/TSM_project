@@ -138,8 +138,19 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     
     // TODO:
     g_tsm_signal_bitfileds = 0;
-    if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
-        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
+    // TODO:
+    g_tsm.tsm_action_param.request_mrm = 0;   // 就发一帧请求mrm, 避免误触发
+    // TODO: delete mrm_system_fault_level judge
+    if (rtu_DeDiag2TSM->Fault_Level == NO_FAULT) {
+        if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
+        }
+    } else {
+        if (g_inter_media_msg.mrm_failure_lighting_flag) {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_LIGHTING);
+        } else {
+            SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
+        }
     }
 
     // IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State) ?
@@ -174,6 +185,9 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     }
 
     if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT)) {
+        SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
+    } else if (rtu_DeDiag2TSM->Fault_Level != NO_FAULT) {
+        g_tsm.tsm_action_param.request_mrm = 1;
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
 }
@@ -342,9 +356,7 @@ void ActionInPassive()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in MCU_MRM_PASSIVE St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    DoNoFunctionWork();
 }
 
 void ActionInFailureLighting()
@@ -352,9 +364,7 @@ void ActionInFailureLighting()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Failure Lighting St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    DoNoFunctionWork();
 }
 
 void ActionInFailureNoLighting()
@@ -362,9 +372,7 @@ void ActionInFailureNoLighting()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Failure No Lighting St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    DoNoFunctionWork();
 }
 
 void ActionInStandby()
@@ -372,9 +380,7 @@ void ActionInStandby()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Standby St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    DoNoFunctionWork();
 }
 
 void ActionInTorBothCtrl()
@@ -382,9 +388,9 @@ void ActionInTorBothCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Both Ctrl St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 1;
+    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_TOR);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
 }
 
 void ActionInTorLatCtrl()
@@ -392,9 +398,9 @@ void ActionInTorLatCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Lat Ctrl St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 1;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 1;
+    OutputLatLngOverrideStatus(OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_TOR);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
 }
 
 void ActionInTorStand()
@@ -402,9 +408,9 @@ void ActionInTorStand()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Tor Stand St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 1;
-    g_tsm.tsm_action_param.mrm_activation_st   = 1;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_TOR);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
 }
 
 void ActionInMrmBothCtrl()
@@ -412,10 +418,9 @@ void ActionInMrmBothCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_YELLOW, "It's in Mrm Both Ctrl St.");
 #endif
-    // car test
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 0;
-    g_tsm.tsm_action_param.control_arb_request = 1;
+    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_ACTIVE);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
 }
 
 void ActionInMrmLatCtrl()
@@ -423,10 +428,9 @@ void ActionInMrmLatCtrl()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Mrm Lat Ctrl St.");
 #endif
-    // car test
-    g_tsm.tsm_action_param.lng_override_flag   = 1;
-    g_tsm.tsm_action_param.mrm_activation_st   = 0;
-    g_tsm.tsm_action_param.control_arb_request = 1;
+    OutputLatLngOverrideStatus(OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_ACTIVE);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
 }
 
 void ActionInMrc()
@@ -434,9 +438,9 @@ void ActionInMrc()
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "It's in Mrc St.");
 #endif
-    g_tsm.tsm_action_param.lng_override_flag   = 0;
-    g_tsm.tsm_action_param.mrm_activation_st   = 0;
-    g_tsm.tsm_action_param.control_arb_request = 0;
+    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_INVALID);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_SOC);
 }
 
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
@@ -472,6 +476,29 @@ boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECO
         return false;
     }
     return true;
+}
+
+void DoNoFunctionWork()
+{
+    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
+    OutputMrmStatus(MRM_ST_INVALID);
+    OutputCtrlArbReq(CTRLARB_RESPOND_TO_SOC);
+}
+
+void OutputLatLngOverrideStatus(const OverrideSt lng_override_st, const OverrideSt lat_override_st)
+{
+    g_tsm.tsm_action_param.lng_override_flag = lng_override_st;
+    g_tsm.tsm_action_param.lat_override_flag = lat_override_st;
+}
+
+void OutputMrmStatus(const MrmStateToPlanning mrm_st)
+{
+    g_tsm.tsm_action_param.mrm_activation_st = mrm_st;
+}
+
+void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req)
+{
+    g_tsm.tsm_action_param.control_arb_request = ctrl_arb_req;
 }
 
 // 组包并发送

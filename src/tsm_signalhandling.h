@@ -106,6 +106,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 // 具体处理函数
 // 判断 驾驶员注意力状态
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info);
+boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info);
+boolean IsDriverNotFatigue();
 // 判断 纵向超越标志位以及判断 驾驶员是否长时纵向超越
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 // 判断 刹车是否踩下
@@ -130,6 +133,7 @@ void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue*
 void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value);
 
 #endif
+void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
 
 boolean IsInMCUMRMActiveSt();
 
