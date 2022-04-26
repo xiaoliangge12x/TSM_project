@@ -29,7 +29,7 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     // 判断 纵向超越标志位
     LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 刹车是否踩下
-    BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    // BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
     // 判断 刹车长时介入标志位
     BrakeInervationFlagJudge();
     // 判断 驾驶员手力矩超越标志位
@@ -360,9 +360,9 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
 void BrakeInervationFlagJudge()
 {
     static uint16 brake_intervation_cnt = 0;
-    if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
+    if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE)) {
         g_inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
-        brake_intervation_cnt                       = 0;
+        brake_intervation_cnt                     = 0;
     } else {
         if (IsInMCUMRMActiveSt()) {
             if (g_inter_media_msg.brake_intervention_type == LONG_TERM_INTERVENTION) {

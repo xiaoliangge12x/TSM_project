@@ -22,9 +22,9 @@ static const StateMachine g_top_state_machine =
 {
     .state_transit_table = 
     {
-        {MCU_MRM_PASSIVE,             EVENT_STANDBY,              MCU_MRM_STANDBY},
         {MCU_MRM_PASSIVE,             EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
         {MCU_MRM_PASSIVE,             EVENT_NO_LIGHTING,          MCU_MRM_FAILURE_NO_LIGHTING},
+        {MCU_MRM_PASSIVE,             EVENT_STANDBY,              MCU_MRM_STANDBY},
         {MCU_MRM_FAILURE_LIGHTING,    EVENT_NO_LIGHTING,          MCU_MRM_FAILURE_NO_LIGHTING},
         {MCU_MRM_FAILURE_LIGHTING,    EVENT_FAULT_NOT_EXIST,      MCU_MRM_PASSIVE},
         {MCU_MRM_FAILURE_NO_LIGHTING, EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
@@ -201,7 +201,7 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT)) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     } else if (rtu_DeDiag2TSM->Fault_Level != NO_FAULT) {
-        g_tsm.tsm_action_param.request_mrm = 1;
+        g_tsm.tsm_action_param.request_mrm = IsInMCUMRMActiveSt() ? 1 : 0;
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
 }

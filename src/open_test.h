@@ -7,7 +7,14 @@
 #include "Rte_Type.h"
 #include "tsm_parameter.h"
 // -------------------------  macro         ---------------------------------
-#define SIGNAL_NAME_MAX_LEN      50
+#define MAX_HEADER_NAME          50U
+#define MAX_KEY_NAME             50U
+#define MAX_VALUE_NAME           20U
+#define MAX_TYPE_NAME            20U
+#define MAX_INTERMEDIATE_NAME    50U
+#define SIGNAL_NAME_MAX_LEN      50U
+
+#define ENABLE_SET_INTERMEDIATE
 // -------------------------  typedef       ----------------------------------
 typedef void* (*GetSignalPtr) (SimulinkData* simulink_data);
 
@@ -23,12 +30,22 @@ typedef struct {
     GetSignalPtr signal_ptr_get;
 } Signal;
 
+typedef struct 
+{
+  char                  intermediate_sig_name[MAX_INTERMEDIATE_NAME];
+  BitNoForInterMediaSig bitno_intermediate_sig;
+} IntermediateSig;
 // -------------------------  driving table -----------------------------------
 // static const Signal g_signal_table[];  // 此处非声明，而是定义
 
 // -------------------------  function declaration ----------------------------
 void  ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data);
-void  SimulinkDataSet(const char* key_str, const char* value_str, SimulinkData* simulink_data);
+void  SimulinkDataSet(const char* key_str, const char* value_str, const char* header_str, 
+    const char* type_str,SimulinkData* simulink_data);
+void SetOriginInputandInterMediateSig(const char* key_str, const char* value_str, 
+    SimulinkData* simulink_data);
+void SetInterMediateMsg(const char* key_str, const char* value_str, const char* type_str, 
+    SimulinkData* simulink_data);
 void* GetBCS_VehicleStandStillSt(SimulinkData* simulink_data) 
 {
     return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt);
@@ -98,21 +115,6 @@ void* GetPlanningLite_control_state(SimulinkData* simulink_data)
     return &(simulink_data->rt_in_planlite_tsm.planningLite_control_state);
 }
 
-void* GetNDATransitNormalFlag(SimulinkData* simulink_data)
-{
-    (void)simulink_data;
-    return &(g_inter_media_msg.automaton_transit_normal_flag);
-}
-void* GetLngOverrideSt(SimulinkData* simulink_data)
-{
-    (void)simulink_data;
-    return &(g_inter_media_msg.lng_override_st);
-}
-void* GetDriverHandTorqueSt(SimulinkData* simulink_data)
-{
-    (void)simulink_data;
-    return &(g_inter_media_msg.driver_hand_torque_st);
-}
 void* GetMRMSystemFaultLevel(SimulinkData* simulink_data)
 {
     (void)simulink_data;
