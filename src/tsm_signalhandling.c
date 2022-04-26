@@ -20,26 +20,10 @@ InterMediaMsg g_inter_media_msg;
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
-    // 判断驾驶员注意力状态
-    DrvrAttentionStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 判断NDA是否可用
-    CheckNdaAvailableSt(&rtu_DeCANGATE2TSM->Soc_Info);
-    // 判断 驾驶员是否踩下油门, 系统需求中无此项，针对3.17测试增加
-    DriverGasPedalAppliedJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 判断 纵向超越标志位
-    LngOverrideFlagJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 判断 刹车是否踩下
-    // BrakeIsSetJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 判断 刹车长时介入标志位
-    BrakeInervationFlagJudge();
-    // 判断 驾驶员手力矩超越标志位
-    DriveHandTorqueOverrideStJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    // 检查 NDA激活跳转的条件
-    CheckNdaActiveTransitCond(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
-    // 监控 SOC侧NDA的状态跳转
-    MonitorNdaStateTransition(&rtu_DeCANGATE2TSM->Soc_Info.Automaton_State);
-    // 判断 SOC侧NDA的跳转是否错误, 初始版本，先用harzard light去判断跳转是否正常
-    NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
+    RunCommonConditionCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    RunNdaTranistionMonitor(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
+    RunDriverOperationCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
         "driver_hand_torque_st: %d", 
@@ -48,6 +32,42 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED),
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
 #endif
+}
+
+void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info)
+{
+    DrvrAttentionStJudge(veh_info);
+}
+
+void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
+{
+    CheckNdaPassiveVD(soc_info);
+
+    CheckNdaPhaseInAvailable();
+    CheckNdaNeedPhaseIn();
+
+    CheckHandsFreeOnFunc(soc_info);
+
+    CheckNdaAvailableSt(soc_info);
+
+    RunNdaActiveTransitCondCheck(veh_info, soc_info);
+
+    MonitorNdaStateTransition(&soc_info->Automaton_State);
+
+    NdaStTransitNormalJudge(veh_info, soc_info);
+}
+
+void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
+{
+    DriverGasPedalAppliedJudge(vehicle_signal);
+
+    LngOverrideFlagJudge(vehicle_signal);
+
+    BrakeIsSetJudge(vehicle_signal);
+
+    BrakeInervationFlagJudge();
+
+    DriveHandTorqueOverrideStJudge(vehicle_signal);
 }
 
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
@@ -424,17 +444,17 @@ void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* 
 
 #endif
 
-void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
+void RunNdaActiveTransitCondCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
 {
     memset(&g_monitor_bitfields, 0, sizeof(MonitorBitfields));
 
     if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT)) {
         if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
-            (soc_info->HandsOn_HandsFree_Flag) ? 
+            (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSON) ? 
             (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL)) : 
             (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_NORMAL));
         } else if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-            if (!soc_info->HandsOn_HandsFree_Flag) {
+            if (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSFREE) {
                 SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_STANDACTIVE);
             }
         } else {
@@ -474,7 +494,7 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_LAT_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LAT_OVERRIDE);
         } else {
-            if (soc_info->HandsOn_HandsFree_Flag) {
+            if (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSFREE) {
                 SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL);
                 SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSON_NORMAL);
                 SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSON_NORMAL);
@@ -513,4 +533,34 @@ boolean IsInMCUMRMActiveSt()
             (g_tsm.state == MCU_MRM_MRC));
 }
 
+void CheckNdaPassiveVD(const Dt_RECORD_Soc_Info* soc_info)
+{
+    // TODO:
+    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_PASSIVE_VD);
+}
 
+void CheckNdaPhaseInAvailable()
+{
+    // TODO:
+    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_PHASE_IN_AVAILABLE);
+}
+
+void CheckNdaNeedPhaseIn()
+{
+    // TODO:
+    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_NEED_PHASE_IN);
+}
+
+void CheckHandsFreeOnFunc(const Dt_RECORD_Soc_Info* soc_info)
+{
+    // TODO:
+    if (!soc_info->EEA_Status) {
+        g_inter_media_msg.handsfree_handson_func_flag = FUNC_NOT_AVAILABLE;
+    } else {
+        if (soc_info->HandsOn_HandsFree_Flag == 1) {
+            g_inter_media_msg.handsfree_handson_func_flag = FUNC_HANDSON;
+        } else {
+            g_inter_media_msg.handsfree_handson_func_flag = FUNC_HANDSFREE;
+        }
+    }
+}

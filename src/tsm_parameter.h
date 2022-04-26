@@ -219,6 +219,13 @@ typedef enum
 
 typedef enum
 {
+    FUNC_NOT_AVAILABLE = 0,
+    FUNC_HANDSFREE,
+    FUNC_HANDSON,
+} HandsFreeOnFuncFlag;
+
+typedef enum
+{
     NO_REQUEST = 0U,
     DRIVEOFF_REQUEST,
     LANE_CHANGE_LEFT_REQUEST,
@@ -315,6 +322,7 @@ typedef struct
     DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态            
     NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位      
     Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
+    HandsFreeOnFuncFlag       handsfree_handson_func_flag;      // HandsFree 和 HandsOn 的功能标志位
     uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
 } InterMediaMsg;
 

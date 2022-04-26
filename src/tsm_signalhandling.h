@@ -88,40 +88,33 @@ typedef struct
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 
-
-// 具体处理函数
-// 判断 驾驶员注意力状态
+void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal);
+void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
+void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info);
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info);
 boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info);
 boolean IsDriverNotFatigue();
-// 判断 纵向超越标志位以及判断 驾驶员是否长时纵向超越
 void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-// 判断 刹车是否踩下
 void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-// 判断 刹车长时介入标志位
 void BrakeInervationFlagJudge();
-// 判断 驾驶员是否踩下油门
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-// 判断 驾驶员手力矩超越标志位
 void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-// soc侧状态机跳转监控判断
 void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state);
-// soc侧状态机跳转错误判断
 void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info);
+void CheckNdaPassiveVD(const Dt_RECORD_Soc_Info* soc_info);
+void CheckNdaPhaseInAvailable();
+void CheckNdaNeedPhaseIn();
+void CheckHandsFreeOnFunc(const Dt_RECORD_Soc_Info* soc_info);
 
 // user defined
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void FlagSetWithTimeCount(const uint32 bit_no, const uint16 time_threshold_cnt, uint16* time_cnt);
 #ifdef CONSUME_TIME
-
 void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* time, uint8* time_flag);
-
 #endif
-void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
-
+void RunNdaActiveTransitCondCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
 boolean IsInMCUMRMActiveSt();
-
 void SetLaneChangeSt(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM);
 #endif
