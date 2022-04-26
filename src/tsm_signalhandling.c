@@ -103,21 +103,23 @@ void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info)
         return;
     }
 
-    g_inter_media_msg.is_nda_avl_before_activation = 
     (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_Before_Active && 
-    (g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED)) ? 1 : 0;
+    (g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED)) ?
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT) :
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT);
 
-    g_inter_media_msg.is_nda_avl_after_activation =
     (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_After_Active && 
-    IsDriverNotFatigue()) ? 1 : 0;
+    IsDriverNotFatigue()) ?
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT) :
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT);
 }
 
 boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info) 
 {
-    return (g_inter_media_msg.nda_passive_vd_flag && 
+    return (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_PASSIVE_VD) && 
         (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) &&
         soc_info->NDA_Enable_State &&
-        !g_inter_media_msg.nda_need_phase_in && 
+        !IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_NEED_PHASE_IN) && 
         soc_info->SD_Map_HD_Map_Match_St && 
         soc_info->User_Set_Navi_Status);
 }
@@ -167,7 +169,7 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
     if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
         FlagSetWithTimeCount(BITNO_SET_BRAKE, K_BrakPedalAppliedThresholdTime_Cnt, &brakeset_cnt);
     } else {
-        ResetSignalBitFields(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
         brakeset_cnt = 0;
     }
 #else
@@ -177,16 +179,16 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
     if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
         FlagSetWithTime(BITNO_SET_BRAKE, K_BrakPedalAppliedThresholdTime, &brakeset_time, &brakeset_timing_flag);
     } else {
-        ResetSignalBitFields(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
         StopTiming(&brakeset_timing_flag);
     }
 #endif
 }
 
-boolean DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
 #ifndef CONSUME_TIME
-    static uint16   gasPedalPos_cnt              = 0;
+    static uint16   gasPedalPos_cnt = 0;
 
     if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
         (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
@@ -235,7 +237,6 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
 #ifndef CONSUME_TIME
     static uint16   lat_override_withHOD_cnt  = 0;
 
-    var_value.time_threshold_cnt = (uint16)K_OverrideHandTorqCheckTime_Cnt;
     if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
         FlagSetWithTimeCount(BITNO_DRVR_HANDTORQUE_OVERRIDE_ST, K_OverrideHandTorqCheckTime_Cnt, &lat_override_withHOD_cnt);
     } else {
@@ -427,7 +428,7 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
 {
     memset(&g_monitor_bitfields, 0, sizeof(MonitorBitfields));
 
-    if (g_inter_media_msg.is_nda_avl_before_activation) {
+    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT)) {
         if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
             (soc_info->HandsOn_HandsFree_Flag) ? 
             (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL)) : 
@@ -441,7 +442,7 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
         }
     }
 
-    if (g_inter_media_msg.is_nda_avl_after_activation) {
+    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT)) {
         if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
             IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);

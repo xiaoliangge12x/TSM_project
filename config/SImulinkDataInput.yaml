@@ -16,6 +16,10 @@ Vehicle_Signal_To_Tsm:
   EMS_GasPedalActPstforMRRVD: 1
   EMS_GasPedalActPstforMRR: 19.0
 
+From_Diag:
+  Fault_Level: 1
+  
+
 From_Planlite:
   planningLite_control_state: 0
 

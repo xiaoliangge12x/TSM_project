@@ -23,7 +23,7 @@
 #endif
 
 // ----------------------  macro ------------------------------------------------------
-// #define CONSUME_TIME
+#define CONSUME_TIME
 
 // ----------------------  global variable(calibration) -------------------------------
 extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
@@ -310,18 +310,12 @@ typedef struct
 typedef struct
 {
     MrmSystemFaultLevel       mrm_system_fault_level;           // mrm 系统故障等级   待定
-    uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
     MrmType                   mrm_type;                         // mrm 类型            
     BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型             
     DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态            
-    uint8                     brake_is_set;                     // 刹车是否踩下              非0 及1
-    uint8                     nda_need_phase_in;                // nda 是否需要phase-in     非0 及 1
-    uint8                     nda_passive_vd_flag;              // nda passive的vd标志位， 1 为valid   非 0 及 1
-    uint8                     driver_acc_pedal_applied_flag;    // 驾驶员是否踩下油门          非 0 及 1  取消
     NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位      
     Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
-    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位    非 0 及 1
-    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位     非 0 及 1
+    uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
 } InterMediaMsg;
 
 typedef struct 
