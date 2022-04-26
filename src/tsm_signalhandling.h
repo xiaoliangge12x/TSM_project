@@ -84,20 +84,6 @@ typedef struct
     DrvrAttentionSt      driver_attention_st;
 } DrvrAttStResult;
 
-typedef struct 
-{
-    uint8   flag_set_val;
-    uint8   flag_unset_val;
-    float32 time_threshold;
-} VarValueInTime;
-
-typedef struct 
-{
-    uint8  flag_set_val;
-    uint8  flag_unset_val;
-    uint16 time_threshold_cnt;
-} VarValue;
-
 // --------------------- function declaration -----------------------------------------------
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
@@ -127,10 +113,10 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
 // user defined
 void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue* var_value);
+void FlagSetWithTimeCount(const uint32 bit_no, const uint16 time_threshold_cnt, uint16* time_cnt);
 #ifdef CONSUME_TIME
 
-void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value);
+void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* time, uint8* time_flag);
 
 #endif
 void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);

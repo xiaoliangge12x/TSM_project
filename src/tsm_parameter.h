@@ -238,6 +238,7 @@ typedef enum
     LANE_CHANGE_LEFT,
     LANE_CHANGE_RIGHT
 } LaneChangeState;
+
 typedef enum
 {
     NONE = 0,
@@ -281,32 +282,46 @@ typedef enum
     BOTH_OVERRIDE_LNG_OVERRIDE,
     BOTH_OVERRIDE_LAT_OVERRIDE,
 } NdaTransitEnableFlag;
+
+typedef enum
+{
+    BITNO_FAILURE_LIGHTING_FLAG = 0U,
+    BITNO_NDA_TRANSIT_NORMAL_FLAG,
+    BITNO_DRVR_HANDTORQUE_OVERRIDE_ST,
+    BITNO_LNG_OVERRIDE_ST,
+    BITNO_LONG_TIME_LNG_OVERRIDE,
+    BITNO_HANDS_CAN_TAKEOVER,
+    BITNO_SET_BRAKE,
+    BITNO_PHASE_IN_AVAILABLE,
+    BITNO_NDA_NEED_PHASE_IN,
+    BITNO_NDA_PASSIVE_VD,
+    BITNO_NDA_AVL_BEFORE_ACT,
+    BITNO_NDA_AVL_AFTER_ACT,
+    BITNO_DRVR_ACC_PEDAL_APPLIED,
+} BitNoForInterMediaSig;
+
 // ------------------ 中间变量 ---------------
 typedef struct
 {
     NdaTransitEnableFlag nda_transit_enable_flag; 
     uint8                frame_cnt;   // 帧数计数器
 } NdaStTransitMonitor;
+
 typedef struct
 {
-    MrmSystemFaultLevel       mrm_system_fault_level;           // mrm 系统故障等级
-    uint8                     mrm_failure_lighting_flag;        // mrm 故障点灯标志位
-    MrmType                   mrm_type;                         // mrm 类型
-    uint8                     automaton_transit_normal_flag;    // soc状态机跳转是否正常标志位， 需要临时做标定
-    OverrideSt                driver_hand_torque_st;            // 驾驶员手力矩超越标志
-    BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型
-    OverrideSt                lng_override_st;                  // 纵向超越标志位
-    uint8                     lng_override_long_duration_flag;  // 纵向超越长时持续标志位
-    DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态
-    uint8                     hands_can_takeover;               // 手可以接管标志位
-    uint8                     brake_is_set;                     // 刹车是否踩下
-    uint8                     nda_need_phase_in;                // nda 是否需要phase-in
-    uint8                     nda_passive_vd_flag;              // nda passive的vd标志位， 1 为valid
-    uint8                     driver_acc_pedal_applied_flag;    // 驾驶员是否踩下油门
-    NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位
+    MrmSystemFaultLevel       mrm_system_fault_level;           // mrm 系统故障等级   待定
+    uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
+    MrmType                   mrm_type;                         // mrm 类型            
+    BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型             
+    DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态            
+    uint8                     brake_is_set;                     // 刹车是否踩下              非0 及1
+    uint8                     nda_need_phase_in;                // nda 是否需要phase-in     非0 及 1
+    uint8                     nda_passive_vd_flag;              // nda passive的vd标志位， 1 为valid   非 0 及 1
+    uint8                     driver_acc_pedal_applied_flag;    // 驾驶员是否踩下油门          非 0 及 1  取消
+    NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位      
     Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
-    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位
-    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位 
+    uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位    非 0 及 1
+    uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位     非 0 及 1
 } InterMediaMsg;
 
 typedef struct 

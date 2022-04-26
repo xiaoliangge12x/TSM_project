@@ -98,7 +98,6 @@ void MRM_TSM_MODULE_Init(void)
 {
     memset(&g_tsm, 0, sizeof(TSMParam));
     memset(&g_inter_media_msg, 0, sizeof(InterMediaMsg));
-    g_inter_media_msg.automaton_transit_normal_flag = 1;
     g_tsm.tsm_action_param.mrm_activation_st        = 1;
     g_tsm.state                                     = MCU_MRM_PASSIVE;
     g_warning_sm.warning_state                      = NO_WARNING;
@@ -161,7 +160,7 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
         }
     } else {
-        if (g_inter_media_msg.mrm_failure_lighting_flag) {
+        if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_FAILURE_LIGHTING_FLAG)) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_LIGHTING);
         } else {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
@@ -215,24 +214,25 @@ boolean IsDriverTakeOver()
             return true;
         }
         if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-            g_inter_media_msg.lng_override_long_duration_flag) {
+            IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
             return true;
         }
         if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_LOOK_REARVIEW_OR_HU) ||
             (g_inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED) ||
             (g_inter_media_msg.driver_attention_st == FATIGUE_DRIVER_ATTENTION_ST)) {
-            if (g_inter_media_msg.hands_can_takeover && g_inter_media_msg.lng_override_long_duration_flag) {
+            if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_HANDS_CAN_TAKEOVER) && 
+                IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
                 return true;
             }
         }
     }
 
     if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-        (g_inter_media_msg.hands_can_takeover)) {
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_HANDS_CAN_TAKEOVER)) {
         return true;
     }
 
-    if (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY) {
+    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
         return true;
     }
     return false;
@@ -252,7 +252,7 @@ boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, c
     }
 
     // 监控SOC侧NDA激活状态跳转错误
-    if (!g_inter_media_msg.automaton_transit_normal_flag) {
+    if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG)) {
         return true;
     }
     // for debug
@@ -279,7 +279,8 @@ boolean IsNDAInActiveSt(const uint8 nda_st)
 
 void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl)
 {
-    ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ?
+    (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) || 
+     IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE)) ?
         SetSignalBitFields(&g_tsm_signal_bitfileds, lat_ctrl) :
         SetSignalBitFields(&g_tsm_signal_bitfileds, both_ctrl);
 }

@@ -42,9 +42,11 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     NdaStTransitNormalJudge(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
-        "driver_hand_torque_st: %d", g_inter_media_msg.lng_override_long_duration_flag, 
-        g_inter_media_msg.brake_is_set, g_inter_media_msg.driver_acc_pedal_applied_flag, 
-        g_inter_media_msg.driver_hand_torque_st);
+        "driver_hand_torque_st: %d", 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE), 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE),
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED),
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
 #endif
 }
 
@@ -131,36 +133,28 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   lng_override_cnt = 0;
-    static VarValue var_value        = {1, 0, 0};
-
-    var_value.time_threshold_cnt = K_LngOverrideTakeOverTime_Cnt;
-
     // TODO: 未加变道状态
-    if ((vehicle_signal->VCU_AccDriverOrvd == DRIVER_OVERRIDE) || g_inter_media_msg.driver_acc_pedal_applied_flag) {
-        g_inter_media_msg.lng_override_st = OVERRIDE_SATISFY;
-        FlagSetWithTimeCount(&g_inter_media_msg.lng_override_long_duration_flag, &lng_override_cnt, &var_value);
+    if ((vehicle_signal->VCU_AccDriverOrvd == DRIVER_OVERRIDE) || 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED)) {
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST);
+        FlagSetWithTimeCount(BITNO_LONG_TIME_LNG_OVERRIDE, K_LngOverrideTakeOverTime_Cnt, &lng_override_cnt);
     } else {
-        g_inter_media_msg.lng_override_st                 = OVERRIDE_NOT_SATISFY;
-        lng_override_cnt                                  = 0;
-        g_inter_media_msg.lng_override_long_duration_flag = var_value.flag_unset_val;
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST);
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE);
+        lng_override_cnt = 0;
     }
 #else
     static sint64         lngOverride_time        = 0;
-    static VarValueInTime var_value               = {1, 0, 0.0};
     static uint8          lngOverride_timing_flag = 0;
 
-    var_value.time_threshold = K_LngOverrideTakeOverTime;
-    if ((vehicle_signal->VCU_AccDriverOrvd == DRIVER_OVERRIDE) || g_inter_media_msg.driver_acc_pedal_applied_flag) {
-        g_inter_media_msg.lng_override_st = OVERRIDE_SATISFY;
-        if (!lngOverride_timing_flag) {
-            StartTiming(&lngOverride_time, &lngOverride_timing_flag);
-        }
-        FlagSetWithTime(&g_inter_media_msg.lng_override_long_duration_flag, lngOverride_time, 
-            lngOverride_timing_flag, &var_value);
+    if ((vehicle_signal->VCU_AccDriverOrvd == DRIVER_OVERRIDE) || 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED)) {
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST);
+        FlagSetWithTime(BITNO_LONG_TIME_LNG_OVERRIDE,  K_LngOverrideTakeOverTime, &lngOverride_time, &lngOverride_timing_flag);
     } else {
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST);
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE);
         StopTiming(&lngOverride_timing_flag);
-        g_inter_media_msg.lng_override_st                 = OVERRIDE_NOT_SATISFY;
-        g_inter_media_msg.lng_override_long_duration_flag = var_value.flag_unset_val;
     }
 #endif
 }
@@ -169,65 +163,48 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   brakeset_cnt = 0;
-    static VarValue var_value    = {1, 0, 0};
 
-    var_value.time_threshold_cnt = K_BrakPedalAppliedThresholdTime_Cnt;
-
-    if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && 
-        (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
-        FlagSetWithTimeCount(&g_inter_media_msg.brake_is_set, &brakeset_cnt, &var_value);
+    if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
+        FlagSetWithTimeCount(BITNO_SET_BRAKE, K_BrakPedalAppliedThresholdTime_Cnt, &brakeset_cnt);
     } else {
-        g_inter_media_msg.brake_is_set = var_value.flag_unset_val;
-        brakeset_cnt                     = 0;
+        ResetSignalBitFields(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
+        brakeset_cnt = 0;
     }
 #else
     static sint64         brakeset_time        = 0;
-    static VarValueInTime var_value            = {1, 0, 0.0};
     static uint8          brakeset_timing_flag = 0;
-    var_value.time_threshold = K_BrakPedalAppliedThresholdTime;
-    if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && 
-        (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
-        if (!brakeset_timing_flag) {
-            StartTiming(&brakeset_time, &brakeset_timing_flag);
-        }
-        FlagSetWithTime(&g_inter_media_msg.brake_is_set, brakeset_time, brakeset_timing_flag, &var_value);
+
+    if ((vehicle_signal->EBB_BrkPedalAppliedSt == BRK_APPLIED_ST_NORMAL) && (vehicle_signal->EBB_BrkPedalApplied == BRAKE_PEDAL_APPLIED)) {
+        FlagSetWithTime(BITNO_SET_BRAKE, K_BrakPedalAppliedThresholdTime, &brakeset_time, &brakeset_timing_flag);
     } else {
+        ResetSignalBitFields(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE);
         StopTiming(&brakeset_timing_flag);
-        g_inter_media_msg.brake_is_set = var_value.flag_unset_val;
     }
 #endif
 }
 
-void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+boolean DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 {
 #ifndef CONSUME_TIME
-    static uint16   gasPedalPos_cnt = 0;
-    static VarValue var_value       = {1, 0, 0};
+    static uint16   gasPedalPos_cnt              = 0;
 
-    var_value.time_threshold_cnt = K_GasPedalAppliedThresholdTime_Cnt;
     if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
         (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
-        FlagSetWithTimeCount(&g_inter_media_msg.driver_acc_pedal_applied_flag, &gasPedalPos_cnt, &var_value);
+        FlagSetWithTimeCount(BITNO_DRVR_ACC_PEDAL_APPLIED, K_GasPedalAppliedThresholdTime_Cnt, &gasPedalPos_cnt);
     } else {
-        g_inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
-        gasPedalPos_cnt                                     = 0;
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED);
+        gasPedalPos_cnt = 0;
     }
 #else
     static sint64         gasPedalPos_time            = 0;
-    static VarValueInTime var_value                   = {1, 0, 0.0};
     static uint8          gasPedalApplied_timing_flag = 0;
 
-    var_value.time_threshold = K_GasPedalAppliedThresholdTime;
     if (vehicle_signal->EMS_GasPedalActPstforMRRVD && 
         (vehicle_signal->EMS_GasPedalActPstforMRR > K_GasPedalPosThresholdValue)) {
-        if (!gasPedalApplied_timing_flag) {
-            StartTiming(&gasPedalPos_time, &gasPedalApplied_timing_flag);
-        }
-        FlagSetWithTime(&g_inter_media_msg.driver_acc_pedal_applied_flag, gasPedalPos_time, 
-            gasPedalApplied_timing_flag, &var_value);
+        FlagSetWithTime(BITNO_DRVR_ACC_PEDAL_APPLIED, K_GasPedalAppliedThresholdTime, &gasPedalPos_time, &gasPedalApplied_timing_flag);
     } else {
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED);
         StopTiming(&gasPedalApplied_timing_flag);
-        g_inter_media_msg.driver_acc_pedal_applied_flag = var_value.flag_unset_val;
     }
 #endif
 }
@@ -257,29 +234,24 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
 
 #ifndef CONSUME_TIME
     static uint16   lat_override_withHOD_cnt  = 0;
-    static VarValue var_value                 = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
+
     var_value.time_threshold_cnt = (uint16)K_OverrideHandTorqCheckTime_Cnt;
     if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
-        FlagSetWithTimeCount(&g_inter_media_msg.driver_hand_torque_st, &lat_override_withHOD_cnt, &var_value);
+        FlagSetWithTimeCount(BITNO_DRVR_HANDTORQUE_OVERRIDE_ST, K_OverrideHandTorqCheckTime_Cnt, &lat_override_withHOD_cnt);
     } else {
-        g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
-        lat_override_withHOD_cnt                = 0;
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
+        lat_override_withHOD_cnt = 0;
     }
 #else
     static sint64         latOverrideWithHOD_time        = 0;
-    static VarValueInTime var_value                      = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0.0};
     static uint8          latOverrideWithHOD_timing_flag = 0;
 
-    var_value.time_threshold = K_OverrideHandTorqCheckTime;
     if (vehicle_signal->EPS_StrngWhlTorqVD && (fabs(vehicle_signal->EPS_StrngWhlTorq) > overrideHandTorqThreshold)) {
-        if (!latOverrideWithHOD_timing_flag) {
-            StartTiming(&latOverrideWithHOD_time, &latOverrideWithHOD_timing_flag);
-        }
-        FlagSetWithTime(&g_inter_media_msg.driver_hand_torque_st, latOverrideWithHOD_time, 
-            latOverrideWithHOD_timing_flag, &var_value);
+        FlagSetWithTime(BITNO_DRVR_HANDTORQUE_OVERRIDE_ST, K_OverrideHandTorqCheckTime, &latOverrideWithHOD_time, 
+            &latOverrideWithHOD_timing_flag);
     } else {
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
         StopTiming(&latOverrideWithHOD_timing_flag);
-        g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
     }
 #endif
 }
@@ -288,32 +260,25 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
 {
 #ifndef CONSUME_TIME
     static uint16   lat_override_withoutHOD_cnt = 0;
-    static VarValue var_value                   = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0};
 
-    var_value.time_threshold_cnt = K_OverrideHandTorqCheckTime_Cnt;
     if (vehicle_signal->EPS_StrngWhlTorqVD && 
         (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
-        FlagSetWithTimeCount(&g_inter_media_msg.driver_hand_torque_st, &lat_override_withoutHOD_cnt, &var_value);
+        FlagSetWithTimeCount(BITNO_DRVR_HANDTORQUE_OVERRIDE_ST, K_OverrideHandTorqCheckTime_Cnt, &lat_override_withoutHOD_cnt);
     } else {
-        g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
-        lat_override_withoutHOD_cnt               = 0;
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
+        lat_override_withoutHOD_cnt = 0;
     }
 #else
     static sint64         latOverrideWithoutHOD_time        = 0;
-    static VarValueInTime var_value                         = {OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY, 0.0};
     static uint8          latOverrideWithoutHOD_timing_flag = 0;
 
-    var_value.time_threshold = K_OverrideHandTorqCheckTime;
     if (vehicle_signal->EPS_StrngWhlTorqVD && 
         (fabs(vehicle_signal->EPS_StrngWhlTorq) > K_OverrideHandTorqThreshold_LessTwoZone)) {
-        if (!latOverrideWithoutHOD_timing_flag) {
-            StartTiming(&latOverrideWithoutHOD_time, &latOverrideWithoutHOD_timing_flag);
-        }
-        FlagSetWithTime(&g_inter_media_msg.driver_hand_torque_st, latOverrideWithoutHOD_time, 
-            latOverrideWithoutHOD_timing_flag, &var_value);
+        FlagSetWithTime(BITNO_DRVR_HANDTORQUE_OVERRIDE_ST, K_OverrideHandTorqCheckTime, &latOverrideWithoutHOD_time, 
+            &latOverrideWithoutHOD_timing_flag);
     } else {
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
         StopTiming(&latOverrideWithoutHOD_timing_flag);
-        g_inter_media_msg.driver_hand_torque_st = var_value.flag_unset_val;
     }
 #endif
 }
@@ -369,12 +334,12 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     }
 
     if (hazardlight_on) {
-        g_inter_media_msg.automaton_transit_normal_flag = 0;
+        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
         // 0328版本暂用，此时顺便把系统故障置为TOR故障，后续删除
         g_inter_media_msg.mrm_system_fault_level = TOR_LEVEL3_FAULT;
         return;
     }
-    g_inter_media_msg.automaton_transit_normal_flag = 1;
+    SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
     // 0328版本暂用，后续删除
     g_inter_media_msg.mrm_system_fault_level = 0;
 
@@ -383,18 +348,18 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     //     if ((g_inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
     //         (soc_info->Automaton_State.NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
     //         if (g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
-    //             g_inter_media_msg.automaton_transit_normal_flag = 0;
+    //             ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
     //             return;
     //         }
     //     }
     // }
-    // g_inter_media_msg.automaton_transit_normal_flag = 1;
+    // SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
 }
 
 void BrakeInervationFlagJudge()
 {
     static uint16 brake_intervation_cnt = 0;
-    if (!g_inter_media_msg.brake_is_set) {
+    if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
         g_inter_media_msg.brake_intervention_type = NO_BRAKE_INTERVENTION;
         brake_intervation_cnt                       = 0;
     } else {
@@ -423,16 +388,16 @@ void BrakeInervationFlagJudge()
     }
 }
 
-void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue* var_value) 
+void FlagSetWithTimeCount(const uint32 bit_no, const uint16 time_threshold_cnt, uint16* time_cnt) 
 {
-    if (*flag_set_var == var_value->flag_set_val) {
-        *flag_set_var = var_value->flag_set_val;
+    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, bit_no)) {
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
     } else {
-        if (*time_cnt > var_value->time_threshold_cnt) {
-            *flag_set_var = var_value->flag_set_val;
+        if (*time_cnt > time_threshold_cnt) {
+            SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
             *time_cnt     = 0;
         } else {
-            *flag_set_var = var_value->flag_unset_val;
+            ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
             ++(*time_cnt);
         }
     }
@@ -440,15 +405,18 @@ void FlagSetWithTimeCount(uint8* flag_set_var, uint16* time_cnt, const VarValue*
 
 #ifdef CONSUME_TIME
 
-void FlagSetWithTime(uint8* flag_set_var, const sint64 time, const uint8 time_flag, const VarValueInTime* var_value)
+void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* time, uint8* time_flag)
 {
-    if (*flag_set_var == var_value->flag_set_val) {
-        *flag_set_var = var_value->flag_set_val;
+    if (!(*time_flag)) {
+        StartTiming(time, time_flag);
+    }
+    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, bit_no)) {
+        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
     } else {
-        if (GetTimeGapInSec(time, time_flag) > var_value->time_threshold) {
-            *flag_set_var = var_value->flag_set_val;
+        if (GetTimeGapInSec(*time, *time_flag) > time_threshold) {
+            SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
         } else {
-            *flag_set_var = var_value->flag_unset_val;
+            ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, bit_no);
         }
     }
 }
@@ -474,8 +442,8 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
     }
 
     if (g_inter_media_msg.is_nda_avl_after_activation) {
-        if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
-            (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
+        if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
+            IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE);
@@ -484,8 +452,8 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
             SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_BOTH_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_BOTH_OVERRIDE);
-        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) &&
-                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_NOT_SATISFY)) {
+        } else if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
+                   !IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE);
@@ -494,8 +462,8 @@ void CheckNdaActiveTransitCond(const Dt_RECORD_VehicleSignal2TSM* veh_info, cons
             SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_LNG_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LNG_OVERRIDE);
-        } else if ((g_inter_media_msg.lng_override_st == OVERRIDE_NOT_SATISFY) &&
-                   (g_inter_media_msg.driver_hand_torque_st == OVERRIDE_SATISFY)) {
+        } else if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
+                   IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE);
             SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE);
