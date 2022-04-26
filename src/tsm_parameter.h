@@ -49,10 +49,6 @@ extern float32 K_TakeOverAvailHandTorqThreshold_ThreeZone;
 extern float32 K_GasPedalPosThresholdValue;
 
 // ---------------------------------- typedef   ------------------------------------------------
-
-
-
-
 typedef enum 
 {
     AWAKE_AND_NOT_DISTRACTED = 0,
@@ -312,7 +308,6 @@ typedef struct
     uint8                     is_nda_avl_before_activation;    // 激活前NDA是否可用标志位
     uint8                     is_nda_avl_after_activation;     // 激活后NDA是否可用标志位 
 } InterMediaMsg;
-
 
 typedef struct 
 {

@@ -65,7 +65,7 @@ typedef struct tagSoc_Info
     uint8_t                   SD_Map_HD_Map_Match_St;     // SD地图和高精地图的匹配状态， from localMap
     uint8_t                   EEA_Status;                  // 车辆是否处于电子围栏内
     uint8_t                   User_Set_Navi_Status;              // 用户设置导航状态， from navi
-    uint8_t                   Global_Location_Accuracy;          // 全局定位精度
+    uint8_t                   Global_Location_Accuracy;          // 全局定位精度, 取融合定位的结果
     uint8_t                   Relative_Location_Accuracy;        // 相对定位精度
     uint8_t                   HandsOn_HandsFree_Flag;            // handson_handsfree配置码
     uint8_t                   Request_Mrm_From_SOC;    // 来自SOC侧的请求MRM

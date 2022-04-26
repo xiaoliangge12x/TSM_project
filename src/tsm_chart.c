@@ -13,13 +13,10 @@
 
 #include "tsm_chart.h"
 #include "tsm_warning.h"
-#ifndef _RUN_IN_LINUX
-#include "hb_TimeSync.h"
-#endif
+#include "tsm_output.h"
 
 // -------------------------------  global variable definition ----------------------------
 TSMParam      g_tsm;
-static uint32 g_tsm_signal_bitfileds = 0U;
 // -------------------------------- driving table initilize -------------------------------
 static const StateMachine g_top_state_machine = 
 {
@@ -34,12 +31,12 @@ static const StateMachine g_top_state_machine =
         {MCU_MRM_FAILURE_NO_LIGHTING, EVENT_FAULT_NOT_EXIST,      MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_LIGHTING,             MCU_MRM_FAILURE_LIGHTING},
         {MCU_MRM_STANDBY,             EVENT_NO_LIGHTING,          MCU_MRM_FAILURE_NO_LIGHTING},
-        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_STANDBY,             EVENT_MRM_BOTH_CTRL,        MCU_MRM_ACTIVE_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRM_LAT_CTRL,         MCU_MRM_ACTIVE_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_MRC,                  MCU_MRM_MRC},
         {MCU_MRM_STANDBY,             EVENT_TOR_BOTH_CTRL,        MCU_MRM_TOR_LNG_LAT_CTRL},
         {MCU_MRM_STANDBY,             EVENT_TOR_LAT_CTRL,         MCU_MRM_TOR_LAT_CTRL},
+        {MCU_MRM_STANDBY,             EVENT_NO_STANDBY,           MCU_MRM_PASSIVE},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_LAT_CTRL_SWITCH,  MCU_MRM_TOR_LAT_CTRL},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_VEH_STANDSTILL,       MCU_MRM_TOR_STAND},
         {MCU_MRM_TOR_LNG_LAT_CTRL,    EVENT_TOR_TO_MRM_BOTH,      MCU_MRM_ACTIVE_LNG_LAT_CTRL},
@@ -96,6 +93,7 @@ static const StateMachine g_top_state_machine =
     }, 
 };
 
+// -------------------------------- function  ---------------------------------------------
 void MRM_TSM_MODULE_Init(void)
 {
     memset(&g_tsm, 0, sizeof(TSMParam));
@@ -106,30 +104,47 @@ void MRM_TSM_MODULE_Init(void)
     g_warning_sm.warning_state                      = NO_WARNING;
 }
 
-void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
-    const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
-    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
-    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
-    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
+void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
+    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
+    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI, Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
 {
 	// TODO:
+    // validate timestamp
 	(void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
-    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);  
-	RunTsmSit(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
-	RunWarningSit();
-    StateMachineWork(&g_top_state_machine, &g_tsm.state);
-    StateMachineWork(&g_warning_state_machine, &g_warning_sm.warning_state);
+
+    // Preprocess msg
+    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+
+    // run tsm user
+    RunTsmUser(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+
+    // run warning user
+    RunWarningUser();
+
+    // wrap package and send
     WrapAndSend(rtu_DeCtrlArb2TSM, rtu_DeDecisionArbitrator2TSM, rtu_DeCANGATE2TSM, 
         rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
         rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, rty_DeTSM2HMI, rty_DeTSM2CANGATE);
+    
+    // 保存SOC状态
+    memcpy(&g_inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
+        sizeof(Dt_RECORD_Automaton_State));
+
 #ifdef _NEED_LOG
-    LOG(COLOR_GREEN, "tsm state: %d, warning state: %d", g_tsm.state, g_warning_sm.warning_state);
+    LOG(COLOR_GREEN, "request_mrm_from_mcu: %d", g_tsm.tsm_action_param.request_mrm);
 #endif
+}
+
+void RunTsmUser(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+{
+    // Run Sit
+    RunTsmSit(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+
+    // Run tsm sm
+    StateMachineWork(&g_top_state_machine, &g_tsm.state);
 }
 
 void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
@@ -160,19 +175,19 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
 
     if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
-        if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+        if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_MRC);
         }
     } else {
         SetCtrlType(BITNO_MRM_BOTH_CTRL_SWITCH, BITNO_MRM_LAT_CTRL_SWITCH);
         if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
             SetCtrlType(BITNO_TOR_BOTH_CTRL_SWITCH, BITNO_TOR_LAT_CTRL_SWITCH);
-            if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+            if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
                 SetCtrlType(BITNO_TOR_BOTH_CTRL, BITNO_TOR_LAT_CTRL);
             }
         } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
             SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
-            if (!g_inter_media_msg.automaton_transit_normal_flag || IsInTorFault()) {
+            if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
                 SetCtrlType(BITNO_MRM_BOTH_CTRL, BITNO_MRM_LAT_CTRL);
             }
         } else {
@@ -190,105 +205,6 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
         g_tsm.tsm_action_param.request_mrm = 1;
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
-}
-
-
-boolean IsMrmSystemFaultNotExist()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
-}
-
-boolean IsLightingConditionMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_LIGHTING);
-}
-
-boolean IsNoLightingConditionMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
-}
-
-boolean IsStandbyConditionMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_STANDBY);
-}
-
-boolean IsStandbyConditionNotMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_STANDBY);
-}
-
-boolean IsMrmBothCtrlConditionMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL);
-}
-
-boolean IsMrmLatCtrlConditionMeet()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL);
-}
-
-boolean IsCanEnterMrcFromStandby() 
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRC);
-}
-
-boolean IsTorBothCtrlCondMeet() 
-{
-#ifdef _NEED_LOG
-    // LOG(COLOR_RED, "IsTorBothCtrlCondMeet: %d", IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL));
-#endif
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL);
-}
-
-boolean IsTorLatCtrlCondMeet() 
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL);
-}
-
-boolean IsVehStandStillCondMeet() 
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
-}
-
-boolean IsFuncExitCondMeet() 
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
-}
-
-boolean IsWaitEpbSt()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_WAIT_EPB_RES);
-}
-
-boolean IsSwitchToMrmBothCtrl()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL_SWITCH);
-}
-
-boolean IsSwitchToMrmLatCtrl()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL_SWITCH);
-}
-
-boolean IsSwitchToTorBothCtrl()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL_SWITCH);
-}
-
-boolean IsSwitchToTorLatCtrl()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL_SWITCH);
-}
-
-boolean IsTorToMrmBoth()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_BOTH);
-}
-
-boolean IsTorToMrmLat()
-{
-    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_LAT);
 }
 
 boolean IsDriverTakeOver()
@@ -322,11 +238,28 @@ boolean IsDriverTakeOver()
     return false;
 }
 
-boolean IsInTorFault() 
+boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM) 
 {
-    return ((g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) ||
-            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) ||
-            (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT));
+    // TODO:
+    // SOC状态机退出且TO3故障发还给MCU， 或者SOC安全停车时发生故障
+    if (rtu_DeCANGATE2TSM->Soc_Info.Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Soc_Info.Request_Mrm_From_SOC) {
+        return true;
+    }
+
+    // 和 SOC 发生通信故障
+    if (rtu_DeDiag2TSM->Com_Fault_with_SOC) {
+        return true;
+    }
+
+    // 监控SOC侧NDA激活状态跳转错误
+    if (!g_inter_media_msg.automaton_transit_normal_flag) {
+        return true;
+    }
+    // for debug
+    if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
+        return true;
+    }
+    return false;
 }
 
 boolean IsNDAInActiveSt(const uint8 nda_st)
@@ -349,98 +282,6 @@ void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl)
     ((g_inter_media_msg.lng_override_st == OVERRIDE_SATISFY) || g_inter_media_msg.brake_is_set) ?
         SetSignalBitFields(&g_tsm_signal_bitfileds, lat_ctrl) :
         SetSignalBitFields(&g_tsm_signal_bitfileds, both_ctrl);
-}
-
-void ActionInPassive()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in MCU_MRM_PASSIVE St.");
-#endif
-    DoNoFunctionWork();
-}
-
-void ActionInFailureLighting()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Failure Lighting St.");
-#endif
-    DoNoFunctionWork();
-}
-
-void ActionInFailureNoLighting()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Failure No Lighting St.");
-#endif
-    DoNoFunctionWork();
-}
-
-void ActionInStandby()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Standby St.");
-#endif
-    DoNoFunctionWork();
-}
-
-void ActionInTorBothCtrl()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Tor Both Ctrl St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_TOR);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-}
-
-void ActionInTorLatCtrl()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Tor Lat Ctrl St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_TOR);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-}
-
-void ActionInTorStand()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Tor Stand St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_TOR);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-}
-
-void ActionInMrmBothCtrl()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_YELLOW, "It's in Mrm Both Ctrl St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_ACTIVE);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-}
-
-void ActionInMrmLatCtrl()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Mrm Lat Ctrl St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_ACTIVE);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_MCU);
-}
-
-void ActionInMrc()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in Mrc St.");
-#endif
-    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_INVALID);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_SOC);
 }
 
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
@@ -476,134 +317,4 @@ boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECO
         return false;
     }
     return true;
-}
-
-void DoNoFunctionWork()
-{
-    OutputLatLngOverrideStatus(OVERRIDE_NOT_SATISFY, OVERRIDE_NOT_SATISFY);
-    OutputMrmStatus(MRM_ST_INVALID);
-    OutputCtrlArbReq(CTRLARB_RESPOND_TO_SOC);
-}
-
-void OutputLatLngOverrideStatus(const OverrideSt lng_override_st, const OverrideSt lat_override_st)
-{
-    g_tsm.tsm_action_param.lng_override_flag = lng_override_st;
-    g_tsm.tsm_action_param.lat_override_flag = lat_override_st;
-}
-
-void OutputMrmStatus(const MrmStateToPlanning mrm_st)
-{
-    g_tsm.tsm_action_param.mrm_activation_st = mrm_st;
-}
-
-void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req)
-{
-    g_tsm.tsm_action_param.control_arb_request = ctrl_arb_req;
-}
-
-// 组包并发送
-void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
-    const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
-    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
-    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
-    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator,
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
-{
-	static Dt_RECORD_TimeStamp tsm_timestamp  = {0};
-#ifdef CONSUME_TIME
-    static sint64              time_in_ten_ns = 0;
-    static uint32              TEN_NS_PER_S   = 100000000;
-    static uint32              NS_PER_TEN_NS  = 10;
-    tsm_timestamp.Timestamp_valid = 1;
-    hb_TimeSync_GetTime(&time_in_ten_ns);   // 10ns per
-    tsm_timestamp.Timestamp_nsec = (uint32)time_in_ten_ns * NS_PER_TEN_NS;
-    tsm_timestamp.Timestamp_sec  = (uint32)time_in_ten_ns / TEN_NS_PER_S;
-#endif
-    // 保存SOC状态
-    memcpy(&g_inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
-        sizeof(Dt_RECORD_Automaton_State));
-    
-    // 组包发送相关
-    // ----- 给到planlite相关 ---------
-    memcpy(&rty_DeTsm2Planlite->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机提供
-    memcpy(&rty_DeTsm2Planlite->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    rty_DeTsm2Planlite->NDA_Lane_Change_Type = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Type;
-    rty_DeTsm2Planlite->NDA_Lane_Change_Direction = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Direction;
-    rty_DeTsm2Planlite->NDA_Lane_Change_State = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_State;
-    // to do: 状态机提供
-    rty_DeTsm2Planlite->MRM_Status = g_tsm.tsm_action_param.mrm_activation_st;   // 1 激活， 0 取消
-
-    // ----- 给到CtrlArb相关 --------
-    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_CanGate, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->DeTimeStamp,
-        sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机提供
-    memcpy(&rty_DeTSM2CtrlArb->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    // 状态机输出信号相关
-    rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
-    // to do: 是否需要封装一层状态
-    memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
-        sizeof(Dt_RECORD_Automaton_State));
-    rty_DeTSM2CtrlArb->long_override_flag = g_tsm.tsm_action_param.lng_override_flag;
-    // to do: 暂时全发0，逻辑还没定 
-    rty_DeTSM2CtrlArb->NDA_LatState = 0;
-    rty_DeTSM2CtrlArb->NDA_LongState = 0;
-    rty_DeTSM2CtrlArb->NDA_ILC_State = 0;
-	rty_DeTSM2CtrlArb->control_arb_request = g_tsm.tsm_action_param.control_arb_request;
-
-
-    // ------- 给到DeciArb相关 ---------
-    memcpy(&rty_DeTSM2DecisionArbitrator->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp,
-        sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2DecisionArbitrator->DeScenarioType, &rtu_DeCANGATE2TSM->Soc_Info,
-        sizeof(Dt_RECORD_ScenarioType));
-
-    // ------- 给到Diag诊断相关 --------
-    // to do: 状态机提供
-    memcpy(&rty_DeTSM2Diag->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机提供， TSM故障状态
-    rty_DeTSM2Diag->Tsm_Status = 0;
-    
-    // -------- 给到HMI相关 --------
-    // to do: 状态机提供
-    memcpy(&rty_DeTSM2HMI->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机提供
-    rty_DeTSM2HMI->Fault_Info = 0;     // 故障信息
-    // to do: 状态机提供
-    rty_DeTSM2HMI->Tor_Request = 0;    // tor请求
-
-    // -------- 给到CANgate相关 -------
-    // to do: 状态机提供
-    memcpy(&rty_DeTSM2CANGATE->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, &rtu_DeDecisionArbitrator2TSM->Decision_Arbitrator_TimeStamp,
-        sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, &rtu_DeCtrlArb2TSM->timestamp,
-        sizeof(Dt_RECORD_TimeStamp));
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->EPB_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Hazard_Light_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Ecall_Request = 0;
-    // to do: 状态机判断提供
-    rty_DeTSM2CANGATE->Door_Unlock_Request = 0;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AS_Status = rtu_DeCtrlArb2TSM->AS_Status;
-    memcpy(&rty_DeTSM2CANGATE->Tsm_To_Soc.Control_Arbitrator_Results, &rtu_DeCtrlArb2TSM->Control_Arbitrator_Results, 
-        sizeof(Dt_RECORD_Control_Arbitrator_Results));
-    rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
-    // to do: 状态机提供状态跳转监控标志位
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Standby_HandsFree_St_Monitor_Flag = 
-        g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.HandsOn_St_Monitor_Flag = 0;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Override_St_Monitor_Flag = 0;
-    // to do: 状态机提供
-    memcpy(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    // to do:
-    rty_DeTSM2CANGATE->Mcu_To_Ifc.MCU_MRM_status = 0;  // MRM状态, 表示MCU安全停车是否可用,以供IFC判断是否启动安全停车 -- 功能故障,和明江讨论下
 }

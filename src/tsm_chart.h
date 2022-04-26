@@ -16,15 +16,14 @@
 
 #include "tsm_parameter.h"
 #include "base/sm_base.h"
-#ifdef _NEED_LOG
-#include "common.h"
-#endif
+
 // ---------------------------------- macro definition     --------------------------------------
 #define TIMESTAMP_MAX_NUM     3
 #define EPSINON_TIME          ((float32)0.00001)
 #define NS_IN_MS              ((float32)1000000.0)
 #define UPPER_CYCLE           ((float32)21.0)
 #define LOWER_CYCLE           ((float32)19.0)
+
 // ---------------------------------- typedef              --------------------------------------
 typedef enum
 {
@@ -79,74 +78,117 @@ typedef enum
     BITNO_WAIT_EPB_RES,
 } TsmEventBitNo;
 
-typedef enum
-{
-    MRM_ST_TOR = 0,
-    MRM_ST_ACTIVE,
-    MRM_ST_INVALID,
-} MrmStateToPlanning;
+// ---------------------------------- global variable def  --------------------------------------
+static uint32 g_tsm_signal_bitfileds = 0U;
 
-typedef enum
-{
-    CTRLARB_RESPOND_TO_SOC = 0,
-    CTRLARB_RESPOND_TO_MCU,
-} CtrlArbRequest;
 // ---------------------------------- function declaration --------------------------------------
+void RunTsmUser(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 boolean IsTimeStampLost(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp);
 boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp);
-
-// 组包并发送
-void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
-    const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
-    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
-    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
-    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI,
-    Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE);
-
 void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean IsMrmSystemFaultNotExist(); 
-boolean IsLightingConditionMeet();
-boolean IsNoLightingConditionMeet();
-boolean IsStandbyConditionMeet();
-boolean IsStandbyConditionNotMeet();
-boolean IsMrmBothCtrlConditionMeet();
-boolean IsMrmLatCtrlConditionMeet();
-boolean IsCanEnterMrcFromStandby();
-boolean IsTorBothCtrlCondMeet();
-boolean IsTorLatCtrlCondMeet();
-boolean IsVehStandStillCondMeet();
-boolean IsFuncExitCondMeet();
-boolean IsWaitEpbSt();
-boolean IsSwitchToMrmBothCtrl();
-boolean IsSwitchToMrmLatCtrl();
-boolean IsSwitchToTorBothCtrl();
-boolean IsSwitchToTorLatCtrl();
-boolean IsTorToMrmBoth();
-boolean IsTorToMrmLat();
 boolean IsDriverTakeOver();
-boolean IsInTorFault();
+boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
 boolean IsNDAInActiveSt(const uint8 nda_st);
 void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl);
-void DoNoFunctionWork();
-void OutputLatLngOverrideStatus(const OverrideSt lng_override_st, const OverrideSt lat_override_st);
-void OutputMrmStatus(const MrmStateToPlanning mrm_st);
-void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req);
 
-void ActionInPassive();
-void ActionInStandby();   
-void ActionInFailureLighting();
-void ActionInFailureNoLighting();
-void ActionInTorBothCtrl();
-void ActionInTorLatCtrl();
-void ActionInTorStand();  
-void ActionInMrmBothCtrl();
-void ActionInMrmLatCtrl();     
-void ActionInMrc();
+
+boolean IsMrmSystemFaultNotExist()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
+}
+
+boolean IsLightingConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_LIGHTING);
+}
+
+boolean IsNoLightingConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_LIGHTING);
+}
+
+boolean IsStandbyConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_STANDBY);
+}
+
+boolean IsStandbyConditionNotMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_NO_STANDBY);
+}
+
+boolean IsMrmBothCtrlConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL);
+}
+
+boolean IsMrmLatCtrlConditionMeet()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL);
+}
+
+boolean IsCanEnterMrcFromStandby() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRC);
+}
+
+boolean IsTorBothCtrlCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL);
+}
+
+boolean IsTorLatCtrlCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL);
+}
+
+boolean IsVehStandStillCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
+}
+
+boolean IsFuncExitCondMeet() 
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
+}
+
+boolean IsWaitEpbSt()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_WAIT_EPB_RES);
+}
+
+boolean IsSwitchToMrmBothCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_BOTH_CTRL_SWITCH);
+}
+
+boolean IsSwitchToMrmLatCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_MRM_LAT_CTRL_SWITCH);
+}
+
+boolean IsSwitchToTorBothCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_BOTH_CTRL_SWITCH);
+}
+
+boolean IsSwitchToTorLatCtrl()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_LAT_CTRL_SWITCH);
+}
+
+boolean IsTorToMrmBoth()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_BOTH);
+}
+
+boolean IsTorToMrmLat()
+{
+    return IsBitSet(g_tsm_signal_bitfileds, BITNO_TOR_TO_MRM_LAT);
+}
+
 #endif

@@ -127,6 +127,15 @@ void RunWarningSit()
     }
 }
 
+void RunWarningUser()
+{
+    // run sit
+    RunWarningSit();
+
+    // run state machine
+    StateMachineWork(&g_warning_state_machine, &g_warning_sm.warning_state);
+}
+
 void ActionInNoWarning()
 {
 #ifdef _NEED_LOG

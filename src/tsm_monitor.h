@@ -91,6 +91,8 @@ typedef struct
 extern const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE];  // 千万不能声明成static
 extern MonitorBitfields       g_monitor_bitfields;
 // ----------------------------- function declaration ---------------------------------
+void CheckNdaPassiveVD();
+
 boolean TransitCondFromStandbyToHandsFreeNormal();
 boolean TransitCondFromStandbyToHandsOnNormal();
 boolean TransitCondFromStandbyToHandsFreeStandActive();

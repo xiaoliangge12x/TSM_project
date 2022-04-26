@@ -18,6 +18,7 @@ static const Signal g_signal_table[] =
     {TYPE_FLOAT32, "EPS_StrngWhlTorq",              GetEPS_StrngWhlTorq},
     {TYPE_UINT8,   "EMS_GasPedalActPstforMRRVD",    GetEMS_GasPedalActPstforMRRVD},
     {TYPE_FLOAT32, "EMS_GasPedalActPstforMRR",      GetEMS_GasPedalActPstforMRR},
+    {TYPE_UINT8,   "Fault_Level",                   GetFault_Level},
 // -------------------- seperate line -----------------------------------------------    
     {TYPE_UINT8,   "automaton_transit_normal_flag", GetNDATransitNormalFlag},
     {TYPE_UINT8,   "lng_override_st",               GetLngOverrideSt},

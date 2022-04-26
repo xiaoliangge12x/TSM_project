@@ -60,6 +60,7 @@ typedef struct
 extern const StateMachine   g_warning_state_machine;
 extern WarningSMParam       g_warning_sm;
 // ----------------------- function declaration --------------------------
+void RunWarningUser();
 void RunWarningSit();
 
 void ActionInNoWarning();
