@@ -8,6 +8,10 @@ uint16  K_BrakeTOR_TimeThreshold_Cnt                 = 150U;   // 刹车长时�
 uint16  K_OverrideHandTorqCheckTime_Cnt              = 50U;    // 手力矩是否超越的持续时间， 暂定1s
 uint16  K_Tor3RampUpToMrm4Time_Cnt                   = 500U;
 
+uint16  K_MissQuitTime_Cnt                           = 5U;      // NDA功能无法退出的时间阈值
+uint16  K_MissOverrideTime_Cnt                       = 5U;      // Active未响应进入Override St的时间阈值
+uint16  K_StuckOverrideTime_Cnt                      = 5U;      // Override未响应进入Active St的时间间隔
+
 float32 K_BrakPedalAppliedThresholdTime              = 0.2;
 float32 K_GasPedalAppliedThresholdTime               = 0.2;
 float32 K_LngOverrideTakeOverTime                    = 10.0;

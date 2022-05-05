@@ -21,6 +21,9 @@ static const Signal g_signal_table[] =
     {TYPE_UINT8,   "Fault_Level",                   GetFault_Level},  
     {TYPE_UINT8,   "mrm_system_fault_level",        GetMRMSystemFaultLevel},
     {TYPE_UINT8,   "planningLite_control_state",    GetPlanningLite_control_state},
+    {TYPE_UINT8,   "NDA_Function_State",            GetNDA_Function_State},
+    {TYPE_UINT8,   "ICA_Function_State",            GetICA_Function_State},
+    {TYPE_UINT8,   "ACC_Function_State",            GetACC_Function_State},
 };
 
 static const IntermediateSig g_intermediate_sig_table[] = 
@@ -98,7 +101,7 @@ void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data)
                 }
             }
             /* Others */
-            default: {
+            default: {  
                 keyFlag = 0;
             }
         }
@@ -116,6 +119,8 @@ void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data)
 void SimulinkDataSet(const char* key_str, const char* value_str, const char* header_str, 
     const char* type_str, SimulinkData* simulink_data) 
 {
+    // int number = sizeof(g_intermediate_sig_table) / sizeof(IntermediateSig);
+    // LOG(COLOR_GREEN, "header_str: %s, type_str: %s, number: %d", header_str, type_str, number);
     if (!strncmp(header_str, "Inter_Media_Msg", strlen("Inter_Media_Msg"))) {
 #ifdef ENABLE_SET_INTERMEDIATE
         SetInterMediateMsg(key_str, value_str, type_str, simulink_data);

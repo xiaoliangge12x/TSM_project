@@ -16,6 +16,10 @@ Vehicle_Signal_To_Tsm:
   EMS_GasPedalActPstforMRRVD: 1
   EMS_GasPedalActPstforMRR: 19.0
 
+Soc_Info:
+  NDA_Function_State: 0
+  ICA_Function_State: 0
+
 From_Diag:
   Fault_Level: 1
   

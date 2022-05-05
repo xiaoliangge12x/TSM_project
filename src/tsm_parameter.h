@@ -23,7 +23,7 @@
 #endif
 
 // ----------------------  macro ------------------------------------------------------
-#define CONSUME_TIME
+// #define CONSUME_TIME
 
 // ----------------------  global variable(calibration) -------------------------------
 extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
@@ -32,6 +32,10 @@ extern uint16  K_LngOverrideTakeOverTime_Cnt;
 extern uint16  K_BrakeTOR_TimeThreshold_Cnt;                 
 extern uint16  K_OverrideHandTorqCheckTime_Cnt;
 extern uint16  K_Tor3RampUpToMrm4Time_Cnt;
+
+extern uint16  K_MissQuitTime_Cnt;
+extern uint16  K_MissOverrideTime_Cnt;
+extern uint16  K_StuckOverrideTime_Cnt;
 
 extern float32 K_BrakPedalAppliedThresholdTime;
 extern float32 K_GasPedalAppliedThresholdTime;
@@ -248,50 +252,6 @@ typedef enum
 
 typedef enum
 {
-    NONE = 0,
-    STANDBY_HANDSFREE_NORMAL,
-    STANDBY_HANDSON_NORMAL,
-    STANDBY_HANDSFREE_STANDACTIVE,
-    HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE,
-    HANDSFREE_NORMAL_BOTH_OVERRIDE,
-    HANDSFREE_NORMAL_LAT_OVERRIDE,
-    HANDSFREE_NORMAL_LNG_OVERRIDE,
-    HANDSFREE_NORMAL_HANDSON_NORMAL,
-    HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL,
-    HANDSFREE_STANDACTIVE_LNG_OVERRIDE,
-    HANDSFREE_STANDACTIVE_BOTH_OVERRIDE,
-    HANDSFREE_STANDACTIVE_LAT_OVERRIDE,
-    HANDSFREE_STANDWAIT_LNG_OVERRIDE,
-    HANDSFREE_STANDWAIT_BOTH_OVERRIDE,
-    HANDSFREE_STANDWAIT_LAT_OVERRIDE,
-    HANDSON_NORMAL_HANDSON_STANDACTIVE,
-    HANDSON_NORMAL_BOTH_OVERRIDE,
-    HANDSON_NORMAL_LAT_OVERRIDE,
-    HANDSON_NORMAL_LNG_OVERRIDE,
-    HANDSON_NORMAL_HANDSFREE_NORMAL,
-    HANDSON_STANDACTIVE_HANDSON_NORMAL,
-    HANDSON_STANDACTIVE_LNG_OVERRIDE,
-    HANDSON_STANDACTIVE_BOTH_OVERRIDE,
-    HANDSON_STANDACTIVE_LAT_OVERRIDE,
-    HANDSON_STANDWAIT_LNG_OVERRIDE,
-    HANDSON_STANDWAIT_BOTH_OVERRIDE,
-    HANDSON_STANDWAIT_LAT_OVERRIDE,
-    LNG_OVERRIDE_HANDSFREE_NORMAL,
-    LNG_OVERRIDE_HANDSON_NORMAL,
-    LNG_OVERRIDE_BOTH_OVERRIDE,
-    LNG_OVERRIDE_LAT_OVERRIDE,
-    LAT_OVERRIDE_HANDSFREE_NORMAL,
-    LAT_OVERRIDE_HANDSON_NORMAL,
-    LAT_OVERRIDE_BOTH_OVERRIDE,
-    LAT_OVERRIDE_LNG_OVERRIDE,
-    BOTH_OVERRIDE_HANDSFREE_NORMAL,
-    BOTH_OVERRIDE_HANDSON_NORMAL,
-    BOTH_OVERRIDE_LNG_OVERRIDE,
-    BOTH_OVERRIDE_LAT_OVERRIDE,
-} NdaTransitEnableFlag;
-
-typedef enum
-{
     BITNO_FAILURE_LIGHTING_FLAG = 0U,
     BITNO_NDA_TRANSIT_NORMAL_FLAG,
     BITNO_DRVR_HANDTORQUE_OVERRIDE_ST,
@@ -305,22 +265,16 @@ typedef enum
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
     BITNO_DRVR_ACC_PEDAL_APPLIED,
+    BITNO_AS_ACTIVE,
 } BitNoForInterMediaSig;
 
 // ------------------ 中间变量 ---------------
 typedef struct
 {
-    NdaTransitEnableFlag nda_transit_enable_flag; 
-    uint8                frame_cnt;   // 帧数计数器
-} NdaStTransitMonitor;
-
-typedef struct
-{
     MrmSystemFaultLevel       mrm_system_fault_level;           // mrm 系统故障等级   待定
     MrmType                   mrm_type;                         // mrm 类型            
     BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型             
-    DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态            
-    NdaStTransitMonitor       nda_st_transit_monitor;           // nda状态跳转使能标志位      
+    DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态              
     Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
     HandsFreeOnFuncFlag       handsfree_handson_func_flag;      // HandsFree 和 HandsOn 的功能标志位
     uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域

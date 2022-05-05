@@ -21,40 +21,24 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
     RunCommonConditionCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    RunNdaTranistionMonitor(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
     RunDriverOperationCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
 
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
-        "driver_hand_torque_st: %d", 
-        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LONG_TIME_LNG_OVERRIDE), 
+    LOG(COLOR_NONE, "lng_override_st: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
+        "driver_hand_torque_st: %d, standtill st: %d \n [Automaton] NDA_Function_State: %d, ICA_Function_State: %d", 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST), 
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE),
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED),
-        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST),
+        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt, 
+        rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State,
+        rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.ICA_Function_State);
 #endif
 }
 
 void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info)
 {
     DrvrAttentionStJudge(veh_info);
-}
-
-void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
-{
-    CheckNdaPassiveVD(soc_info);
-
-    CheckNdaPhaseInAvailable();
-    CheckNdaNeedPhaseIn();
-
-    CheckHandsFreeOnFunc(soc_info);
-
-    CheckNdaAvailableSt(soc_info);
-
-    RunNdaActiveTransitCondCheck(veh_info, soc_info);
-
-    MonitorNdaStateTransition(&soc_info->Automaton_State);
-
-    NdaStTransitNormalJudge(veh_info, soc_info);
 }
 
 void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
@@ -304,35 +288,7 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
 #endif
 }
 
-void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state)
-{
-    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
-            if ((g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == 
-                nda_st_transit_monitor_array[i].transit_enable_flag) && 
-                (g_inter_media_msg.nda_st_transit_monitor.frame_cnt != MAX_FRAME_CNT)) {
-                ++g_inter_media_msg.nda_st_transit_monitor.frame_cnt;
-                return;
-            }
-        }
-    }
-
-    for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-        // 此时为通过可跳转条件去判断该给SOC的标志， 由于跳转是唯一且独立的，只要满足跳转条件就跳，然后直接退出循环
-        if (automaton_state->NDA_Function_State == nda_st_transit_monitor_array[i].start_st) {
-            if (nda_st_transit_monitor_array[i].nda_transit_cond()) {
-                g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = 
-                    nda_st_transit_monitor_array[i].transit_enable_flag;
-                g_inter_media_msg.nda_st_transit_monitor.frame_cnt = 1;
-                return;
-            }
-        }
-    }
-    // 如果上述情况都不满足，说明不满足可跳转，那么跳转标志位为NONE
-    g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag = NONE;
-    g_inter_media_msg.nda_st_transit_monitor.frame_cnt               = 0;
-}
-
+// temp
 void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info)
 {
     // 延时
@@ -364,17 +320,6 @@ void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, 
     // 0328版本暂用，后续删除
     g_inter_media_msg.mrm_system_fault_level = 0;
 
-    // 这段逻辑保留，后期使用
-    // for (uint8 i = 0; i < (uint8)MONITOR_ARRAY_SIZE; ++i) {
-    //     if ((g_inter_media_msg.last_automaton_st.NDA_Function_State == nda_st_transit_monitor_array[i].start_st) &&
-    //         (soc_info->Automaton_State.NDA_Function_State == nda_st_transit_monitor_array[i].next_st)) {
-    //         if (g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag == NONE) {
-    //             ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
-    //             return;
-    //         }
-    //     }
-    // }
-    // SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
 }
 
 void BrakeInervationFlagJudge()
@@ -443,85 +388,6 @@ void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* 
 }
 
 #endif
-
-void RunNdaActiveTransitCondCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
-{
-    memset(&g_monitor_bitfields, 0, sizeof(MonitorBitfields));
-
-    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT)) {
-        if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
-            (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSON) ? 
-            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSON_NORMAL)) : 
-            (SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_NORMAL));
-        } else if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-            if (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSFREE) {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_STANDBY_HANDSFREE_STANDACTIVE);
-            }
-        } else {
-            // do nothing
-        }
-    }
-
-    if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT)) {
-        if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
-            IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_BOTH_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_BOTH_OVERRIDE);
-        } else if (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
-                   !IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_LNG_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LNG_OVERRIDE);
-        } else if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_LNG_OVERRIDE_ST) &&
-                   IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_LAT_OVERRIDE);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_LAT_OVERRIDE);
-        } else {
-            if (g_inter_media_msg.handsfree_handson_func_flag == FUNC_HANDSFREE) {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSON_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSON_NORMAL);
-                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-                    SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE);
-                }
-            } else {
-                SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL);
-                SetSignalBitFields(&g_monitor_bitfields.monitor_override_bitfields, BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL);
-                if (veh_info->BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
-                    SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE);
-                }
-            }
-        }
-
-        // TODO: planning driveoff req
-        if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-            (soc_info->NDA_Planning_Request == DRIVEOFF_REQUEST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
-        }
-    }
-}
-
 
 boolean IsInMCUMRMActiveSt()
 {

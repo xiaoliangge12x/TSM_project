@@ -15,123 +15,56 @@
 #define TSM_MONITOR_H_
 
 #include "tsm_parameter.h"
+#include "tsm_output.h"
 
 // ----------------------------- macro definition -------------------------------------
-#define MAX_FRAME_CNT      5
 #define MONITOR_ARRAY_SIZE 39
+#define MAX_LOG_LEN        50
 // ----------------------------- typedef          -------------------------------------
-typedef boolean (*NdaTransitCondition) ();
-
-typedef enum
-{
-    BITNO_STANDBY_HANDSFREE_NORMAL = 0,
-    BITNO_STANDBY_HANDSON_NORMAL,
-    BITNO_STANDBY_HANDSFREE_STANDACTIVE,
-    BITNO_HANDSFREE_NORMAL_HANDSFREE_STANDACTIVE,
-    BITNO_HANDSFREE_NORMAL_BOTH_OVERRIDE,
-    BITNO_HANDSFREE_NORMAL_LAT_OVERRIDE,
-    BITNO_HANDSFREE_NORMAL_LNG_OVERRIDE,
-    BITNO_HANDSFREE_NORMAL_HANDSON_NORMAL,
-    BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL,
-    BITNO_HANDSFREE_STANDACTIVE_LNG_OVERRIDE,
-    BITNO_HANDSFREE_STANDACTIVE_BOTH_OVERRIDE,
-    BITNO_HANDSFREE_STANDACTIVE_LAT_OVERRIDE,
-    BITNO_HANDSFREE_STANDWAIT_LNG_OVERRIDE,
-    BITNO_HANDSFREE_STANDWAIT_BOTH_OVERRIDE,
-    BITNO_HANDSFREE_STANDWAIT_LAT_OVERRIDE,
-} StandbyHandsFreeBitNo;
-
-typedef enum
-{
-    BITNO_HANDSON_NORMAL_HANDSON_STANDACTIVE = 0,
-    BITNO_HANDSON_NORMAL_BOTH_OVERRIDE,
-    BITNO_HANDSON_NORMAL_LAT_OVERRIDE,
-    BITNO_HANDSON_NORMAL_LNG_OVERRIDE,
-    BITNO_HANDSON_NORMAL_HANDSFREE_NORMAL,
-    BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL,
-    BITNO_HANDSON_STANDACTIVE_LNG_OVERRIDE,
-    BITNO_HANDSON_STANDACTIVE_BOTH_OVERRIDE,
-    BITNO_HANDSON_STANDACTIVE_LAT_OVERRIDE,
-    BITNO_HANDSON_STANDWAIT_LNG_OVERRIDE,
-    BITNO_HANDSON_STANDWAIT_BOTH_OVERRIDE,
-    BITNO_HANDSON_STANDWAIT_LAT_OVERRIDE,
-} HandsOnBitNo;
-
-typedef enum
-{
-    BITNO_LNG_OVERRIDE_HANDSFREE_NORMAL = 0,
-    BITNO_LNG_OVERRIDE_HANDSON_NORMAL,
-    BITNO_LNG_OVERRIDE_BOTH_OVERRIDE,
-    BITNO_LNG_OVERRIDE_LAT_OVERRIDE,
-    BITNO_LAT_OVERRIDE_HANDSFREE_NORMAL,
-    BITNO_LAT_OVERRIDE_HANDSON_NORMAL,
-    BITNO_LAT_OVERRIDE_BOTH_OVERRIDE,
-    BITNO_LAT_OVERRIDE_LNG_OVERRIDE,
-    BITNO_BOTH_OVERRIDE_HANDSFREE_NORMAL,
-    BITNO_BOTH_OVERRIDE_HANDSON_NORMAL,
-    BITNO_BOTH_OVERRIDE_LNG_OVERRIDE,
-    BITNO_BOTH_OVERRIDE_LAT_OVERRIDE,
-} OverrideBitNo;
-
-typedef struct 
-{
-    NdaFunctionSt        start_st;
-    NdaFunctionSt        next_st;
-    NdaTransitEnableFlag transit_enable_flag;
-    NdaTransitCondition  nda_transit_cond;
-} NdaStMonitorInfo;
+typedef boolean (*CondJudge)();
 
 typedef struct
 {
-    uint32 monitor_standby_handsfree_bitfields;
-    uint32 monitor_handson_bitfields;
-    uint32 monitor_override_bitfields;
-} MonitorBitfields;
+    uint8    current_st;
+    boolean* enter_flag;
+    char     log[MAX_LOG_LEN];
+} AtomicData;
 // ----------------------------- driving table declaration ----------------------------
-extern const NdaStMonitorInfo nda_st_transit_monitor_array[MONITOR_ARRAY_SIZE];  // 千万不能声明成static
-extern MonitorBitfields       g_monitor_bitfields;
 // ----------------------------- function declaration ---------------------------------
-void CheckNdaPassiveVD();
 
-boolean TransitCondFromStandbyToHandsFreeNormal();
-boolean TransitCondFromStandbyToHandsOnNormal();
-boolean TransitCondFromStandbyToHandsFreeStandActive();
-boolean TransitCondFromHandsFreeNormalToHandsFreeStandActive();
-boolean TransitCondFromHandsFreeNormalToBothOverride();
-boolean TransitCondFromHandsFreeNormalToLatOverride();
-boolean TransitCondFromHandsFreeNormalToLngOverride();
-boolean TransitCondFromHandsFreeNormalToHandsOnNormal();
-boolean TransitCondFromHandsFreeStandActiveToHandsFreeNormal();
-boolean TransitCondFromHandsFreeStandActiveToLngOverride();
-boolean TransitCondFromHandsFreeStandActiveToBothOverride();
-boolean TransitCondFromHandsFreeStandActiveToLatOverride();
-boolean TransitCondFromHandsFreeStandWaitToLngOverride();
-boolean TransitCondFromHandsFreeStandWaitToBothOverride();
-boolean TransitCondFromHandsFreeStandWaitToLatOverride();
-boolean TransitCondFromHandsOnNormalToHandsOnStandActive();
-boolean TransitCondFromHandsOnNormalToBothOverride();
-boolean TransitCondFromHandsOnNormalToLatOverride();
-boolean TransitCondFromHandsOnNormalToLngOverride();
-boolean TransitCondFromHandsOnNormalToHandsFreeNormal();
-boolean TransitCondFromHandsOnStandActiveToHandsOnNormal();
-boolean TransitCondFromHandsOnStandActiveToLngOverride();
-boolean TransitCondFromHandsOnStandActiveToBothOverride();
-boolean TransitCondFromHandsOnStandActiveToLatOverride();
-boolean TransitCondFromHandsOnStandWaitToLngOverride();
-boolean TransitCondFromHandsOnStandWaitToBothOverride();
-boolean TransitCondFromHandsOnStandWaitToLatOverride();
-boolean TransitCondFromLngOverrideToHandsFreeNormal();
-boolean TransitCondFromLngOverrideToHandsOnNormal();
-boolean TransitCondFromLngOverrideToBothOverride();
-boolean TransitCondFromLngOverrideToLatOverride();
-boolean TransitCondFromLatOverrideToHandsFreeNormal();
-boolean TransitCondFromLatOverrideToHandsOnNormal();
-boolean TransitCondFromLatOverrideToBothOverride();
-boolean TransitCondFromLatOverrideToLngOverride();
-boolean TransitCondFromBothOverrideToHandsFreeNormal();
-boolean TransitCondFromBothOverrideToHandsOnNormal();
-boolean TransitCondFromBothOverrideToLngOverride();
-boolean TransitCondFromBothOverrideToLatOverride();
+void RunMonitorNdaTransitionLogic(const Dt_RECORD_Automaton_State* automaton_state, const Dt_RECORD_VehicleSignal2TSM* veh_sig);
 
-boolean IsNdaAvailable();
+void MonitorNdaChangeFromStandbyToActive(const Dt_RECORD_Automaton_State* automaton_st, const Dt_RECORD_VehicleSignal2TSM* veh_sig);
+
+void MonitorNdaChangeFromActiveToOverride(const Dt_RECORD_Automaton_State* automaton_st);
+
+void MonitorNdaIgnoreOverrideReq(const Dt_RECORD_Automaton_State* automaton_st);
+
+void MonitorNdaChangeFromOverrideToActive(const Dt_RECORD_Automaton_State* automaton_st);
+
+void MonitorNdaStuckInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
+
+void MonitorIcaUpgradeToNda(const Dt_RECORD_Automaton_State* automaton_st);
+
+void MonitorNdaUnableToExit(const Dt_RECORD_Automaton_State* automaton_st);
+
+boolean CheckNdaInActiveSt(const Dt_RECORD_Automaton_State* automaton_st);
+
+boolean CheckNdaInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
+
+boolean CheckIcaInActiveOrOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
+
+void PostHandleForTransitAbnormal(const boolean monitor_flag, const uint8 last_hand_torque_override_st, const char* log);
+
+void PostHandleForStuckInSt(uint16* time_cnt, const CondJudge cond_judge, const uint16 time_cnt_threshold, const char* log);
+
+boolean IsDriverNotLatOverride();
+
+boolean IsDriverNotLngOverride();
+
+boolean IsDriverNotLatOrLngOverride();
+
+boolean IsDriverLatOrLngOverride();
+
+boolean IsASActiveOrBrakeSet();
 #endif

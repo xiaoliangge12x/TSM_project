@@ -13,7 +13,8 @@
 
 #include "tsm_chart.h"
 #include "tsm_warning.h"
-#include "tsm_output.h"
+#include "tsm_signalhandling.h"
+#include "tsm_monitor.h"
 
 // -------------------------------  global variable definition ----------------------------
 TSMParam      g_tsm;
@@ -116,6 +117,11 @@ void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECO
     // Preprocess msg
     SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
 
+    // Monitor NDA transition
+    SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
+    if (!IsInMCUMRMActiveSt()) {
+        RunNdaTranistionMonitor(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
+    }
     // run tsm user
     RunTsmUser(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
 
@@ -132,7 +138,8 @@ void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECO
         sizeof(Dt_RECORD_Automaton_State));
 
 #ifdef _NEED_LOG
-    LOG(COLOR_GREEN, "request_mrm_from_mcu: %d", g_tsm.tsm_action_param.request_mrm);
+    LOG(COLOR_GREEN, "nda_avl_before_act: %d", 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT));
 #endif
 }
 
@@ -206,6 +213,19 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
     }
 }
 
+void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
+{
+    CheckNdaPassiveVD(soc_info);
+    CheckNdaPhaseInAvailable();
+    CheckNdaNeedPhaseIn();
+    CheckHandsFreeOnFunc(soc_info);
+    // CheckNdaAvailableSt(soc_info);
+
+    RunMonitorNdaTransitionLogic(&soc_info->Automaton_State, veh_info);
+
+    // NdaStTransitNormalJudge(veh_info, soc_info);
+}
+
 boolean IsDriverTakeOver()
 {
     if ((g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) || (g_tsm.state == MCU_MRM_TOR_LAT_CTRL) || 
@@ -243,20 +263,24 @@ boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, c
     // TODO:
     // SOC状态机退出且TO3故障发还给MCU， 或者SOC安全停车时发生故障
     if (rtu_DeCANGATE2TSM->Soc_Info.Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Soc_Info.Request_Mrm_From_SOC) {
+        LOG(COLOR_RED, "SOC tor fault trigger Mrm.");
         return true;
     }
 
     // 和 SOC 发生通信故障
     if (rtu_DeDiag2TSM->Com_Fault_with_SOC) {
+        LOG(COLOR_RED, "Com Fault with SOC trigger Mrm.");
         return true;
     }
 
     // 监控SOC侧NDA激活状态跳转错误
     if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG)) {
+        LOG(COLOR_RED, "transit abnormal trigger Mrm.");
         return true;
     }
     // for debug
     if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
+        LOG(COLOR_RED, "TOR_LEVEL3_FAULT trigger Mrm.");
         return true;
     }
     return false;

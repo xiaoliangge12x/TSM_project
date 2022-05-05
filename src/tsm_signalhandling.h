@@ -14,7 +14,7 @@
 #ifndef TSM_SIGNAL_HANDLING_H_
 #define TSM_SIGNAL_HANDLING_H_
 
-#include "tsm_monitor.h"
+#include "tsm_parameter.h"
 #ifdef _NEED_LOG
 #include "common.h"
 #endif
@@ -89,7 +89,6 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 
 void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal);
-void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
 void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info);
 void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info);
@@ -100,7 +99,6 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void BrakeInervationFlagJudge();
 void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
 void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void MonitorNdaStateTransition(const Dt_RECORD_Automaton_State* automaton_state);
 void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info);
 void CheckNdaPassiveVD(const Dt_RECORD_Soc_Info* soc_info);
 void CheckNdaPhaseInAvailable();
@@ -114,7 +112,6 @@ void FlagSetWithTimeCount(const uint32 bit_no, const uint16 time_threshold_cnt, 
 #ifdef CONSUME_TIME
 void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* time, uint8* time_flag);
 #endif
-void RunNdaActiveTransitCondCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info);
 boolean IsInMCUMRMActiveSt();
 void SetLaneChangeSt(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM);
 #endif

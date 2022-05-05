@@ -215,8 +215,7 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD
     rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
     rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
     // TODO:
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Standby_HandsFree_St_Monitor_Flag = 
-        g_inter_media_msg.nda_st_transit_monitor.nda_transit_enable_flag;;
+    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Standby_HandsFree_St_Monitor_Flag = 0;
     rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.HandsOn_St_Monitor_Flag = 0;
     rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Override_St_Monitor_Flag = 0;
     // TODO:

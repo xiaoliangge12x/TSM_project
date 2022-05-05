@@ -155,7 +155,8 @@ typedef struct tagTSM2Soc
     Dt_RECORD_TimeStamp                  tsm_timestamp;               // tsm的时间戳
     uint8_t Parking_EPS_handshake_state;// 泊车握手的标志位, from ctrlarb,   新增
     Dt_RECORD_AutomatonTransitMonitorFlag AutomatonTransitMonitorFlag;// From tsm
-    uint8_t                               Is_MCU_MRM_Active;           // 是否MCU的MRM激活
+    uint8_t                               MCU_MRM_Active_St;           // 是否MCU的MRM激活
+    uint8_t                               Request_NDA_Exit;            // 请求NDA功能退出
 } Dt_RECORD_TSM2Soc;
 
 // ---------------- inside struct ------------------

@@ -120,4 +120,19 @@ void* GetMRMSystemFaultLevel(SimulinkData* simulink_data)
     (void)simulink_data;
     return &(g_inter_media_msg.mrm_system_fault_level);
 }
+
+void* GetNDA_Function_State(SimulinkData* simulink_data)
+{
+    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.Automaton_State.NDA_Function_State);
+}
+
+void* GetICA_Function_State(SimulinkData* simulink_data)
+{
+    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.Automaton_State.ICA_Function_State);
+}
+
+void* GetACC_Function_State(SimulinkData* simulink_data)
+{
+    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.Automaton_State.ACC_Function_State);
+}
 #endif
