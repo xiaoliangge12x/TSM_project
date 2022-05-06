@@ -165,7 +165,7 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD
     rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
     // TODO:
     memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
-        sizeof(Dt_RECORD_Automaton_State));
+        sizeof(Soc_State));
     rty_DeTSM2CtrlArb->long_override_flag = g_tsm.tsm_action_param.lng_override_flag;
     // TODO:
     rty_DeTSM2CtrlArb->NDA_LatState = 0;

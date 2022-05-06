@@ -52,14 +52,21 @@ extern float32 K_TakeOverAvailHandTorqThreshold_TwoZone;
 extern float32 K_TakeOverAvailHandTorqThreshold_ThreeZone;
 extern float32 K_GasPedalPosThresholdValue;
 
+extern float32 K_GeoEndDist_NotActive;
+extern float32 K_GeoEndDist_Active;
+extern float32 K_VehSpdThreshold;
+
 // ---------------------------------- typedef   ------------------------------------------------
+typedef Dt_RECORD_VehicleSignal2TSM Veh_Sig;
+typedef Dt_RECORD_Soc_Info          Soc_Info;
+typedef Dt_RECORD_Automaton_State   Soc_State;
+
 typedef enum 
 {
     AWAKE_AND_NOT_DISTRACTED = 0,
     AWAKE_AND_LOOK_REARVIEW_OR_HU,
     AWAKE_AND_DISTRACTED,
     FATIGUE_DRIVER_ATTENTION_ST,
-    UNKNOWN,
 } DrvrAttentionSt;
 
 typedef enum 
@@ -194,6 +201,7 @@ typedef enum
     MCU_MRM_ACTIVE_LAT_CTRL,
     MCU_MRM_MRC
 } MCUMRMFunctionSt;
+
 typedef enum
 {
     NO_WARNING = BASE_ST_WARNING_START + 1,
@@ -220,13 +228,6 @@ typedef enum
     COMFORTABLE_STOP = 0,
     EMERGENCY_STOP
 } MrmType;
-
-typedef enum
-{
-    FUNC_NOT_AVAILABLE = 0,
-    FUNC_HANDSFREE,
-    FUNC_HANDSON,
-} HandsFreeOnFuncFlag;
 
 typedef enum
 {
@@ -261,7 +262,6 @@ typedef enum
     BITNO_SET_BRAKE,
     BITNO_PHASE_IN_AVAILABLE,
     BITNO_NDA_NEED_PHASE_IN,
-    BITNO_NDA_PASSIVE_VD,
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
     BITNO_DRVR_ACC_PEDAL_APPLIED,
@@ -276,7 +276,6 @@ typedef struct
     BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型             
     DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态              
     Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
-    HandsFreeOnFuncFlag       handsfree_handson_func_flag;      // HandsFree 和 HandsOn 的功能标志位
     uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
 } InterMediaMsg;
 

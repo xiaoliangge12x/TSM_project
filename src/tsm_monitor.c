@@ -12,12 +12,69 @@
  */
 
 #include "tsm_monitor.h"
+#include "tsm_signalhandling.h"
 
 // ------------------------------ global variable def -------------------------------------------
 // ------------------------------ driving table Initilize ----------------------------------------
 
 // ----------------------------------- function -------------------------------------------------
-void RunMonitorNdaTransitionLogic(const Dt_RECORD_Automaton_State* automaton_state, const Dt_RECORD_VehicleSignal2TSM* veh_sig)
+void CheckMonitorPrecondition(const Veh_Sig* veh_info, const Soc_Info* soc_info)
+{
+    // 
+}
+
+void RunNdaTranistionMonitor(const Veh_Sig* veh_info, const Soc_Info* soc_info)
+{
+    CheckMonitorPrecondition(veh_info, soc_info);
+
+    RunMonitorNdaTransitionLogic(&soc_info->Automaton_State, veh_info);
+}
+
+boolean IsRainFallSatisfy(const Veh_Sig* vehicle_signal)
+{
+    // TODO:
+    return true;
+}
+
+boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_signal, const Soc_Info* soc_info)
+{
+    // TODO:  默认激活前 不满足， 激活后 满足
+    if (!soc_info->EEA_Status || !IsRainFallSatisfy(vehicle_signal)) {
+        return false;
+    }
+
+    if ((activation_time == BEFORE_ACTIVATION) && 
+        (!vehicle_signal->BCS_VehSpdVD || (vehicle_signal->BCS_VehSpdVD && (vehicle_signal->BCS_VehSpd > K_VehSpdThreshold)))) {
+        return false;
+    }
+
+    if (activation_time == BEFORE_ACTIVATION) {
+        return (soc_info->HD_Map_Warning_Dist > K_GeoEndDist_NotActive);
+    } else {
+        return (soc_info->HD_Map_Warning_Dist > K_GeoEndDist_Active);
+    }
+
+    return true;
+}
+
+boolean IsNdaPassiveVD(const Soc_Info* soc_info) 
+{
+    // TODO:
+    return true;
+}
+
+boolean ValidateNdaAvlCond(const Soc_Info* soc_info)
+{
+
+}
+
+void CheckNdaNeedPhaseIn()
+{
+    // TODO:
+    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_NEED_PHASE_IN);
+}
+
+void RunMonitorNdaTransitionLogic(const Soc_State* automaton_state, const Veh_Sig* veh_sig)
 {
     MonitorNdaChangeFromStandbyToActive(automaton_state, veh_sig);
     MonitorNdaChangeFromActiveToOverride(automaton_state);
@@ -28,7 +85,7 @@ void RunMonitorNdaTransitionLogic(const Dt_RECORD_Automaton_State* automaton_sta
     MonitorNdaUnableToExit(automaton_state);
 }
 // 监控点1
-void MonitorNdaChangeFromStandbyToActive(const Dt_RECORD_Automaton_State* automaton_st, const Dt_RECORD_VehicleSignal2TSM* veh_sig)
+void MonitorNdaChangeFromStandbyToActive(const Soc_State* automaton_st, const Veh_Sig* veh_sig)
 {
     static boolean monitor_enter_normal_flag      = true;
     static boolean monitor_enter_standactive_flag = true;
@@ -63,7 +120,7 @@ void MonitorNdaChangeFromStandbyToActive(const Dt_RECORD_Automaton_State* automa
 }
 
 // 监控点2
-void MonitorNdaChangeFromActiveToOverride(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorNdaChangeFromActiveToOverride(const Soc_State* automaton_st)
 {
     static boolean monitor_enter_lat_override_flag  = true;
     static boolean monitor_enter_lng_override_flag  = true;
@@ -112,7 +169,7 @@ void MonitorNdaChangeFromActiveToOverride(const Dt_RECORD_Automaton_State* autom
 }
 
 // 监控点3
-void MonitorNdaIgnoreOverrideReq(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorNdaIgnoreOverrideReq(const Soc_State* automaton_st)
 {
     static uint16  ignore_overrideReq_cnt = 0;
 
@@ -125,7 +182,7 @@ void MonitorNdaIgnoreOverrideReq(const Dt_RECORD_Automaton_State* automaton_st)
 }
 
 // 监控点4
-void MonitorNdaChangeFromOverrideToActive(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorNdaChangeFromOverrideToActive(const Soc_State* automaton_st)
 {
     static boolean monitor_enter_normal_flag         = true;
     static uint8   last_drvr_hand_torque_override_st = 0;
@@ -149,7 +206,7 @@ void MonitorNdaChangeFromOverrideToActive(const Dt_RECORD_Automaton_State* autom
 }
 
 // 监控点5
-void MonitorNdaStuckInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st)
 {
     static uint16 stuck_in_lat_override_cnt  = 0;
     static uint16 stuck_in_lng_override_cnt  = 0;
@@ -193,7 +250,7 @@ void MonitorNdaStuckInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st)
 }
 
 // 监控点6
-void MonitorIcaUpgradeToNda(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorIcaUpgradeToNda(const Soc_State* automaton_st)
 {
     static boolean monitor_upgrade_nda               = true;
     static uint8   last_drvr_hand_torque_override_st = 0;
@@ -234,7 +291,7 @@ void MonitorIcaUpgradeToNda(const Dt_RECORD_Automaton_State* automaton_st)
 }
 
 // 监控点7
-void MonitorNdaUnableToExit(const Dt_RECORD_Automaton_State* automaton_st)
+void MonitorNdaUnableToExit(const Soc_State* automaton_st)
 {
     // TODO:
     static uint16 nda_unable_exit_cnt = 0;
@@ -260,14 +317,14 @@ void MonitorNdaUnableToExit(const Dt_RECORD_Automaton_State* automaton_st)
     }
 }
 
-boolean CheckNdaInActiveSt(const Dt_RECORD_Automaton_State* automaton_st)
+boolean CheckNdaInActiveSt(const Soc_State* automaton_st)
 {
     return ((automaton_st->NDA_Function_State == NDA_ACTIVE_HANDS_ON_NORMAL) || 
             (automaton_st->NDA_Function_State == NDA_ACTIVE_HANDS_ON_STAND_ACTIVE) ||
             (automaton_st->NDA_Function_State == NDA_ACTIVE_HANDS_ON_STAND_WAIT));
 }
 
-boolean CheckIcaInActiveOrOverrideSt(const Dt_RECORD_Automaton_State* automaton_st)
+boolean CheckIcaInActiveOrOverrideSt(const Soc_State* automaton_st)
 {
     return ((automaton_st->ICA_Function_State == ICA_HANDS_ON_NORMAL) || 
             (automaton_st->ICA_Function_State == ICA_HANDS_ON_STANDACTIVE) ||
@@ -275,7 +332,7 @@ boolean CheckIcaInActiveOrOverrideSt(const Dt_RECORD_Automaton_State* automaton_
             (automaton_st->ICA_Function_State == ICA_LNG_OVERRIDE));
 }
 
-boolean CheckNdaInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st)
+boolean CheckNdaInOverrideSt(const Soc_State* automaton_st)
 {
     return ((automaton_st->NDA_Function_State == NDA_LNG_OVERRIDE) || 
             (automaton_st->NDA_Function_State == NDA_LNG_LAT_OVERRIDE) ||

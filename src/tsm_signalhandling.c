@@ -36,12 +36,12 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
 #endif
 }
 
-void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info)
+void RunCommonConditionCheck(const Veh_Sig* veh_info)
 {
     DrvrAttentionStJudge(veh_info);
 }
 
-void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
+void RunDriverOperationCheck(const Veh_Sig* vehicle_signal)
 {
     DriverGasPedalAppliedJudge(vehicle_signal);
 
@@ -54,9 +54,9 @@ void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
     DriveHandTorqueOverrideStJudge(vehicle_signal);
 }
 
-void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void DrvrAttentionStJudge(const Veh_Sig *vehicle_signal)
 {
-    // 判断 清醒且未分神
+    // 判断 清醒且未分神, 若 都不满足，则保持上一状态值
     if (vehicle_signal->DMS_L3DriverFatigueSt == (uint16)DRVR_FATIGUE_ST_ALERT) {
         if ((vehicle_signal->DMS_DrvrDetSts == (uint8)DRVR_DET_ST_EYE_DETECTED) ||
             (vehicle_signal->DMS_DrvrDetSts == (uint8)DRVR_DET_ST_HEAD_DETECTED)) {
@@ -97,35 +97,6 @@ void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
         g_inter_media_msg.driver_attention_st = FATIGUE_DRIVER_ATTENTION_ST;
         return;
     }
-    
-    g_inter_media_msg.driver_attention_st = UNKNOWN;
-}
-
-void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info)
-{
-    if (soc_info == NULL_PTR) {
-        return;
-    }
-
-    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_Before_Active && 
-    (g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED)) ?
-        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT) :
-        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT);
-
-    (ValidateNdaAvlCond(soc_info) && soc_info->NDA_Odc_Flag_After_Active && 
-    IsDriverNotFatigue()) ?
-        SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT) :
-        ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT);
-}
-
-boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info) 
-{
-    return (IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_PASSIVE_VD) && 
-        (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) &&
-        soc_info->NDA_Enable_State &&
-        !IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_NEED_PHASE_IN) && 
-        soc_info->SD_Map_HD_Map_Match_St && 
-        soc_info->User_Set_Navi_Status);
 }
 
 boolean IsDriverNotFatigue() 
@@ -135,7 +106,7 @@ boolean IsDriverNotFatigue()
             (g_inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED));
 }
 
-void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void LngOverrideFlagJudge(const Veh_Sig *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   lng_override_cnt = 0;
@@ -165,7 +136,7 @@ void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 #endif
 }
 
-void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void BrakeIsSetJudge(const Veh_Sig *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   brakeset_cnt = 0;
@@ -189,7 +160,7 @@ void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
 #endif
 }
 
-void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void DriverGasPedalAppliedJudge(const Veh_Sig *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   gasPedalPos_cnt = 0;
@@ -215,7 +186,7 @@ void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signa
 #endif
 }
 
-void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void DriveHandTorqueOverrideStJudge(const Veh_Sig *vehicle_signal)
 {
     if ((vehicle_signal->HOD_FaultStatus == 0) && (vehicle_signal->HOD_CalibrationSt == 1)) {
         TorqueOverrideStJudgeWithHodDetection(vehicle_signal);
@@ -224,7 +195,7 @@ void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_s
     }
 }
 
-void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void TorqueOverrideStJudgeWithHodDetection(const Veh_Sig *vehicle_signal)
 {
     static float32  overrideHandTorqThreshold = 0;
 
@@ -261,7 +232,7 @@ void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *ve
 #endif
 }
 
-void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal)
+void TorqueOverrideStJudgeWithoutHodDetection(const Veh_Sig *vehicle_signal)
 {
 #ifndef CONSUME_TIME
     static uint16   lat_override_withoutHOD_cnt = 0;
@@ -289,7 +260,7 @@ void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM 
 }
 
 // temp
-void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info)
+void NdaStTransitNormalJudge(const Veh_Sig* vehicle_signal, const Soc_Info* soc_info)
 {
     // 延时
     static uint8 time_cnt       = 0;
@@ -397,36 +368,4 @@ boolean IsInMCUMRMActiveSt()
             (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
             (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) ||
             (g_tsm.state == MCU_MRM_MRC));
-}
-
-void CheckNdaPassiveVD(const Dt_RECORD_Soc_Info* soc_info)
-{
-    // TODO:
-    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_PASSIVE_VD);
-}
-
-void CheckNdaPhaseInAvailable()
-{
-    // TODO:
-    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_PHASE_IN_AVAILABLE);
-}
-
-void CheckNdaNeedPhaseIn()
-{
-    // TODO:
-    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_NEED_PHASE_IN);
-}
-
-void CheckHandsFreeOnFunc(const Dt_RECORD_Soc_Info* soc_info)
-{
-    // TODO:
-    if (!soc_info->EEA_Status) {
-        g_inter_media_msg.handsfree_handson_func_flag = FUNC_NOT_AVAILABLE;
-    } else {
-        if (soc_info->HandsOn_HandsFree_Flag == 1) {
-            g_inter_media_msg.handsfree_handson_func_flag = FUNC_HANDSON;
-        } else {
-            g_inter_media_msg.handsfree_handson_func_flag = FUNC_HANDSFREE;
-        }
-    }
 }

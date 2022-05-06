@@ -29,42 +29,47 @@ typedef struct
     boolean* enter_flag;
     char     log[MAX_LOG_LEN];
 } AtomicData;
+
+typedef enum 
+{
+    BEFORE_ACTIVATION = 0,
+    AFTER_ACTIVATION,
+} CheckMoment;
+
 // ----------------------------- driving table declaration ----------------------------
 // ----------------------------- function declaration ---------------------------------
+// total
+void RunNdaTranistionMonitor(const Veh_Sig* veh_info, const Soc_Info* soc_info);
+// condition
+void CheckMonitorPrecondition(const Veh_Sig* veh_info, const Soc_Info* soc_info);
+boolean ValidateNdaAvlCond(const Soc_Info* soc_info);
+boolean IsRainFallSatisfy(const Soc_Info* soc_info, const Veh_Sig* vehicle_signal);
+boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_signal, const Soc_Info* soc_info);
+boolean IsNdaPassiveVD(const Soc_Info* soc_info);
+void CheckNdaPhaseInAvailable();
+void CheckNdaNeedPhaseIn();
 
-void RunMonitorNdaTransitionLogic(const Dt_RECORD_Automaton_State* automaton_state, const Dt_RECORD_VehicleSignal2TSM* veh_sig);
+// monitor logic
+void RunMonitorNdaTransitionLogic(const Soc_State* automaton_state, const Veh_Sig* veh_sig);
+void MonitorNdaChangeFromStandbyToActive(const Soc_State* automaton_st, const Veh_Sig* veh_sig);
+void MonitorNdaChangeFromActiveToOverride(const Soc_State* automaton_st);
+void MonitorNdaIgnoreOverrideReq(const Soc_State* automaton_st);
+void MonitorNdaChangeFromOverrideToActive(const Soc_State* automaton_st);
+void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st)
+void MonitorIcaUpgradeToNda(const Soc_State* automaton_st);
+void MonitorNdaUnableToExit(const Soc_State* automaton_st);
 
-void MonitorNdaChangeFromStandbyToActive(const Dt_RECORD_Automaton_State* automaton_st, const Dt_RECORD_VehicleSignal2TSM* veh_sig);
-
-void MonitorNdaChangeFromActiveToOverride(const Dt_RECORD_Automaton_State* automaton_st);
-
-void MonitorNdaIgnoreOverrideReq(const Dt_RECORD_Automaton_State* automaton_st);
-
-void MonitorNdaChangeFromOverrideToActive(const Dt_RECORD_Automaton_State* automaton_st);
-
-void MonitorNdaStuckInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
-
-void MonitorIcaUpgradeToNda(const Dt_RECORD_Automaton_State* automaton_st);
-
-void MonitorNdaUnableToExit(const Dt_RECORD_Automaton_State* automaton_st);
-
-boolean CheckNdaInActiveSt(const Dt_RECORD_Automaton_State* automaton_st);
-
-boolean CheckNdaInOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
-
-boolean CheckIcaInActiveOrOverrideSt(const Dt_RECORD_Automaton_State* automaton_st);
-
+// post handling
 void PostHandleForTransitAbnormal(const boolean monitor_flag, const uint8 last_hand_torque_override_st, const char* log);
-
 void PostHandleForStuckInSt(uint16* time_cnt, const CondJudge cond_judge, const uint16 time_cnt_threshold, const char* log);
 
+// user-defined check
+boolean CheckNdaInActiveSt(const Soc_State* automaton_st);
+boolean CheckNdaInOverrideSt(const Soc_State* automaton_st);
+boolean CheckIcaInActiveOrOverrideSt(const Soc_State* automaton_st);
 boolean IsDriverNotLatOverride();
-
 boolean IsDriverNotLngOverride();
-
 boolean IsDriverNotLatOrLngOverride();
-
 boolean IsDriverLatOrLngOverride();
-
 boolean IsASActiveOrBrakeSet();
 #endif

@@ -88,26 +88,21 @@ typedef struct
 void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
                     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
 
-void RunDriverOperationCheck(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal);
-void RunCommonConditionCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info);
-void DrvrAttentionStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void CheckNdaAvailableSt(const Dt_RECORD_Soc_Info* soc_info);
-boolean ValidateNdaAvlCond(const Dt_RECORD_Soc_Info* soc_info);
+void RunDriverOperationCheck(const Veh_Sig* vehicle_signal);
+void RunCommonConditionCheck(const Veh_Sig* veh_info);
+void DrvrAttentionStJudge(const Veh_Sig *vehicle_signal);
 boolean IsDriverNotFatigue();
-void LngOverrideFlagJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void BrakeIsSetJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+void LngOverrideFlagJudge(const Veh_Sig *vehicle_signal);
+void BrakeIsSetJudge(const Veh_Sig *vehicle_signal);
 void BrakeInervationFlagJudge();
-void DriverGasPedalAppliedJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void DriveHandTorqueOverrideStJudge(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void NdaStTransitNormalJudge(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal, const Dt_RECORD_Soc_Info* soc_info);
-void CheckNdaPassiveVD(const Dt_RECORD_Soc_Info* soc_info);
-void CheckNdaPhaseInAvailable();
-void CheckNdaNeedPhaseIn();
-void CheckHandsFreeOnFunc(const Dt_RECORD_Soc_Info* soc_info);
+void DriverGasPedalAppliedJudge(const Veh_Sig *vehicle_signal);
+void DriveHandTorqueOverrideStJudge(const Veh_Sig *vehicle_signal);
+void NdaStTransitNormalJudge(const Veh_Sig* vehicle_signal, const Soc_Info* soc_info);
+
 
 // user defined
-void TorqueOverrideStJudgeWithHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
-void TorqueOverrideStJudgeWithoutHodDetection(const Dt_RECORD_VehicleSignal2TSM *vehicle_signal);
+void TorqueOverrideStJudgeWithHodDetection(const Veh_Sig *vehicle_signal);
+void TorqueOverrideStJudgeWithoutHodDetection(const Veh_Sig *vehicle_signal);
 void FlagSetWithTimeCount(const uint32 bit_no, const uint16 time_threshold_cnt, uint16* time_cnt);
 #ifdef CONSUME_TIME
 void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* time, uint8* time_flag);

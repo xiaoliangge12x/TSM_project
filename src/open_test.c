@@ -37,10 +37,10 @@ static const IntermediateSig g_intermediate_sig_table[] =
     {"SET_BRAKE", BITNO_SET_BRAKE},
     {"PHASE_IN_AVAILABLE", BITNO_PHASE_IN_AVAILABLE},
     {"NDA_NEED_PHASE_IN", BITNO_NDA_NEED_PHASE_IN},
-    {"NDA_PASSIVE_VD", BITNO_NDA_PASSIVE_VD},
     {"NDA_AVL_BEFORE_ACT", BITNO_NDA_AVL_BEFORE_ACT},
     {"NDA_AVL_AFTER_ACT", BITNO_NDA_AVL_AFTER_ACT},
     {"DRVR_ACC_PEDAL_APPLIED", BITNO_DRVR_ACC_PEDAL_APPLIED},
+    {"AS_ACTIVE", BITNO_AS_ACTIVE},
 };
 // -------------------- function definition -----------------------------------------
 // 从yaml中读取数据并设置

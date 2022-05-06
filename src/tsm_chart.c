@@ -135,7 +135,7 @@ void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECO
     
     // 保存SOC状态
     memcpy(&g_inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
-        sizeof(Dt_RECORD_Automaton_State));
+        sizeof(Soc_State));
 
 #ifdef _NEED_LOG
     LOG(COLOR_GREEN, "nda_avl_before_act: %d", 
@@ -211,19 +211,6 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
         g_tsm.tsm_action_param.request_mrm = IsInMCUMRMActiveSt() ? 1 : 0;
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
-}
-
-void RunNdaTranistionMonitor(const Dt_RECORD_VehicleSignal2TSM* veh_info, const Dt_RECORD_Soc_Info* soc_info)
-{
-    CheckNdaPassiveVD(soc_info);
-    CheckNdaPhaseInAvailable();
-    CheckNdaNeedPhaseIn();
-    CheckHandsFreeOnFunc(soc_info);
-    // CheckNdaAvailableSt(soc_info);
-
-    RunMonitorNdaTransitionLogic(&soc_info->Automaton_State, veh_info);
-
-    // NdaStTransitNormalJudge(veh_info, soc_info);
 }
 
 boolean IsDriverTakeOver()
