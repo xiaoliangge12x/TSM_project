@@ -514,11 +514,11 @@ void RunNdaActiveTransitCondCheck(const Dt_RECORD_VehicleSignal2TSM* veh_info, c
         }
 
         // TODO: planning driveoff req
-        if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
-            (soc_info->NDA_Planning_Request == DRIVEOFF_REQUEST)) {
-            SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
-            SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
-        }
+        // if ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) &&
+        //     (soc_info->NDA_Planning_Request == DRIVEOFF_REQUEST)) {
+        //     SetSignalBitFields(&g_monitor_bitfields.monitor_standby_handsfree_bitfields, BITNO_HANDSFREE_STANDACTIVE_HANDSFREE_NORMAL);
+        //     SetSignalBitFields(&g_monitor_bitfields.monitor_handson_bitfields, BITNO_HANDSON_STANDACTIVE_HANDSON_NORMAL);
+        // }
     }
 }
 

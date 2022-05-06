@@ -242,14 +242,14 @@ boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, c
 {
     // TODO:
     // SOC状态机退出且TO3故障发还给MCU， 或者SOC安全停车时发生故障
-    if (rtu_DeCANGATE2TSM->Soc_Info.Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Soc_Info.Request_Mrm_From_SOC) {
-        return true;
-    }
+    // if (rtu_DeCANGATE2TSM->Soc_Info.Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Soc_Info.Request_Mrm_From_SOC) {
+    //     return true;
+    // }
 
-    // 和 SOC 发生通信故障
-    if (rtu_DeDiag2TSM->Com_Fault_with_SOC) {
-        return true;
-    }
+    // // 和 SOC 发生通信故障
+    // if (rtu_DeDiag2TSM->Com_Fault_with_SOC) {
+    //     return true;
+    // }
 
     // 监控SOC侧NDA激活状态跳转错误
     if (!IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG)) {

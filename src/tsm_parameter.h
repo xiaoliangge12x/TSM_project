@@ -23,7 +23,7 @@
 #endif
 
 // ----------------------  macro ------------------------------------------------------
-#define CONSUME_TIME
+// #define CONSUME_TIME
 
 // ----------------------  global variable(calibration) -------------------------------
 extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
