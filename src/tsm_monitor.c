@@ -27,7 +27,7 @@ void RunNdaTranistionMonitor(const Veh_Sig* veh_info, const Soc_Info* soc_info)
 {
     CheckMonitorPrecondition(veh_info, soc_info);
 
-    RunMonitorNdaTransitionLogic(&soc_info->Automaton_State, veh_info);
+    RunMonitorNdaTransitionLogic(&soc_info->automaton_state, veh_info);
 }
 
 boolean IsRainFallSatisfy(const Veh_Sig* vehicle_signal)
@@ -39,7 +39,7 @@ boolean IsRainFallSatisfy(const Veh_Sig* vehicle_signal)
 boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_signal, const Soc_Info* soc_info)
 {
     // TODO:  默认激活前 不满足， 激活后 满足
-    if (!soc_info->EEA_Status || !IsRainFallSatisfy(vehicle_signal)) {
+    if (!soc_info->monitor_sig_src.EEA_Status || !IsRainFallSatisfy(vehicle_signal)) {
         return false;
     }
 
@@ -49,9 +49,9 @@ boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_s
     }
 
     if (activation_time == BEFORE_ACTIVATION) {
-        return (soc_info->HD_Map_Warning_Dist > K_GeoEndDist_NotActive);
+        return (soc_info->monitor_sig_src.HD_Map_Warning_Dist > K_GeoEndDist_NotActive);
     } else {
-        return (soc_info->HD_Map_Warning_Dist > K_GeoEndDist_Active);
+        return (soc_info->monitor_sig_src.HD_Map_Warning_Dist > K_GeoEndDist_Active);
     }
 
     return true;
@@ -226,7 +226,7 @@ void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st)
         {NDA_LNG_OVERRIDE, IsDriverNotLngOverride, &stuck_in_lng_override_cnt, "NDA stuck in lng override st"},
         {NDA_LAT_OVERRIDE, IsDriverNotLatOverride, &stuck_in_lat_override_cnt, "NDA stuck in lat override st"},
     };
-
+    
     for (uint8 i = 0; i < (uint8)(sizeof(override_stuck_atomic_data_table) / sizeof(AtomicData)); ++i) {
         if (automaton_st->NDA_Function_State == override_stuck_atomic_data_table[i].override_st) {
             PostHandleForStuckInSt(override_stuck_atomic_data_table[i].time_cnt, 
@@ -237,7 +237,7 @@ void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st)
                 if (j == i) {
                     continue;
                 } else {
-                    *override_stuck_atomic_data_table[i].time_cnt = 0;
+                    *override_stuck_atomic_data_table[j].time_cnt = 0;
                 }
             }
             return;

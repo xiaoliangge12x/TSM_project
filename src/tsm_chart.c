@@ -17,7 +17,9 @@
 #include "tsm_monitor.h"
 
 // -------------------------------  global variable definition ----------------------------
-TSMParam      g_tsm;
+TSMParam  g_tsm;
+TsmInput  g_tsm_input;
+TsmOutput g_tsm_output;
 // -------------------------------- driving table initilize -------------------------------
 static const StateMachine g_top_state_machine = 
 {
@@ -110,59 +112,82 @@ void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECO
     Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
     Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI, Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
 {
-	// TODO:
+    SetTsmInput(rtu_DeCtrlArb2TSM, rtu_DeDecisionArbitrator2TSM, rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+    SetTsmOutput(rty_DeTsm2Planlite, rty_DeTSM2CtrlArb, rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, rty_DeTSM2HMI, rty_DeTSM2CANGATE);
+
+    // TODO:
     // validate timestamp
-	(void)ValidateRcvMsgTimeStamp(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+	(void)ValidateRcvMsgTimeStamp();
 
     // Preprocess msg
-    SignalHandling(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+    SignalHandling();
 
     // Monitor NDA transition
     SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_TRANSIT_NORMAL_FLAG);
     if (!IsInMCUMRMActiveSt()) {
-        RunNdaTranistionMonitor(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm, &rtu_DeCANGATE2TSM->Soc_Info);
+        RunNdaTranistionMonitor(&g_tsm_input.p_can_gate->Vehicle_Signal_To_Tsm, &g_tsm_input.p_can_gate->Soc_Info);
     }
     // run tsm user
-    RunTsmUser(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+    RunTsmUser();
 
     // run warning user
     RunWarningUser();
 
     // wrap package and send
-    WrapAndSend(rtu_DeCtrlArb2TSM, rtu_DeDecisionArbitrator2TSM, rtu_DeCANGATE2TSM, 
-        rtu_DeDiag2TSM, rtu_DePlanlite2Tsm, rty_DeTsm2Planlite, rty_DeTSM2CtrlArb,
-        rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, rty_DeTSM2HMI, rty_DeTSM2CANGATE);
+    WrapAndSend();
     
     // 保存SOC状态
-    memcpy(&g_inter_media_msg.last_automaton_st, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
+    memcpy(&g_inter_media_msg.last_automaton_st, &g_tsm_input.p_can_gate->Soc_Info.automaton_state,
         sizeof(Soc_State));
 
 #ifdef _NEED_LOG
-    LOG(COLOR_GREEN, "nda_avl_before_act: %d", 
-        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT));
+    LOG(COLOR_GREEN, "nda_avl_before_act: %d, fault level: %d, g_tsm_input fault level: %d, mrm_active_st: %d.", 
+        IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_NDA_AVL_BEFORE_ACT),
+        rtu_DeDiag2TSM->Fault_Level, g_tsm_input.p_diag->Fault_Level,
+        rty_DeTSM2CANGATE->Tsm_To_Soc.MCU_MRM_Active_St);
 #endif
 }
 
-void RunTsmUser(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+SetTsmInput(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
+    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
 {
+    g_tsm_input.p_ctrl_arb = rtu_DeCtrlArb2TSM;
+    g_tsm_input.p_deci_arb = rtu_DeDecisionArbitrator2TSM;
+    g_tsm_input.p_can_gate = rtu_DeCANGATE2TSM;
+    g_tsm_input.p_diag     = rtu_DeDiag2TSM;
+    g_tsm_input.p_planlite = rtu_DePlanlite2Tsm;
+}
+
+SetTsmOutput(Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite, Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, 
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, 
+    Dt_RECORD_TSM2HMI *rty_DeTSM2HMI, Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE) 
+{
+    g_tsm_output.p_planlite = rty_DeTsm2Planlite;
+    g_tsm_output.p_ctrl_arb = rty_DeTSM2CtrlArb;
+    g_tsm_output.p_deci_arb = rty_DeTSM2DecisionArbitrator;
+    g_tsm_output.p_diag     = rty_DeTSM2Diag;
+    g_tsm_output.p_hmi      = rty_DeTSM2HMI;
+    g_tsm_output.p_can_gate = rty_DeTSM2CANGATE;
+}
+
+void RunTsmUser()
+{
     // Run Sit
-    RunTsmSit(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM, rtu_DePlanlite2Tsm);
+    RunTsmSit();
 
     // Run tsm sm
     StateMachineWork(&g_top_state_machine, &g_tsm.state);
 }
 
-void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+void RunTsmSit()
 {
-    
     // TODO:
     g_tsm_signal_bitfileds = 0;
     // TODO:
     g_tsm.tsm_action_param.request_mrm = 0;   // 就发一帧请求mrm, 避免误触发
     // TODO: delete mrm_system_fault_level judge
-    if (rtu_DeDiag2TSM->Fault_Level == NO_FAULT) {
+    if (g_tsm_input.p_diag->Fault_Level == NO_FAULT) {
         if (g_inter_media_msg.mrm_system_fault_level == NO_FAULT) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FAULT_NOT_EXIST);
         }
@@ -174,26 +199,26 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
         }
     }
 
-    // IsNDAInActiveSt(rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State) ?
+    // IsNDAInActiveSt(g_tsm_input.p_can_gate->Soc_Info.automaton_state.NDA_Function_State) ?
     //     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_STANDBY) :
     //     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_NO_STANDBY);
     SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_STANDBY);
 
-    if (rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
+    if (g_tsm_input.p_can_gate->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt == VEH_STANDSTILL_ST_STANDSTILL) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_VEH_STANDSTILL);
-        if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
+        if (ValidateActivationCond()) {
             SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_MRC);
         }
     } else {
         SetCtrlType(BITNO_MRM_BOTH_CTRL_SWITCH, BITNO_MRM_LAT_CTRL_SWITCH);
-        if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_TOR) {
+        if (g_tsm_input.p_planlite->planningLite_control_state == PC_TOR) {
             SetCtrlType(BITNO_TOR_BOTH_CTRL_SWITCH, BITNO_TOR_LAT_CTRL_SWITCH);
-            if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
+            if (ValidateActivationCond()) {
                 SetCtrlType(BITNO_TOR_BOTH_CTRL, BITNO_TOR_LAT_CTRL);
             }
-        } else if (rtu_DePlanlite2Tsm->planningLite_control_state == PC_MRM) {
+        } else if (g_tsm_input.p_planlite->planningLite_control_state == PC_MRM) {
             SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
-            if (ValidateActivationCond(rtu_DeCANGATE2TSM, rtu_DeDiag2TSM)) {
+            if (ValidateActivationCond()) {
                 SetCtrlType(BITNO_MRM_BOTH_CTRL, BITNO_MRM_LAT_CTRL);
             }
         } else {
@@ -205,9 +230,9 @@ void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_D
         SetCtrlType(BITNO_TOR_TO_MRM_BOTH, BITNO_TOR_TO_MRM_LAT);
     }
 
-    if (IsDriverTakeOver() || (rtu_DePlanlite2Tsm->planningLite_control_state == PC_EXIT)) {
+    if (IsDriverTakeOver() || (g_tsm_input.p_planlite->planningLite_control_state == PC_EXIT)) {
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
-    } else if (rtu_DeDiag2TSM->Fault_Level != NO_FAULT) {
+    } else if (g_tsm_input.p_diag->Fault_Level != NO_FAULT) {
         g_tsm.tsm_action_param.request_mrm = IsInMCUMRMActiveSt() ? 1 : 0;
         SetSignalBitFields(&g_tsm_signal_bitfileds, BITNO_FUNCTION_EXIT);
     }
@@ -245,17 +270,18 @@ boolean IsDriverTakeOver()
     return false;
 }
 
-boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM) 
+boolean ValidateActivationCond() 
 {
     // TODO:
     // SOC状态机退出且TO3故障发还给MCU， 或者SOC安全停车时发生故障
-    if (rtu_DeCANGATE2TSM->Soc_Info.Tor_Fault_From_SOC || rtu_DeCANGATE2TSM->Soc_Info.Request_Mrm_From_SOC) {
+    if (g_tsm_input.p_can_gate->Soc_Info.monitor_sig_src.Tor_Fault_From_SOC || 
+        g_tsm_input.p_can_gate->Soc_Info.monitor_sig_src.Request_Mrm_From_SOC) {
         LOG(COLOR_RED, "SOC tor fault trigger Mrm.");
         return true;
     }
 
     // 和 SOC 发生通信故障
-    if (rtu_DeDiag2TSM->Com_Fault_with_SOC) {
+    if (g_tsm_input.p_diag->Com_Fault_with_SOC) {
         LOG(COLOR_RED, "Com Fault with SOC trigger Mrm.");
         return true;
     }
@@ -296,23 +322,22 @@ void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl)
         SetSignalBitFields(&g_tsm_signal_bitfileds, both_ctrl);
 }
 
-boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+boolean ValidateRcvMsgTimeStamp()
 {
     static Dt_RECORD_TimeStamp timestamp_table[TIMESTAMP_MAX_NUM][2] = {0};  // 1st column is cur, 2nd columm is last
     
-    memcpy(&timestamp_table[0][0], &(rtu_DeCANGATE2TSM->TimeStamp),                sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&timestamp_table[1][0], &(rtu_DeDiag2TSM->Diag_TimeStamp),              sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&timestamp_table[2][0], &(rtu_DePlanlite2Tsm->DeTimeStamp), sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[0][0], &(g_tsm_input.p_can_gate->TimeStamp), sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[1][0], &(g_tsm_input.p_diag->Diag_TimeStamp),  sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[2][0], &(g_tsm_input.p_planlite->DeTimeStamp), sizeof(Dt_RECORD_TimeStamp));
 
     for (uint8 i = 0; i < TIMESTAMP_MAX_NUM; ++i) {
         return (IsTimeStampError(&timestamp_table[i][0], &timestamp_table[i][1]) || 
             IsTimeStampLost(&timestamp_table[i][0], &timestamp_table[i][1]));
     }
 
-    memcpy(&timestamp_table[0][1], &(rtu_DeCANGATE2TSM->TimeStamp),                sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&timestamp_table[1][1], &(rtu_DeDiag2TSM->Diag_TimeStamp),              sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&timestamp_table[2][1], &(rtu_DePlanlite2Tsm->DeTimeStamp), sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[0][1], &(g_tsm_input.p_can_gate->TimeStamp), sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[1][1], &(g_tsm_input.p_diag->Diag_TimeStamp), sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&timestamp_table[2][1], &(g_tsm_input.p_planlite->DeTimeStamp), sizeof(Dt_RECORD_TimeStamp));
 }
 
 boolean IsTimeStampLost(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp)

@@ -81,16 +81,22 @@ typedef enum
 // ---------------------------------- global variable def  --------------------------------------
 static uint32 g_tsm_signal_bitfileds = 0U;
 // ---------------------------------- function declaration --------------------------------------
-void RunTsmUser(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
+SetTsmInput(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
+    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
-boolean ValidateRcvMsgTimeStamp(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
+
+SetTsmOutput(Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, 
+    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, 
+    Dt_RECORD_TSM2HMI *rty_DeTSM2HMI, Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE);
+
+void RunTsmUser();
+boolean ValidateRcvMsgTimeStamp();
 boolean IsTimeStampLost(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp);
 boolean IsTimeStampError(const Dt_RECORD_TimeStamp* cur_timestamp, const Dt_RECORD_TimeStamp* last_timestamp);
-void RunTsmSit(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm);
+
+void RunTsmSit();
 boolean IsDriverTakeOver();
-boolean ValidateActivationCond(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM);
+boolean ValidateActivationCond();
 boolean IsNDAInActiveSt(const uint8 nda_st);
 void SetCtrlType(const uint8 both_ctrl, const uint8 lat_ctrl);
 

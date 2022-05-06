@@ -291,13 +291,33 @@ typedef struct
 typedef struct 
 {
     MCUMRMFunctionSt state;              // 当前状态
-    TSMActionParam   tsm_action_param;      // 行为参数
+    TSMActionParam   tsm_action_param;   // 行为参数
 } TSMParam;
+
+typedef struct 
+{
+    Dt_RECORD_CtrlArb2TSM*            p_ctrl_arb;
+    Dt_RECORD_DecisionArbitrator2TSM* p_deci_arb;
+    Dt_RECORD_CANGATE2TSM*            p_can_gate;
+    Dt_RECORD_Diag2TSM*               p_diag;
+    Dt_RECORD_PLANLITE2TSM*           p_planlite;
+} TsmInput;
+
+typedef struct 
+{
+    Dt_RECORD_TSM2PLANLITE*           p_planlite;
+    Dt_RECORD_TSM2CtrlArb*            p_ctrl_arb;
+    Dt_RECORD_TSM2DecisionArbitrator* p_deci_arb;
+    Dt_RECORD_TSM2Diag*               p_diag;
+    Dt_RECORD_TSM2HMI*                p_hmi;
+    Dt_RECORD_TSM2CANGATE*            p_can_gate;
+} TsmOutput;
 
 // --------------------------------- global declaration ----------------------------
 extern InterMediaMsg g_inter_media_msg;
-// 声明全局变量
-extern TSMParam g_tsm;
+extern TSMParam      g_tsm;
+extern TsmInput      g_tsm_input;
+extern TsmOutput     g_tsm_output;
 // --------------------------------- function declaration --------------------------
 
 #ifdef CONSUME_TIME
@@ -309,4 +329,6 @@ float32 GetTimeGapInSec(const sint64 start_time, const uint8 flag); // 计算持
 boolean IsBitSet(const uint32 event_bitfields, const uint8 bit_no);
 void SetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
 void ResetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
+
+boolean IsInMCUMRMActiveSt();
 #endif

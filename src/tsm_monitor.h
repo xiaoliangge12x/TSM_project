@@ -43,7 +43,7 @@ void RunNdaTranistionMonitor(const Veh_Sig* veh_info, const Soc_Info* soc_info);
 // condition
 void CheckMonitorPrecondition(const Veh_Sig* veh_info, const Soc_Info* soc_info);
 boolean ValidateNdaAvlCond(const Soc_Info* soc_info);
-boolean IsRainFallSatisfy(const Soc_Info* soc_info, const Veh_Sig* vehicle_signal);
+boolean IsRainFallSatisfy(const Veh_Sig* vehicle_signal);
 boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_signal, const Soc_Info* soc_info);
 boolean IsNdaPassiveVD(const Soc_Info* soc_info);
 void CheckNdaPhaseInAvailable();
@@ -55,7 +55,7 @@ void MonitorNdaChangeFromStandbyToActive(const Soc_State* automaton_st, const Ve
 void MonitorNdaChangeFromActiveToOverride(const Soc_State* automaton_st);
 void MonitorNdaIgnoreOverrideReq(const Soc_State* automaton_st);
 void MonitorNdaChangeFromOverrideToActive(const Soc_State* automaton_st);
-void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st)
+void MonitorNdaStuckInOverrideSt(const Soc_State* automaton_st);
 void MonitorIcaUpgradeToNda(const Soc_State* automaton_st);
 void MonitorNdaUnableToExit(const Soc_State* automaton_st);
 

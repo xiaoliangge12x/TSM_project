@@ -129,11 +129,7 @@ void OutputCtrlArbReq(const CtrlArbRequest ctrl_arb_req)
     g_tsm.tsm_action_param.control_arb_request = ctrl_arb_req;
 }
 
-void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD_DecisionArbitrator2TSM *rtu_DeDecisionArbitrator2TSM, 
-    const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, Dt_RECORD_TSM2HMI *rty_DeTSM2HMI, Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
+void WrapAndSend()
 {
 	static Dt_RECORD_TimeStamp tsm_timestamp  = {0};
 #ifdef CONSUME_TIME
@@ -147,79 +143,77 @@ void WrapAndSend(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const Dt_RECORD
 #endif
     
     // ---------------------------------------- planlite ----------------------------------------------
-    memcpy(&rty_DeTsm2Planlite->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&g_tsm_output.p_planlite->TimeStamp, &g_tsm_input.p_can_gate->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO: 
-    memcpy(&rty_DeTsm2Planlite->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    rty_DeTsm2Planlite->NDA_Lane_Change_Type = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Type;
-    rty_DeTsm2Planlite->NDA_Lane_Change_Direction = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_Direction;
-    rty_DeTsm2Planlite->NDA_Lane_Change_State = rtu_DeCANGATE2TSM->Soc_Info.NDA_Lane_Change_State;
+    memcpy(&g_tsm_output.p_planlite->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
+    g_tsm_output.p_planlite->NDA_Lane_Change_Type = g_tsm_input.p_can_gate->Soc_Info.scenario_type.NDA_Lane_Change_Type;
+    g_tsm_output.p_planlite->NDA_Lane_Change_Direction = g_tsm_input.p_can_gate->Soc_Info.scenario_type.NDA_Lane_Change_Direction;
+    g_tsm_output.p_planlite->NDA_Lane_Change_State = g_tsm_input.p_can_gate->Soc_Info.scenario_type.NDA_Lane_Change_State;
     // TODO: 
-    rty_DeTsm2Planlite->MRM_Status = g_tsm.tsm_action_param.mrm_activation_st;
+    g_tsm_output.p_planlite->MRM_Status = g_tsm.tsm_action_param.mrm_activation_st;
 
     // ----------------------------------------- CtrlArb ----------------------------------------------
-    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_CanGate, &rtu_DeCANGATE2TSM->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CtrlArb->TimeStamp_PlannLite, &rtu_DePlanlite2Tsm->DeTimeStamp,
+    memcpy(&g_tsm_output.p_ctrl_arb->TimeStamp_CanGate, &g_tsm_input.p_can_gate->TimeStamp, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&g_tsm_output.p_ctrl_arb->TimeStamp_PlannLite, &g_tsm_input.p_planlite->DeTimeStamp,
         sizeof(Dt_RECORD_TimeStamp));
     // TODO:
-    memcpy(&rty_DeTSM2CtrlArb->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    rty_DeTSM2CtrlArb->holo_planning_control_status = rtu_DePlanlite2Tsm->planningLite_control_state;
+    memcpy(&g_tsm_output.p_ctrl_arb->DeTimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
+    g_tsm_output.p_ctrl_arb->holo_planning_control_status = g_tsm_input.p_planlite->planningLite_control_state;
     // TODO:
-    memcpy(&rty_DeTSM2CtrlArb->Automaton_State, &rtu_DeCANGATE2TSM->Soc_Info.Automaton_State,
+    memcpy(&g_tsm_output.p_ctrl_arb->Automaton_State, &g_tsm_input.p_can_gate->Soc_Info.automaton_state,
         sizeof(Soc_State));
-    rty_DeTSM2CtrlArb->long_override_flag = g_tsm.tsm_action_param.lng_override_flag;
+    g_tsm_output.p_ctrl_arb->long_override_flag = g_tsm.tsm_action_param.lng_override_flag;
+    g_tsm_output.p_ctrl_arb->lat_override_flag = g_tsm.tsm_action_param.lat_override_flag;
     // TODO:
-    rty_DeTSM2CtrlArb->NDA_LatState = 0;
-    rty_DeTSM2CtrlArb->NDA_LongState = 0;
-    rty_DeTSM2CtrlArb->NDA_ILC_State = 0;
-	rty_DeTSM2CtrlArb->control_arb_request = g_tsm.tsm_action_param.control_arb_request;
+    g_tsm_output.p_ctrl_arb->NDA_LatState = 0;
+    g_tsm_output.p_ctrl_arb->NDA_LongState = 0;
+    g_tsm_output.p_ctrl_arb->NDA_ILC_State = 0;
+	g_tsm_output.p_ctrl_arb->control_arb_request = g_tsm.tsm_action_param.control_arb_request;
 
 
     // ----------------------------------------- DeciArb -----------------------------------------------
-    memcpy(&rty_DeTSM2DecisionArbitrator->TimeStamp, &rtu_DeCANGATE2TSM->TimeStamp,
+    memcpy(&g_tsm_output.p_deci_arb->TimeStamp, &g_tsm_input.p_can_gate->TimeStamp,
         sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2DecisionArbitrator->DeScenarioType, &rtu_DeCANGATE2TSM->Soc_Info,
+    memcpy(&g_tsm_output.p_deci_arb->DeScenarioType, &g_tsm_input.p_can_gate->Soc_Info.scenario_type,
         sizeof(Dt_RECORD_ScenarioType));
 
     // ------- 给到Diag诊断相关 --------
     // TODO:
-    memcpy(&rty_DeTSM2Diag->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&g_tsm_output.p_diag->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO:
-    rty_DeTSM2Diag->Tsm_Status = 0;
+    g_tsm_output.p_diag->Tsm_Status = 0;
     
     // ------------------------------------------ HMI -------------------------------------------------
     // TODO:
-    memcpy(&rty_DeTSM2HMI->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&g_tsm_output.p_hmi->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO:
-    rty_DeTSM2HMI->Fault_Info = 0;  
+    g_tsm_output.p_hmi->Fault_Info = 0;  
     // TODO:
-    rty_DeTSM2HMI->Tor_Request = 0;
+    g_tsm_output.p_hmi->Tor_Request = 0;
 
     // ------------------------------------------ CANgate ----------------------------------------------
     // TODO:
-    memcpy(&rty_DeTSM2CANGATE->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CANGATE->Decision_Arbitrator_TimeStamp, &rtu_DeDecisionArbitrator2TSM->Decision_Arbitrator_TimeStamp,
+    memcpy(&g_tsm_output.p_can_gate->Tsm_TimeStamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
+    memcpy(&g_tsm_output.p_can_gate->Decision_Arbitrator_TimeStamp, &g_tsm_input.p_deci_arb->Decision_Arbitrator_TimeStamp,
         sizeof(Dt_RECORD_TimeStamp));
-    memcpy(&rty_DeTSM2CANGATE->Control_Arbitrator_TimeStamp, &rtu_DeCtrlArb2TSM->timestamp,
+    memcpy(&g_tsm_output.p_can_gate->Control_Arbitrator_TimeStamp, &g_tsm_input.p_ctrl_arb->timestamp,
         sizeof(Dt_RECORD_TimeStamp));
     // TODO:
-    rty_DeTSM2CANGATE->EPB_Request = 0;
+    g_tsm_output.p_can_gate->post_hmi_request.EPB_Request = 0;
     // TODO:
-    rty_DeTSM2CANGATE->Hazard_Light_Request = 0;
+    g_tsm_output.p_can_gate->post_hmi_request.Hazard_Light_Request = 0;
     // TODO:
-    rty_DeTSM2CANGATE->Ecall_Request = 0;
+    g_tsm_output.p_can_gate->post_hmi_request.Ecall_Request = 0;
     // TODO:
-    rty_DeTSM2CANGATE->Door_Unlock_Request = 0;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AS_Status = rtu_DeCtrlArb2TSM->AS_Status;
-    memcpy(&rty_DeTSM2CANGATE->Tsm_To_Soc.Control_Arbitrator_Results, &rtu_DeCtrlArb2TSM->Control_Arbitrator_Results, 
+    g_tsm_output.p_can_gate->post_hmi_request.Door_Unlock_Request = 0;
+    g_tsm_output.p_can_gate->Tsm_To_Soc.AS_Status = g_tsm_input.p_ctrl_arb->AS_Status;
+    memcpy(&g_tsm_output.p_can_gate->Tsm_To_Soc.Control_Arbitrator_Results, &g_tsm_input.p_ctrl_arb->Control_Arbitrator_Results, 
         sizeof(Dt_RECORD_Control_Arbitrator_Results));
-    rty_DeTSM2CANGATE->Tsm_To_Soc.Lane_Change_Allow_Flag = rtu_DeDecisionArbitrator2TSM->Lane_Change_Allow_Flag;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.Parking_EPS_handshake_state = rtu_DeCtrlArb2TSM->Parking_EPS_handshake_state;
+    g_tsm_output.p_can_gate->Tsm_To_Soc.Lane_Change_Allow_Flag = g_tsm_input.p_deci_arb->Lane_Change_Allow_Flag;
+    g_tsm_output.p_can_gate->Tsm_To_Soc.Parking_EPS_handshake_state = g_tsm_input.p_ctrl_arb->Parking_EPS_handshake_state;
+    g_tsm_output.p_can_gate->Tsm_To_Soc.MCU_MRM_Active_St = IsInMCUMRMActiveSt();
     // TODO:
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Standby_HandsFree_St_Monitor_Flag = 0;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.HandsOn_St_Monitor_Flag = 0;
-    rty_DeTSM2CANGATE->Tsm_To_Soc.AutomatonTransitMonitorFlag.Override_St_Monitor_Flag = 0;
+    memcpy(&g_tsm_output.p_can_gate->Mcu_To_Ifc.time_stamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
     // TODO:
-    memcpy(&rty_DeTSM2CANGATE->Mcu_To_Ifc.time_stamp, &tsm_timestamp, sizeof(Dt_RECORD_TimeStamp));
-    // TODO:
-    rty_DeTSM2CANGATE->Mcu_To_Ifc.MCU_MRM_status = 0; 
+    g_tsm_output.p_can_gate->Mcu_To_Ifc.MCU_MRM_status = 0; 
 }

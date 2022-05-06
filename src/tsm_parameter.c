@@ -27,6 +27,10 @@ float32 K_TakeOverAvailHandTorqThreshold_TwoZone     = 0;      // 2区的具备�
 float32 K_TakeOverAvailHandTorqThreshold_ThreeZone   = 0;      // 3区的具备接管能力的手力矩阈值
 float32 K_GasPedalPosThresholdValue                  = 20.0;   // 油门开度阈值
 
+float32 K_GeoEndDist_NotActive                       = 10.0;   // NDA非激活时的高精地图报警距离阈值
+float32 K_GeoEndDist_Active                          = 10.0;   // NDA激活时的高精地图报警距离阈值
+float32 K_VehSpdThreshold                            = 120.0;  // 车速阈值
+
 #ifdef CONSUME_TIME
 
 void StartTiming(sint64* cur_time, uint8* flag)
@@ -72,4 +76,14 @@ void SetSignalBitFields(uint32* event_bitfields, const uint8 bit_no)
 void ResetSignalBitFields(uint32* event_bitfields, const uint8 bit_no)
 {
     *event_bitfields &= ~((uint32)1U << bit_no);
+}
+
+boolean IsInMCUMRMActiveSt()
+{
+    return ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_TOR_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_TOR_STAND) ||
+            (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) ||
+            (g_tsm.state == MCU_MRM_MRC));
 }

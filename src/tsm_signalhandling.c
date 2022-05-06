@@ -17,11 +17,10 @@
 // --------------------------------- global variable definition ---------------------------------------
 InterMediaMsg g_inter_media_msg;
 // --------------------------------- function definition        ---------------------------------------
-void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM, 
-                    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm)
+void SignalHandling()
 {
-    RunCommonConditionCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
-    RunDriverOperationCheck(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
+    RunCommonConditionCheck(&g_tsm_input.p_can_gate->Vehicle_Signal_To_Tsm);
+    RunDriverOperationCheck(&g_tsm_input.p_can_gate->Vehicle_Signal_To_Tsm);
 
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_st: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
@@ -30,9 +29,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_SET_BRAKE),
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_ACC_PEDAL_APPLIED),
         IsBitSet(g_inter_media_msg.intermediate_sig_bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST),
-        rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt, 
-        rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.NDA_Function_State,
-        rtu_DeCANGATE2TSM->Soc_Info.Automaton_State.ICA_Function_State);
+        g_tsm_input.p_can_gate->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt, 
+        g_tsm_input.p_can_gate->Soc_Info.automaton_state.NDA_Function_State,
+        g_tsm_input.p_can_gate->Soc_Info.automaton_state.ICA_Function_State);
 #endif
 }
 
@@ -359,13 +358,3 @@ void FlagSetWithTime(const uint32 bit_no, const float32 time_threshold, sint64* 
 }
 
 #endif
-
-boolean IsInMCUMRMActiveSt()
-{
-    return ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) ||
-            (g_tsm.state == MCU_MRM_TOR_LAT_CTRL) ||
-            (g_tsm.state == MCU_MRM_TOR_STAND) ||
-            (g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
-            (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL) ||
-            (g_tsm.state == MCU_MRM_MRC));
-}
