@@ -12,235 +12,218 @@
  */
 
 #include "tsm_warning.h"
+#include "base/sm_base.h"
 
 // ------------------------------------ global variable definition -------------------------------
 static uint32      g_warning_signal_bitfileds = 0U;
 static sint64      tor_level3_start_time = 0;
 static uint8       tor_level3_timing_flag = 0;
 
-static uint16      tor_level3_duration_cnt = 0;
-WarningSMParam     g_warning_sm;
-const StateMachine g_warning_state_machine = 
-{
-    .state_transit_table = 
+static uint16  K_Tor3RampUpToMrm4Time_Cnt = 500U;
+
+static const struct state_transit warning_state_flow[] = {
     {
-        {NO_WARNING,          EVENT_COME_LEVEL_1,             WARNING_TOR_LEVEL_1},
-        {NO_WARNING,          EVENT_COME_LEVEL_2,             WARNING_TOR_LEVEL_2},
-        {NO_WARNING,          EVENT_COME_LEVEL_3,             WARNING_TOR_LEVEL_3},
-        {NO_WARNING,          EVENT_CHECK_IN_MRM,             WARNING_MRM_LEVEL_4},
-        {NO_WARNING,          EVENT_CHECK_IN_MRC,             WARNING_MRM_LEVEL_5},
-        {WARNING_TOR_LEVEL_1, EVENT_RAMPUP_LEVEL_2,           WARNING_TOR_LEVEL_2},
-        {WARNING_TOR_LEVEL_1, EVENT_RAMPUP_LEVEL_3,           WARNING_TOR_LEVEL_3},
-        {WARNING_TOR_LEVEL_1, EVENT_CHECK_IN_MRM,             WARNING_MRM_LEVEL_4},
-        {WARNING_TOR_LEVEL_1, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
-        {WARNING_TOR_LEVEL_2, EVENT_RAMPUP_LEVEL_3_WITH_TIME, WARNING_TOR_LEVEL_3},
-        {WARNING_TOR_LEVEL_2, EVENT_CHECK_IN_MRM,             WARNING_MRM_LEVEL_4},
-        {WARNING_TOR_LEVEL_2, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
-        {WARNING_TOR_LEVEL_3, EVENT_RAMPUP_LEVEL_4,           WARNING_MRM_LEVEL_4},
-        {WARNING_TOR_LEVEL_3, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
-        {WARNING_MRM_LEVEL_4, EVENT_CHECK_IN_MRC,             WARNING_MRM_LEVEL_5},
-        {WARNING_MRM_LEVEL_4, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
-        {WARNING_MRM_LEVEL_5, EVENT_CHECK_IN_PASSIVE,         NO_WARNING},
+        .cur_st = NO_WARNING,
+        .event_id = EVENT_COME_LEVEL_1,
+        .next_st = WARNING_TOR_LEVEL_1,
     },
-    .event_table = 
     {
-        {EVENT_CHECK_IN_PASSIVE,         CheckInPassiveSt},
-        {EVENT_COME_LEVEL_1,             TorLevel1WarningCome},
-        {EVENT_COME_LEVEL_2,             TorLevel2WaningCome},
-        {EVENT_COME_LEVEL_3,             TorLevel3WarningCome}, 
-        {EVENT_CHECK_IN_MRM,             CheckInMrmSt},
-        {EVENT_CHECK_IN_MRC,             CheckInMrcSt},
-        {EVENT_RAMPUP_LEVEL_2,           RampUpToTorLevel2},
-        {EVENT_RAMPUP_LEVEL_3,           RampUpToTorLevel3WithTiming},
-        {EVENT_RAMPUP_LEVEL_3_WITH_TIME, RampUpToTorLevel3WithoutTiming},
-        {EVENT_RAMPUP_LEVEL_4,           RampUpToMrmLevel4WithTiming}
+        .cur_st = NO_WARNING,
+        .event_id = EVENT_COME_LEVEL_2,
+        .next_st = WARNING_TOR_LEVEL_2,
     },
-    .state_table =
     {
-        {NO_WARNING,          ActionInNoWarning},
-        {WARNING_TOR_LEVEL_1, ActionInWarningTorLevel1},
-        {WARNING_TOR_LEVEL_2, ActionInWarningTorLevel2},
-        {WARNING_TOR_LEVEL_3, ActionInWarningTorLevel3},
-        {WARNING_MRM_LEVEL_4, ActionInWarningMrmLevel4},
-        {WARNING_MRM_LEVEL_5, ActionInWarningMrmLevel5},
+        .cur_st = NO_WARNING,
+        .event_id = EVENT_COME_LEVEL_3,
+        .next_st = WARNING_TOR_LEVEL_3,
+    },
+    {
+        .cur_st = NO_WARNING,
+        .event_id = EVENT_CHECK_MRM_ST,
+        .next_st = WARNING_MRM_LEVEL_4,
+    },
+    {
+        .cur_st = NO_WARNING,
+        .event_id = EVENT_CHECK_MRC_ST,
+        .next_st = WARNING_MRM_LEVEL_5,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_1,
+        .event_id = EVENT_RAMPUP_LEVEL_2,
+        .next_st = WARNING_TOR_LEVEL_2,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_1,
+        .event_id = EVENT_RAMPUP_LEVEL_3,
+        .next_st = WARNING_TOR_LEVEL_3,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_1,
+        .event_id = EVENT_CHECK_MRM_ST,
+        .next_st = WARNING_MRM_LEVEL_4,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_1,
+        .event_id = EVENT_CHECK_PASSIVE_ST,
+        .next_st = NO_WARNING,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_2,
+        .event_id = EVENT_RAMPUP_LEVEL_3_WITH_TIME,
+        .next_st = WARNING_TOR_LEVEL_3,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_2,
+        .event_id = EVENT_CHECK_MRM_ST,
+        .next_st = WARNING_MRM_LEVEL_4,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_2,
+        .event_id = EVENT_CHECK_PASSIVE_ST,
+        .next_st = NO_WARNING,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_3,
+        .event_id = EVENT_RAMPUP_LEVEL_4,
+        .next_st = WARNING_MRM_LEVEL_4,
+    },
+    {
+        .cur_st = WARNING_TOR_LEVEL_3,
+        .event_id = EVENT_CHECK_PASSIVE_ST,
+        .next_st = NO_WARNING,
+    },
+    {
+        .cur_st = WARNING_MRM_LEVEL_4,
+        .event_id = EVENT_CHECK_MRC_ST,
+        .next_st = WARNING_MRM_LEVEL_5,
+    },
+    {
+        .cur_st = WARNING_MRM_LEVEL_4,
+        .event_id = EVENT_CHECK_PASSIVE_ST,
+        .next_st = NO_WARNING,
+    },
+    {
+        .cur_st = WARNING_MRM_LEVEL_5,
+        .event_id = EVENT_CHECK_PASSIVE_ST,
+        .next_st = NO_WARNING,
     },
 };
 
-// ------------------------------------ func def -----------------------------------------
-void RunWarningSit()
-{
-    g_warning_signal_bitfileds = 0;
-
-    if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
-    }
-    
-    if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3);
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
-    }
-    // TODO: 1级TOR延时
-    if (false) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
-    }
-    // TODO: 2级TOR延时
-    if (false) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
-    }
-
+static void
+tsm_no_warning_post_process() {
 #ifdef _NEED_LOG
-#ifdef CONSUME_TIME
-    LOG(COLOR_YELLOW, "tor_level3_start_time: %ld, tor3 warning time pass: %f", tor_level3_start_time, 
-        GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag));
+    LOG(COLOR_NONE, "it's in no warnng st");
 #endif
-#endif
-#ifdef CONSUME_TIME
-    // TODO: 3级TOR延时
-    if (GetTimeGapInSec(tor_level3_start_time, tor_level3_timing_flag) > K_Tor3RampUpToMrm4Time) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
-    }
-#else
-    if (tor_level3_duration_cnt > K_Tor3RampUpToMrm4Time_Cnt) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
-        tor_level3_duration_cnt = 0;
-    }
-#endif
+}
 
-    if ((g_tsm.state == MCU_MRM_TOR_LNG_LAT_CTRL) || (g_tsm.state == MCU_MRM_TOR_LAT_CTRL)) {
-        if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL1_FAULT) {
-            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_1_COME);
-        } else if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL2_FAULT) {
-            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_2_COME);
-        } else if (g_inter_media_msg.mrm_system_fault_level == TOR_LEVEL3_FAULT) {
-            SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_TOR_LEVEL_3_COME);
-        } else {
-            // do nothing;
-        }
-    } else if ((g_tsm.state == MCU_MRM_ACTIVE_LNG_LAT_CTRL) || (g_tsm.state == MCU_MRM_ACTIVE_LAT_CTRL)) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_MRM_ST);
-    } else if (g_tsm.state == MCU_MRM_MRC) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
-    } else if (g_tsm.state == MCU_MRM_PASSIVE) {
-        SetSignalBitFields(&g_warning_signal_bitfileds, BITNO_CHECK_PASSIVE_ST);
+static void
+tsm_tor_lvl_one_post_process() {
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "it's in warning tor level 1 st");
+#endif
+}
+
+static void
+tsm_tor_lvl_two_post_process() {
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "it's in warning tor level 2 st");
+#endif
+}
+
+static void
+tsm_tor_lvl_three_post_process() {
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "it's in warning tor level 3 st");
+#endif
+}
+
+static void
+tsm_mrm_lvl_four_post_process() {
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "it's in warning mrm level 4 st");
+#endif
+}
+
+static void
+tsm_mrm_lvl_five_post_process() {
+#ifdef _NEED_LOG
+    LOG(COLOR_NONE, "it's in warning mrm level 5 st");
+#endif
+}
+
+static size_t
+tsm_run_warning_sit(enum warning_event_id* event_id,
+                    const enum tsm_warning_st warning_st,
+                    const enum tsm_mcu_mrm_func_st mrm_st,
+                    const struct tsm_entry* p_entry, 
+                    const struct tsm_intermediate_sig* p_int_sig) {
+    size_t event_num = 0;
+    static uint16 tor_level3_du_cnt = 0;
+
+    uint8 soc_tor_fault =
+        p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
+    boolean is_mcu_in_tor = ((mrm_st == MCU_MRM_TOR_LNG_LAT_CTRL) ||
+                             (mrm_st == MCU_MRM_TOR_LAT_CTRL));
+    boolean is_mcu_in_mrm = ((mrm_st == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
+                             (mrm_st == MCU_MRM_ACTIVE_LAT_CTRL));
+    if (soc_tor_fault == TOR_LEVEL3_FAULT) {
+        event_id[event_num++] = EVENT_COME_LEVEL_3;
+    } else if (is_mcu_in_tor) {
+        event_id[event_num++] = EVENT_COME_LEVEL_3;
+    }
+
+    if (is_mcu_in_mrm) {
+        event_id[event_num++] = EVENT_CHECK_MRM_ST;
+    } else if (mrm_st == MCU_MRM_MRC) {
+        event_id[event_num++] = EVENT_CHECK_MRC_ST;
+    } else if (mrm_st == MCU_MRM_PASSIVE) {
+        event_id[event_num++] = EVENT_CHECK_PASSIVE_ST;
     } else {
         // do nothing;
     }
-}
 
-void RunWarningUser()
-{
-    // run sit
-    RunWarningSit();
-
-    // run state machine
-    StateMachineWork(&g_warning_state_machine, &g_warning_sm.warning_state);
-}
-
-void ActionInNoWarning()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "No warnng st");
-#endif
-
-#ifdef CONSUME_TIME
-    StopTiming(&tor_level3_timing_flag);
-#endif
-}
-
-void ActionInWarningTorLevel1()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "Warning Tor Level_1 st");
-#endif
-}
-
-void ActionInWarningTorLevel2()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "Warning Tor Level_2 st");
-#endif
-}
-
-void ActionInWarningTorLevel3()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "Warning Tor Level_3 st");
-#endif
-    
-#ifdef CONSUME_TIME
-    if (!tor_level3_timing_flag) {
-        StartTiming(&tor_level3_start_time, &tor_level3_timing_flag);
+    if (is_mcu_in_mrm) {
+        event_id[event_num++] = EVENT_RAMPUP_LEVEL_4;
+    } else if (warning_st == WARNING_TOR_LEVEL_3) {
+        if (tor_level3_du_cnt > K_Tor3RampUpToMrm4Time_Cnt) {
+            event_id[event_num++] = EVENT_RAMPUP_LEVEL_4;
+            tor_level3_du_cnt = 0;
+        } else {
+            ++tor_level3_du_cnt;
+        }
     }
-    LOG(COLOR_YELLOW, "ActionInWarningTorLevel3 start time: %d", tor_level3_start_time);
-#else
-    ++tor_level3_duration_cnt;
-#endif
+
+    return event_num;
 }
 
-void ActionInWarningMrmLevel4()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "Warning Mrm Level_4 st");
-#endif
+enum tsm_warning_st
+tsm_run_warning_user(const enum tsm_warning_st warning_st, 
+                     const enum tsm_mcu_mrm_func_st mrm_st,
+                     const struct tsm_entry* p_entry, 
+                     const struct tsm_intermediate_sig* p_int_sig) {
+    typedef void (*tsm_post_process)();
+    static const tsm_post_process post_process[] = {
+        [NO_WARNING] = tsm_no_warning_post_process,
+        [WARNING_TOR_LEVEL_1] = tsm_tor_lvl_one_post_process,
+        [WARNING_TOR_LEVEL_2] = tsm_tor_lvl_two_post_process,
+        [WARNING_TOR_LEVEL_3] = tsm_tor_lvl_three_post_process,
+        [WARNING_MRM_LEVEL_4] = tsm_mrm_lvl_four_post_process,
+        [WARNING_MRM_LEVEL_5] = tsm_mrm_lvl_five_post_process,
+    };
 
-#ifdef CONSUME_TIME
-    StopTiming(&tor_level3_timing_flag);
-#endif
-}
+    enum warning_event_id event_id[MAX_EVENT_SIZE];
+    size_t event_num = 
+        tsm_run_warning_sit(event_id, warning_st, mrm_st, p_entry, p_int_sig);
+    
+    if (event_num == 0) {
+        post_process[warning_st]();
+        return warning_st;
+    }
 
-void ActionInWarningMrmLevel5()
-{
-#ifdef _NEED_LOG
-    LOG(COLOR_NONE, "Warning Mrm Level_5 st");
-#endif
-}
+    enum tsm_warning_st next_warning_st = 
+        run_state_transit(warning_state_flow, event_id, event_num, warning_st);
+    
+    post_process[next_warning_st]();
 
-boolean TorLevel1WarningCome()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_1_COME);
-}
-
-boolean TorLevel2WaningCome()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_2_COME);
-}
-
-boolean TorLevel3WarningCome()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_TOR_LEVEL_3_COME);
-}
-
-boolean CheckInMrmSt()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRM_ST);
-}
-
-boolean CheckInMrcSt()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_MRC_ST);
-}
-
-boolean CheckInPassiveSt()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_CHECK_PASSIVE_ST);
-}
-
-boolean RampUpToTorLevel2()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_2);
-}
-
-boolean RampUpToTorLevel3WithTiming()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3);
-}
-
-boolean RampUpToTorLevel3WithoutTiming()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_RAMPUP_TOR_LEVEL_3_2);
-}
-
-boolean RampUpToMrmLevel4WithTiming()
-{
-    return IsBitSet(g_warning_signal_bitfileds, BITNO_RAMPUP_MRM_LEVEL_4);
+    return next_warning_st;
 }

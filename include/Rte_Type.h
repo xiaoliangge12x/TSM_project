@@ -55,8 +55,6 @@ typedef struct
     uint8_t Global_Location_Accuracy;
     uint8_t Relative_Location_Accuracy;
     uint8_t HandsOn_HandsFree_Flag;
-    uint8_t Request_Mrm_From_SOC;
-    uint8_t Tor_Fault_From_SOC; 
     uint8_t NDA_Planning_Request; 
     float   HD_Map_Warning_Dist
 } Dt_RECORD_Monitor_Signal_Source;
@@ -67,6 +65,8 @@ typedef struct
     Dt_RECORD_Automaton_State       automaton_state;     
     Dt_RECORD_VehicleControlReq     soc_hmi_request;      
     Dt_RECORD_Monitor_Signal_Source monitor_sig_src;
+    uint8_t frc_fault_from_soc;
+    uint8_t request_mrm_from_soc;
 } Dt_RECORD_Soc_Info;
 
 typedef struct
@@ -126,7 +126,8 @@ typedef struct
     uint8_t  SRS_CrashOutputSt; 
     uint8_t  DMS_DrvrDetSts; 
     uint8_t  DMS_InterestsRegion; 
-    uint16_t DMS_L3DriverFatigueSt; 
+    uint16_t DMS_L3DriverFatigueSt;
+    uint8_t  DMS_L3DriverDistractionSt;
     uint8_t  BCS_VehicleStandStillSt;
     uint8_t  EMS_GasPedalActPstforMRRVD; 
     float    EMS_GasPedalActPstforMRR;
@@ -238,14 +239,4 @@ typedef struct
     Dt_RECORD_TSM2Soc           Tsm_To_Soc;            
     Dt_RECORD_MCU2IFC           Mcu_To_Ifc;
 } Dt_RECORD_TSM2CANGATE;
-
-// ----------------------------------------------- open test ---------------------------------------------------------
-typedef struct 
-{
-    Dt_RECORD_CtrlArb2TSM            rt_in_ctrlarb_tsm;
-    Dt_RECORD_DecisionArbitrator2TSM rt_in_deciarb_tsm;
-    Dt_RECORD_CANGATE2TSM            rt_in_cangate_tsm;
-    Dt_RECORD_Diag2TSM               rt_in_diag_tsm;
-    Dt_RECORD_PLANLITE2TSM           rt_in_planlite_tsm;
-} SimulinkData;
 #endif

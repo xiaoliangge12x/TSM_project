@@ -7,132 +7,34 @@
 #include "Rte_Type.h"
 #include "tsm_parameter.h"
 // -------------------------  macro         ---------------------------------
-#define MAX_HEADER_NAME          50U
-#define MAX_KEY_NAME             50U
-#define MAX_VALUE_NAME           20U
-#define MAX_TYPE_NAME            20U
 #define MAX_INTERMEDIATE_NAME    50U
-#define SIGNAL_NAME_MAX_LEN      50U
-
 #define ENABLE_SET_INTERMEDIATE
-// -------------------------  typedef       ----------------------------------
-typedef void* (*GetSignalPtr) (SimulinkData* simulink_data);
 
-typedef enum {
-    TYPE_UINT8 = 0,
+enum tsm_test_sig_type {
+    TYPE_UINT8,
     TYPE_UINT16,
     TYPE_FLOAT32,
-} SignalType;
+};
 
-typedef struct {
-    SignalType   signal_type;  
-    char         signal_name[SIGNAL_NAME_MAX_LEN];
-    GetSignalPtr signal_ptr_get;
-} Signal;
+struct tsm_simulink_input {
+    Dt_RECORD_CtrlArb2TSM            rt_in_ctrlarb_tsm;
+    Dt_RECORD_DecisionArbitrator2TSM rt_in_deciarb_tsm;
+    Dt_RECORD_CANGATE2TSM            rt_in_cangate_tsm;
+    Dt_RECORD_Diag2TSM               rt_in_diag_tsm;
+    Dt_RECORD_PLANLITE2TSM           rt_in_planlite_tsm;
+};
 
-typedef struct 
-{
-  char                  intermediate_sig_name[MAX_INTERMEDIATE_NAME];
-  BitNoForInterMediaSig bitno_intermediate_sig;
-} IntermediateSig;
-// -------------------------  driving table -----------------------------------
-// static const Signal g_signal_table[];  // 此处非声明，而是定义
+struct tsm_simulink_output {
+    Dt_RECORD_TSM2PLANLITE           rt_out_tsm_planlite;
+    Dt_RECORD_TSM2CtrlArb            rt_out_tsm_ctrlarb;
+    Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
+    Dt_RECORD_TSM2Diag               rt_out_tsm_diag;
+    Dt_RECORD_TSM2HMI                rt_out_tsm_hmi;
+    Dt_RECORD_TSM2CANGATE            rt_out_tsm_cangate;
+};
 
-// -------------------------  function declaration ----------------------------
-void  ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data);
-void  SimulinkDataSet(const char* key_str, const char* value_str, const char* header_str, 
-    const char* type_str,SimulinkData* simulink_data);
-void SetOriginInputandInterMediateSig(const char* key_str, const char* value_str, 
-    SimulinkData* simulink_data);
-void SetInterMediateMsg(const char* key_str, const char* value_str, const char* type_str, 
-    SimulinkData* simulink_data);
-void* GetBCS_VehicleStandStillSt(SimulinkData* simulink_data) 
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt);
-}
-void* GetBCM_LeftTurnLampSt(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt);
-}
-void* GetBCM_RightTurnLampSt(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt);
-}
-void* GetBCM_HazardLampSt(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt);
-}
-void* GetEBB_BrkPedalAppliedSt(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalAppliedSt);
-}
-void* GetEBB_BrkPedalApplied(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalApplied);
-}
-void* GetHOD_TouchZone1(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone1);
-}
-void* GetHOD_TouchZone2(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone2);
-}
-void* GetHOD_TouchZone3(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_TouchZone3);
-}
-void* GetHOD_CalibrationSt(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_CalibrationSt);
-}
-void* GetHOD_FaultStatus(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.HOD_FaultStatus);
-}
-void* GetEPS_StrngWhlTorqVD(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorqVD);
-}
-void* GetEPS_StrngWhlTorq(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorq);
-}
-void* GetEMS_GasPedalActPstforMRRVD(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRRVD);
-}
-void* GetEMS_GasPedalActPstforMRR(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EMS_GasPedalActPstforMRR);
-}
-void* GetFault_Level(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_diag_tsm.Fault_Level);
-}
-void* GetPlanningLite_control_state(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_planlite_tsm.planningLite_control_state);
-}
+// read from yaml and set test data
+void 
+tsm_read_yaml_set_data(const char* filename, struct tsm_simulink_input* simu_in);
 
-void* GetMRMSystemFaultLevel(SimulinkData* simulink_data)
-{
-    (void)simulink_data;
-    return &(g_inter_media_msg.mrm_system_fault_level);
-}
-
-void* GetNDA_Function_State(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.automaton_state.NDA_Function_State);
-}
-
-void* GetICA_Function_State(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.automaton_state.ICA_Function_State);
-}
-
-void* GetACC_Function_State(SimulinkData* simulink_data)
-{
-    return &(simulink_data->rt_in_cangate_tsm.Soc_Info.automaton_state.ACC_Function_State);
-}
 #endif
