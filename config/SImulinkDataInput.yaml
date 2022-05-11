@@ -27,29 +27,4 @@ From_Diag:
 From_Planlite:
   planningLite_control_state: 0
 
-# InterMedia Input
-Inter_Media_Msg:
-  type: nonbool
-  # automaton_transit_normal_flag: 0
-  # lng_override_st: 0
-  # driver_hand_torque_st: 0
-  # mrm_system_fault_level: 0
-
-Inter_Media_Msg:
-  type: bool
-  FAILURE_LIGHTING_FLAG: 0
-  NDA_TRANSIT_NORMAL_FLAG: 0
-  DRVR_HANDTORQUE_OVERRIDE_ST: 0
-  LNG_OVERRIDE_ST: 0
-  LONG_TIME_LNG_OVERRIDE: 0
-  HANDS_CAN_TAKEOVER: 0
-  SET_BRAKE: 0
-  PHASE_IN_AVAILABLE: 0
-  NDA_NEED_PHASE_IN: 0
-  NDA_PASSIVE_VD: 0
-  NDA_AVL_BEFORE_ACT: 0
-  NDA_AVL_AFTER_ACT: 0
-  DRVR_ACC_PEDAL_APPLIED: 0
-  AS_ACTIVE: 0
-
   

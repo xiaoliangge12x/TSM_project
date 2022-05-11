@@ -22,75 +22,18 @@
 #include <assert.h>
 #endif
 
-// ----------------------  macro ------------------------------------------------------
-// #define CONSUME_TIME
+typedef Dt_RECORD_VehicleSignal2TSM tsm_veh_sig;
+typedef Dt_RECORD_Soc_Info tsm_soc_info;
+typedef Dt_RECORD_Automaton_State tsm_soc_st;
+typedef Dt_RECORD_Diag2TSM tsm_diag;
 
-// ----------------------  global variable(calibration) -------------------------------
-extern uint16  K_BrakPedalAppliedThresholdTime_Cnt;         
-extern uint16  K_GasPedalAppliedThresholdTime_Cnt;         
-extern uint16  K_LngOverrideTakeOverTime_Cnt;                
-extern uint16  K_BrakeTOR_TimeThreshold_Cnt;                 
-extern uint16  K_OverrideHandTorqCheckTime_Cnt;
-extern uint16  K_Tor3RampUpToMrm4Time_Cnt;
+enum tsm_drvr_attention_st {
+    DRVR_AWAKE_NOT_DISTRACTED,
+    DRVR_AWAKE_DISTRACTED,
+    DRVR_FATIGUE,
+};
 
-extern uint16  K_MissQuitTime_Cnt;
-extern uint16  K_MissOverrideTime_Cnt;
-extern uint16  K_StuckOverrideTime_Cnt;
-
-extern float32 K_BrakPedalAppliedThresholdTime;
-extern float32 K_GasPedalAppliedThresholdTime;
-extern float32 K_LngOverrideTakeOverTime;
-extern float32 K_BrakeTOR_TimeThreshold;
-extern float32 K_OverrideHandTorqCheckTime;
-extern float32 K_Tor3RampUpToMrm4Time;
-
-extern float32 K_OverrideHandTorqThreshold_LessTwoZone;
-extern float32 K_OverrideHandTorqThreshold_TwoZone;
-extern float32 K_OverrideHandTorqThreshold_ThreeZone;
-extern float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone;
-extern float32 K_TakeOverAvailHandTorqThreshold_TwoZone;
-extern float32 K_TakeOverAvailHandTorqThreshold_ThreeZone;
-extern float32 K_GasPedalPosThresholdValue;
-
-extern float32 K_GeoEndDist_NotActive;
-extern float32 K_GeoEndDist_Active;
-extern float32 K_VehSpdThreshold;
-
-// ---------------------------------- typedef   ------------------------------------------------
-typedef Dt_RECORD_VehicleSignal2TSM Veh_Sig;
-typedef Dt_RECORD_Soc_Info          Soc_Info;
-typedef Dt_RECORD_Automaton_State   Soc_State;
-
-typedef enum 
-{
-    AWAKE_AND_NOT_DISTRACTED = 0,
-    AWAKE_AND_LOOK_REARVIEW_OR_HU,
-    AWAKE_AND_DISTRACTED,
-    FATIGUE_DRIVER_ATTENTION_ST,
-} DrvrAttentionSt;
-
-typedef enum 
-{
-    OVERRIDE_NOT_SATISFY = 0,
-    OVERRIDE_SATISFY,
-} OverrideSt;
-
-typedef enum 
-{
-    NDA_SAFE_PARK_FAULT = 0,
-    NDA_TOR_LEVEL_THREE_FAULT,
-    NDA_TOR_LEVEL_TWO_FAULT,
-    NDA_TOR_LEVEL_ONE_FAULT,
-    NDA_CAN_NOT_ACTIVE_FAULT,
-    NDA_NO_FAULT,
-    DOWN_GRADE_ICA_FAULT,
-    DOWN_GRADE_ACC_FAULT,
-    NDA_MRM_FAULT,
-} NDASystemFaultLevel;
-
-// Automaton St Enum
-typedef enum 
-{
+enum nda_func_st {
     NDA_FAILURE_LIGHTING = 0U,
     NDA_FAILURE_NO_LIGHTING,
     NDA_DISABLE,
@@ -117,9 +60,9 @@ typedef enum
     NDA_MRM_ACTIVE_ES_LAT_CTRL,
     NDA_MRM_ACTIVE_ES_LNG_LAT_CTRL,
     NDA_MRC,
-} NdaFunctionSt;
+};
 
-typedef enum 
+enum ica_func_st
 {
     ICA_FAILURE_LIGHTING = 0U,
     ICA_FAILURE_NO_LIGHTING,
@@ -142,9 +85,9 @@ typedef enum
     ICA_MRM_ES_LAT_CTRL,
     ICA_MRM_ES_LNG_LAT_CTRL,
     ICA_MRC_STATE,
-} IcaFunctionSt;
+};
 
-typedef enum 
+enum acc_func_st
 {
     ACC_DISABLE = 0,
     ACC_PASSIVE,
@@ -157,38 +100,42 @@ typedef enum
     ACC_BOM,
     ACC_FAILURE_LIGHT,
     ACC_FAILURE_NO_LIGHT
-} AccFunctionSt;
+};
 
 typedef enum 
 {
-    VEH_STANDSTILL_ST_NOT_STANDSTILL = 0,
-    VEH_STANDSTILL_ST_STANDSTILL,
-    VEH_STANDSTILL_ST_INVALID,
-    VEH_STANDSTILL_ST_NOT_USED,
-} BCSVehicleStandStillSt;
+    NDA_SAFE_PARK_FAULT = 0,
+    NDA_TOR_LEVEL_THREE_FAULT,
+    NDA_TOR_LEVEL_TWO_FAULT,
+    NDA_TOR_LEVEL_ONE_FAULT,
+    NDA_CAN_NOT_ACTIVE_FAULT,
+    NDA_NO_FAULT,
+    DOWN_GRADE_ICA_FAULT,
+    DOWN_GRADE_ACC_FAULT,
+    NDA_MRM_FAULT,
+} NDASystemFaultLevel;
 
-typedef enum 
-{
-    NO_BRAKE_INTERVENTION = 0,
-    SHORT_TERM_INTERVENTION,
-    LONG_TERM_INTERVENTION,
-} BrakeInterventionType;
+enum tsm_brk_duration_type {
+    NO_BRAKE_INTERVENTION,
+    SHORT_INTERVENTION,
+    LONG_INTERVENTION
+};
 
-typedef enum
+enum base_state
 {
     BASE_ST_INITIAL       = 0,
     BASE_ST_TSM_START     = 10,
     BASE_ST_WARNING_START = 40,
-} BaseState;
+};
 
-typedef enum
+enum base_event
 {
     BASE_EVENT_INITIAL       = 0,
     BASE_EVENT_TSM_START     = 10,
     BASE_EVENT_WARNING_START = 50,
-} BaseEvent;
+};
 
-typedef enum 
+enum tsm_mcu_mrm_func_st
 {
     MCU_MRM_PASSIVE = BASE_ST_TSM_START + 1,
     MCU_MRM_STANDBY,
@@ -200,19 +147,26 @@ typedef enum
     MCU_MRM_ACTIVE_LNG_LAT_CTRL,
     MCU_MRM_ACTIVE_LAT_CTRL,
     MCU_MRM_MRC
-} MCUMRMFunctionSt;
+};
 
-typedef enum
-{
+enum tsm_warning_st {
     NO_WARNING = BASE_ST_WARNING_START + 1,
     WARNING_TOR_LEVEL_1,
     WARNING_TOR_LEVEL_2,
     WARNING_TOR_LEVEL_3,
     WARNING_MRM_LEVEL_4,
     WARNING_MRM_LEVEL_5,
-} WarningState;
+};
 
-typedef enum 
+enum tsm_veh_standstill_st
+{
+    VEH_STANDSTILL_ST_NOT_STANDSTILL = 0,
+    VEH_STANDSTILL_ST_STANDSTILL,
+    VEH_STANDSTILL_ST_INVALID,
+    VEH_STANDSTILL_ST_NOT_USED,
+};
+
+enum fault_level
 {
     NO_FAULT = 0,
     FAILURE_FAULT,
@@ -221,7 +175,7 @@ typedef enum
     TOR_LEVEL2_FAULT,
     TOR_LEVEL3_FAULT,
     OTHER
-} MrmSystemFaultLevel;
+};
 
 typedef enum 
 {
@@ -251,62 +205,64 @@ typedef enum
     LANE_CHANGE_RIGHT
 } LaneChangeState;
 
-typedef enum
+enum tsm_bitno_int_sig
 {
-    BITNO_FAILURE_LIGHTING_FLAG = 0U,
+    BITNO_FAILURE_LIGHTING_FLAG,
     BITNO_NDA_TRANSIT_NORMAL_FLAG,
     BITNO_DRVR_HANDTORQUE_OVERRIDE_ST,
     BITNO_LNG_OVERRIDE_ST,
     BITNO_LONG_TIME_LNG_OVERRIDE,
     BITNO_HANDS_CAN_TAKEOVER,
     BITNO_SET_BRAKE,
-    BITNO_PHASE_IN_AVAILABLE,
-    BITNO_NDA_NEED_PHASE_IN,
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
-    BITNO_DRVR_ACC_PEDAL_APPLIED,
     BITNO_AS_ACTIVE,
-} BitNoForInterMediaSig;
+};
 
-// ------------------ 中间变量 ---------------
-typedef struct
+struct tsm_intermediate_sig {
+    enum tsm_brk_duration_type brk_du_type;
+    enum tsm_drvr_attention_st drvr_att_st;
+    uint32 int_sig_bitfields; 
+};
+
+struct tsm_entry
 {
-    MrmSystemFaultLevel       mrm_system_fault_level;           // mrm 系统故障等级   待定
-    MrmType                   mrm_type;                         // mrm 类型            
-    BrakeInterventionType 	  brake_intervention_type;          // 刹车介入类型             
-    DrvrAttentionSt           driver_attention_st;              // 驾驶员注意力状态              
-    Dt_RECORD_Automaton_State last_automaton_st;        		// 上一帧soc侧automaton状态
-    uint32                    intermediate_sig_bitfields;       // bool型变量的中间信号位域
-} InterMediaMsg;
+    Dt_RECORD_CtrlArb2TSM*            in_ctrl_arb;
+    Dt_RECORD_DecisionArbitrator2TSM* in_deci_arb;
+    Dt_RECORD_CANGATE2TSM*            in_can_gate;
+    Dt_RECORD_Diag2TSM*               in_diag;
+    Dt_RECORD_PLANLITE2TSM*           in_planlite;
+};
 
-typedef struct 
+struct tsm_exit
 {
-    uint8 lng_override_flag;
-    uint8 lat_override_flag;
-    uint8 mrm_activation_st;
-    uint8 control_arb_request;
-    uint8 request_mrm;
-} TSMActionParam;
+    Dt_RECORD_TSM2PLANLITE*           out_planlite;
+    Dt_RECORD_TSM2CtrlArb*            out_ctrl_arb;
+    Dt_RECORD_TSM2DecisionArbitrator* out_deci_arb;
+    Dt_RECORD_TSM2Diag*               out_diag;
+    Dt_RECORD_TSM2HMI*                out_hmi;
+    Dt_RECORD_TSM2CANGATE*            out_can_gate;
+};
 
-typedef struct 
-{
-    MCUMRMFunctionSt state;              // 当前状态
-    TSMActionParam   tsm_action_param;      // 行为参数
-} TSMParam;
+void 
+tsm_start_timing(sint64* cur_time, uint8* flag);
 
-// --------------------------------- global declaration ----------------------------
-extern InterMediaMsg g_inter_media_msg;
-// 声明全局变量
-extern TSMParam g_tsm;
-// --------------------------------- function declaration --------------------------
+void 
+tsm_stop_timing(uint8* flag);
 
-#ifdef CONSUME_TIME
-void StartTiming(sint64* cur_time, uint8* flag);   // 开始计时
-void StopTiming(uint8* flag);    // 停止计时
-float32 GetTimeGapInSec(const sint64 start_time, const uint8 flag); // 计算持续时间
-#endif
+float32
+tsm_get_delta_time(const sint64 start_time, const uint8 flag);
 
-boolean IsBitSet(const uint32 event_bitfields, const uint8 bit_no);
-void SetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
-void ResetSignalBitFields(uint32* event_bitfields, const uint8 bit_no);
+boolean 
+tsm_is_bit_set(const uint32 bitfields, const uint8 bitno);
+
+void 
+tsm_set_bit_in_bitfields(uint32* bitfields, const uint8 bitno);
+
+void
+tsm_reset_bit_in_bitfields(uint32* bitfields, const uint8 bitno);
+
+boolean
+tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st);
+
 #endif

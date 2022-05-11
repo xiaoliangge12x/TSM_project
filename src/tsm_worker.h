@@ -1,15 +1,19 @@
-#ifndef TSM_WORKER_H_
-#define TSM_WORKER_H_
+/*
+ * Copyright (C) HoloMatic Technology(Beijing) Co., Ltd. - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ */
+/*!
+ *  \brief  MRM top state machine main structure definition
+ *  \author zxl
+ *  \date   2022-03-20
+ *  \attention Copyright © Holomatic Technology (Beijing) Co.Ltd
+ *  \attention Please refer to COPYRIGHT.txt for complete terms of copyright Juni24.
+ */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/wait.h>
+#ifndef TSM_CHART_H_
+#define TSM_CHART_H_
 
 #include "tsm_parameter.h"
-
-// --------------------- global declaration ------------------
-extern struct timeval g_timeval;
-
-void TsmModulerWorker();
 
 #endif

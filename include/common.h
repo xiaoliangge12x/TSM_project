@@ -14,6 +14,7 @@
 #define COLOR_GREEN         "\033[32m"
 #define COLOR_YELLOW        "\033[33m"
 
+#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0])) 
 #define LOG(str_color, str, ...) { \
     time_t t_time; \
     struct tm *tm_time; \
@@ -26,6 +27,7 @@
         tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, msTime, ##__VA_ARGS__); \
 } \
 
-// ------------------- function declaration -------------------------
+extern struct timeval g_init_time;
 extern void hb_TimeSync_GetTime(int64_t* value);
+
 #endif

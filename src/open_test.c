@@ -1,171 +1,301 @@
 #include "open_test.h"
 
-// -------------------- driving table initilize ---------------------
-static const Signal g_signal_table[] =
-{
-    {TYPE_UINT8,   "BCS_VehicleStandStillSt",       GetBCS_VehicleStandStillSt},
-    {TYPE_UINT8,   "BCM_LeftTurnLampSt",            GetBCM_LeftTurnLampSt},
-    {TYPE_UINT8,   "BCM_RightTurnLampSt",           GetBCM_RightTurnLampSt},
-    {TYPE_UINT8,   "BCM_HazardLampSt",              GetBCM_HazardLampSt},
-    {TYPE_UINT8,   "EBB_BrkPedalAppliedSt",         GetEBB_BrkPedalAppliedSt},
-    {TYPE_UINT8,   "EBB_BrkPedalApplied",           GetEBB_BrkPedalApplied},
-    {TYPE_UINT8,   "HOD_TouchZone1",                GetHOD_TouchZone1},
-    {TYPE_UINT8,   "HOD_TouchZone2",                GetHOD_TouchZone2},
-    {TYPE_UINT8,   "HOD_TouchZone3",                GetHOD_TouchZone3},
-    {TYPE_UINT8,   "HOD_CalibrationSt",             GetHOD_CalibrationSt},
-    {TYPE_UINT8,   "HOD_FaultStatus",               GetHOD_FaultStatus},
-    {TYPE_UINT8,   "EPS_StrngWhlTorqVD",            GetEPS_StrngWhlTorqVD},
-    {TYPE_FLOAT32, "EPS_StrngWhlTorq",              GetEPS_StrngWhlTorq},
-    {TYPE_UINT8,   "EMS_GasPedalActPstforMRRVD",    GetEMS_GasPedalActPstforMRRVD},
-    {TYPE_FLOAT32, "EMS_GasPedalActPstforMRR",      GetEMS_GasPedalActPstforMRR},
-    {TYPE_UINT8,   "Fault_Level",                   GetFault_Level},  
-    {TYPE_UINT8,   "mrm_system_fault_level",        GetMRMSystemFaultLevel},
-    {TYPE_UINT8,   "planningLite_control_state",    GetPlanningLite_control_state},
-    {TYPE_UINT8,   "NDA_Function_State",            GetNDA_Function_State},
-    {TYPE_UINT8,   "ICA_Function_State",            GetICA_Function_State},
-    {TYPE_UINT8,   "ACC_Function_State",            GetACC_Function_State},
-};
+#define MAX_HEADER_NAME          50U
+#define MAX_KEY_NAME             50U
+#define MAX_VALUE_NAME           20U
+#define MAX_TYPE_NAME            20U
+#define MAX_SIGNAL_NAME          50U
 
-static const IntermediateSig g_intermediate_sig_table[] = 
-{
-    {"FAILURE_LIGHTING_FLAG", BITNO_FAILURE_LIGHTING_FLAG},
-    {"NDA_TRANSIT_NORMAL_FLAG", BITNO_NDA_TRANSIT_NORMAL_FLAG},
-    {"DRVR_HANDTORQUE_OVERRIDE_ST", BITNO_DRVR_HANDTORQUE_OVERRIDE_ST},
-    {"LNG_OVERRIDE_ST", BITNO_LNG_OVERRIDE_ST},
-    {"LONG_TIME_LNG_OVERRIDE", BITNO_LONG_TIME_LNG_OVERRIDE},
-    {"HANDS_CAN_TAKEOVER", BITNO_HANDS_CAN_TAKEOVER},
-    {"SET_BRAKE", BITNO_SET_BRAKE},
-    {"PHASE_IN_AVAILABLE", BITNO_PHASE_IN_AVAILABLE},
-    {"NDA_NEED_PHASE_IN", BITNO_NDA_NEED_PHASE_IN},
-    {"NDA_AVL_BEFORE_ACT", BITNO_NDA_AVL_BEFORE_ACT},
-    {"NDA_AVL_AFTER_ACT", BITNO_NDA_AVL_AFTER_ACT},
-    {"DRVR_ACC_PEDAL_APPLIED", BITNO_DRVR_ACC_PEDAL_APPLIED},
-    {"AS_ACTIVE", BITNO_AS_ACTIVE},
-};
-// -------------------- function definition -----------------------------------------
-// 从yaml中读取数据并设置
-void ReadFromYamlAndSetData(const char* filename, SimulinkData* simulink_data)
-{
-    static int   keyFlag                      = 0;
-    static char  key_name[MAX_KEY_NAME]       = "";
-    static char  value_name[MAX_VALUE_NAME]   = "";
-    static char  header_name[MAX_HEADER_NAME] = "";
-    static char  type_name[MAX_TYPE_NAME]     = "";
-
-    FILE*  f = fopen(filename, "r");
-    static yaml_parser_t parser;  
-    static yaml_token_t  token;
-
-    if (!yaml_parser_initialize(&parser)) {
-        fputs("Failed to initialize parser.\n", stderr);
-    }
-    if (f == NULL) {
-        fputs("Failed to open file!\n", stderr);
-    }
-    yaml_parser_set_input_file(&parser, f);   // 该工具是将文本句柄和解析器绑定的操作
-
-    do {
-        yaml_parser_scan(&parser, &token);
-        switch(token.type){
-            case YAML_KEY_TOKEN: {
-                keyFlag = 1;
-                break;
-            }
-            case YAML_VALUE_TOKEN: {
-                keyFlag = 0;
-                break;
-            }
-            
-            case YAML_SCALAR_TOKEN: {
-                if (keyFlag == 1) {
-                    if (strlen(key_name) != 0) {
-                        // 说明无value, 有value会刷新key_name为""
-                        memset(header_name, 0, MAX_HEADER_NAME);
-                        strncpy(header_name, key_name, strlen(key_name));
-                    }
-                    memset(key_name, 0, MAX_KEY_NAME);
-                    strncpy(key_name, token.data.scalar.value,
-                            strlen(token.data.scalar.value));
-                } else {
-                    keyFlag = 0;
-
-                    if (!strncmp(key_name, "type", strlen("type"))) {
-                        memset(type_name, 0, MAX_TYPE_NAME);
-                        strncpy(type_name, token.data.scalar.value, strlen(token.data.scalar.value));
-                    } else {
-                        memset(value_name, 0, MAX_VALUE_NAME);
-                        strncpy(value_name, token.data.scalar.value, strlen(token.data.scalar.value));
-                        SimulinkDataSet(key_name, value_name, header_name, type_name, simulink_data);
-                    }
-                    memset(key_name, 0, MAX_KEY_NAME);
-                }
-            }
-            /* Others */
-            default: {  
-                keyFlag = 0;
-            }
-        }
-        if (token.type != YAML_STREAM_END_TOKEN)
-        yaml_token_delete(&token);
-    } while (token.type != YAML_STREAM_END_TOKEN);   // 令牌类型不到末尾
+struct tsm_test_signal {
+    enum tsm_test_sig_type sig_type;  
+    char signal_name[MAX_SIGNAL_NAME];
     
-    yaml_token_delete(&token);
- 
-    yaml_parser_delete(&parser);
-    fclose(f);
+    void* (*get_signal_ptr) 
+        (struct tsm_simulink_input* simu_in);
+};
+
+static void*
+tsm_getptr_veh_standstill_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCS_VehicleStandStillSt);
 }
 
-// 设置原始数据
-void SimulinkDataSet(const char* key_str, const char* value_str, const char* header_str, 
-    const char* type_str, SimulinkData* simulink_data) 
-{
-    // int number = sizeof(g_intermediate_sig_table) / sizeof(IntermediateSig);
-    // LOG(COLOR_GREEN, "header_str: %s, type_str: %s, number: %d", header_str, type_str, number);
-    if (!strncmp(header_str, "Inter_Media_Msg", strlen("Inter_Media_Msg"))) {
-#ifdef ENABLE_SET_INTERMEDIATE
-        SetInterMediateMsg(key_str, value_str, type_str, simulink_data);
-#endif
+static void*
+tsm_getptr_left_lamp_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCM_LeftTurnLampSt);
+}
+
+static void*
+tsm_getptr_right_lamp_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCM_RightTurnLampSt);
+}
+
+static void*
+tsm_getptr_hazard_lamp_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCM_HazardLampSt);
+}
+
+static void*
+tsm_getptr_brkpedal_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EBB_BrkPedalAppliedSt);
+}
+
+static void*
+tsm_getptr_brkpedal(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EBB_BrkPedalApplied);
+}
+
+static void*
+tsm_getptr_touchzone1(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        HOD_TouchZone1);
+}
+
+static void*
+tsm_getptr_touchzone2(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        HOD_TouchZone2);
+}
+
+static void*
+tsm_getptr_touchzone3(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        HOD_TouchZone3);
+}
+
+static void*
+tsm_getptr_hod_cali_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        HOD_CalibrationSt);
+}
+
+static void*
+tsm_getptr_hod_fault_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        HOD_FaultStatus);
+}
+
+static void*
+tsm_getptr_strwhl_torq(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPS_StrngWhlTorq);
+}
+
+static void*
+tsm_getptr_strwhl_torq_vd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPS_StrngWhlTorqVD);
+}
+
+static void*
+tsm_getptr_gaspedal_actpos(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EMS_GasPedalActPstforMRR);
+}
+
+static void*
+tsm_getptr_gaspedal_actpos_vd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EMS_GasPedalActPstforMRRVD);
+}
+
+static void*
+tsm_getptr_fault_level(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.Fault_Level);
+}
+
+static void*
+tsm_getptr_pc_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_planlite_tsm.\
+        planningLite_control_state);
+}
+
+static void*
+tsm_getptr_nda_func_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Soc_Info.\
+        automaton_state.NDA_Function_State);
+}
+
+static void*
+tsm_getptr_ica_func_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Soc_Info.\
+        automaton_state.ICA_Function_State);
+}
+
+static void*
+tsm_getptr_acc_func_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Soc_Info.\
+        automaton_state.ACC_Function_State);
+}
+
+static const struct tsm_test_signal ts_sig[] = {
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "BCS_VehicleStandStillSt",
+        .get_signal_ptr = tsm_getptr_veh_standstill_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "BCM_LeftTurnLampSt",
+        .get_signal_ptr = tsm_getptr_left_lamp_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "BCM_RightTurnLampSt",
+        .get_signal_ptr = tsm_getptr_right_lamp_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "BCM_HazardLampSt",
+        .get_signal_ptr = tsm_getptr_hazard_lamp_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EBB_BrkPedalAppliedSt",
+        .get_signal_ptr = tsm_getptr_brkpedal_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EBB_BrkPedalApplied",
+        .get_signal_ptr = tsm_getptr_brkpedal,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "HOD_TouchZone1",
+        .get_signal_ptr = tsm_getptr_touchzone1,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "HOD_TouchZone2",
+        .get_signal_ptr = tsm_getptr_touchzone2,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "HOD_TouchZone3",
+        .get_signal_ptr = tsm_getptr_touchzone3,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "HOD_CalibrationSt",
+        .get_signal_ptr = tsm_getptr_hod_cali_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "HOD_FaultStatus",
+        .get_signal_ptr = tsm_getptr_hod_fault_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EPS_StrngWhlTorqVD",
+        .get_signal_ptr = tsm_getptr_strwhl_torq_vd,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "EPS_StrngWhlTorq",
+        .get_signal_ptr = tsm_getptr_strwhl_torq,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EMS_GasPedalActPstforMRRVD",
+        .get_signal_ptr = tsm_getptr_gaspedal_actpos_vd,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "EMS_GasPedalActPstforMRR",
+        .get_signal_ptr = tsm_getptr_gaspedal_actpos,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "Fault_Level",
+        .get_signal_ptr = tsm_getptr_fault_level,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "planningLite_control_state",
+        .get_signal_ptr = tsm_getptr_pc_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "NDA_Function_State",
+        .get_signal_ptr = tsm_getptr_nda_func_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "ICA_Function_State",
+        .get_signal_ptr = tsm_getptr_ica_func_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "ACC_Function_State",
+        .get_signal_ptr = tsm_getptr_acc_func_st,
+    },
+};
+
+static void
+tsm_set_name(char* name, const yaml_token_t* token) {
+    memset(name, 0, sizeof(name));
+    strncpy(name, token->data.scalar.value, 
+            strlen(token->data.scalar.value));
+}
+
+static void
+tsm_set_hazard_light_tmp(const char* value_str, 
+                         struct tsm_simulink_input* simu_in) {
+    int value = atoi(value_str);
+    uint8* left_lamp_st = 
+        &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+            BCM_LeftTurnLampSt);
+    uint8* right_lamp_st =
+        &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+            BCM_RightTurnLampSt);
+    
+    if (value == 1) {
+        if (*left_lamp_st) {
+            *left_lamp_st = 0;
+            *right_lamp_st = 0;
+        } else {
+            *left_lamp_st = 1;
+            *right_lamp_st = 1;
+        }
     } else {
-        SetOriginInputandInterMediateSig(key_str, value_str, simulink_data);
+        *left_lamp_st = 0;
+        *right_lamp_st = 0;
     }
 }
 
-void SetOriginInputandInterMediateSig(const char* key_str, const char* value_str, 
-    SimulinkData* simulink_data)
+static void
+tsm_set_simu_input(const char* key_str, const char* value_str,
+                   struct tsm_simulink_input* simu_in)
 {
-    for (uint8 i = 0; i < (sizeof(g_signal_table) / sizeof(Signal)); ++i) {
-        if (!strcmp(key_str, g_signal_table[i].signal_name)) {
-            switch (g_signal_table[i].signal_type) {
+    for (size_t i = 0; i < ARRAY_LEN(ts_sig); ++i) {
+        int cmp_ret = strcmp(key_str, ts_sig[i].signal_name);
+        if (!cmp_ret) {
+            switch (ts_sig[i].sig_type) {
                 case TYPE_UINT8: {
-                    if (!strcmp(key_str, "BCM_HazardLampSt")) {
-                        // 模拟车上环境，暂时
-                        if (atoi(value_str) == 1) {
-                            if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt) {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                            } else {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 1;
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 1;
-                            }
-                        } else {
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                        }
+                    const char target_str[] = "BCM_HazardLampSt";
+                    cmp_ret = strcmp(key_str, target_str);
+                    if (!cmp_ret) {
+                        tsm_set_hazard_light_tmp(value_str, simu_in);
                     } else {
-                        *((uint8*)g_signal_table[i].signal_ptr_get(simulink_data)) = 
+                        *((uint8*)ts_sig[i].get_signal_ptr(simu_in)) =
                             (uint8)atoi(value_str);
                     }
                     break;
                 }
 
                 case TYPE_UINT16: {
-                    *((uint16*)g_signal_table[i].signal_ptr_get(simulink_data)) =
+                    *((uint16*)ts_sig[i].get_signal_ptr(simu_in)) =
                         (uint16)atoi(value_str);
                     break;
                 }
 
                 case TYPE_FLOAT32: {
-                    *((float32*)g_signal_table[i].signal_ptr_get(simulink_data)) = 
+                    *((float32*)ts_sig[i].get_signal_ptr(simu_in)) =
                         (float32)atof(value_str);
                     break;
                 }
@@ -179,23 +309,61 @@ void SetOriginInputandInterMediateSig(const char* key_str, const char* value_str
     }
 }
 
-void SetInterMediateMsg(const char* key_str, const char* value_str, const char* type_str, 
-    SimulinkData* simulink_data)
-{
-    if (!strncmp(type_str, "nonbool", strlen("nonbool"))) {
-        SetOriginInputandInterMediateSig(key_str, value_str, simulink_data);
-    } else if (!strncmp(type_str, "bool", strlen("bool"))) {
-        for (int i = 0; i < (int)(sizeof(g_intermediate_sig_table) / sizeof(IntermediateSig)); ++i) {
-            if (!strcmp(key_str, g_intermediate_sig_table[i].intermediate_sig_name)) {
-                (!strncmp(value_str, "1", 1)) ?
-                    SetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, 
-                        g_intermediate_sig_table[i].bitno_intermediate_sig) :
-                    ResetSignalBitFields(&g_inter_media_msg.intermediate_sig_bitfields, 
-                        g_intermediate_sig_table[i].bitno_intermediate_sig);
+void 
+tsm_read_yaml_set_data(const char* filename, struct tsm_simulink_input* simu_in) {
+    static int key_flag = 0;
+    static char key_name[MAX_KEY_NAME];
+    static char value_name[MAX_VALUE_NAME];
+
+    FILE* f = fopen(filename, "r");
+    static yaml_parser_t parser;
+    static yaml_token_t token;
+
+    if (!yaml_parser_initialize(&parser)) {
+        fputs("Failed to initialize parser.\n", stderr);
+    }
+    if (f == NULL) {
+        fputs("Failed to open file!\n", stderr);
+    }
+    yaml_parser_set_input_file(&parser, f);
+
+    do {
+        yaml_parser_scan(&parser, &token);
+        switch(token.type) {
+            case YAML_KEY_TOKEN: {
+                key_flag = 1;
                 break;
             }
+
+            case YAML_VALUE_TOKEN: {
+                key_flag = 0;
+                break;
+            }
+
+            case YAML_SCALAR_TOKEN: {
+                if (key_flag == 1) {
+                    tsm_set_name(key_name, &token);
+                } else {
+                    tsm_set_name(value_name, &token);
+                    tsm_set_simu_input(key_name, value_name, 
+                                       &token);
+                    key_flag = 0;
+                }
+            }
+
+            default: {  
+                key_flag = 0;
+            }
         }
-    } else {
-        // do nothing;
-    }
+
+        if (token.type != YAML_STREAM_END_TOKEN) {
+            yaml_token_delete(&token);
+        }
+    } while (token.type != YAML_STREAM_END_TOKEN);
+
+    yaml_token_delete(&token);
+    yaml_parser_delete(&parser);
+    fclose(f);
 }
+
+

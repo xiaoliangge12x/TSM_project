@@ -13,46 +13,22 @@
 
 #include "base/sm_base.h"
 
-void StateMachineWork(const StateMachine* state_machine, uint8* cur_state)
-{
-    uint8 eventId_Table[MAX_EVENT_SIZE];
-    uint8 size = 0;
-    // 找到触发事件ID的数组
-    uint8 event_index   = 0;
-    while ((event_index < MAX_EVENT_SIZE) && (state_machine->event_table[event_index].transit_event != NULL_PTR)) {
-        if (state_machine->event_table[event_index].transit_event()) {
-            eventId_Table[size++] = state_machine->event_table[event_index].event_id;
-        }
-        ++event_index;
-    }
-
-    uint8 transit_index = 0;
-    if (size != 0) {
-        while ((transit_index < MAX_STATE_TRANSIT_SIZE) && 
-            (state_machine->state_transit_table[transit_index].cur_st != 0)) {
-            if (*cur_state == state_machine->state_transit_table[transit_index].cur_st) {
-                uint8 is_found = 0;
-                for (uint8 j = 0; j < size; ++j) {
-                    if (eventId_Table[j] == state_machine->state_transit_table[transit_index].event_id) {
-                        *cur_state = state_machine->state_transit_table[transit_index].next_st;
-                        is_found = 1;
-                        break;
-                    }
-                }
-                if (is_found) {
-                    break;
+uint8
+run_state_transit(const struct state_transit p_state_transit[],
+                  const size_t transit_num, const uint8* event_table, 
+                  const size_t event_num, const uint8 cur_st) {
+    uint8 next_st = cur_st;
+    
+    for (size_t i = 0; i < transit_num; ++i) {
+        if (cur_st == p_state_transit[i].cur_st) {
+            uint8 event = p_state_transit[i].event_id;
+            for (size_t j = 0; j < event_num; ++j) {
+                if (event_table[j] == event) {
+                    next_st = p_state_transit[i].next_st;
+                    return next_st;
                 }
             }
-            ++transit_index;
         }
     }
-
-    uint8 state_index   = 0;
-    while ((state_index < MAX_STATE_SIZE) && state_machine->state_table[state_index].action != NULL_PTR) {
-        if (*cur_state == state_machine->state_table[state_index].state) {
-            state_machine->state_table[state_index].action();
-            break;
-        }
-        ++state_index;
-    }
+    return next_st;
 }

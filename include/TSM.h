@@ -15,6 +15,7 @@ typedef float float32;
 typedef double float64;
 
 typedef unsigned char boolean;
+// typedef unsigned long size_t;
 
 #ifndef NULL_PTR
 #define NULL_PTR ((void*)0)
