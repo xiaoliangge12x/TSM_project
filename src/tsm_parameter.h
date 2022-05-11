@@ -22,6 +22,10 @@
 #include <assert.h>
 #endif
 
+#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0])) 
+
+typedef unsigned long size_t;
+
 typedef Dt_RECORD_VehicleSignal2TSM tsm_veh_sig;
 typedef Dt_RECORD_Soc_Info tsm_soc_info;
 typedef Dt_RECORD_Automaton_State tsm_soc_st;
@@ -244,6 +248,8 @@ struct tsm_exit
     Dt_RECORD_TSM2CANGATE*            out_can_gate;
 };
 
+#ifdef CONSUME_TIME
+
 void 
 tsm_start_timing(sint64* cur_time, uint8* flag);
 
@@ -252,6 +258,8 @@ tsm_stop_timing(uint8* flag);
 
 float32
 tsm_get_delta_time(const sint64 start_time, const uint8 flag);
+
+#endif
 
 boolean 
 tsm_is_bit_set(const uint32 bitfields, const uint8 bitno);

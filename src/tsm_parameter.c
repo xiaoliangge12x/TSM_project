@@ -11,6 +11,8 @@ float32 K_GeoEndDist_NotActive                       = 10.0;   // NDA非激活�
 float32 K_GeoEndDist_Active                          = 10.0;   // NDA激活时的高精地图报警距离阈值
 float32 K_VehSpdThreshold                            = 120.0;  // 车速阈值
 
+#ifdef CONSUME_TIME
+
 void 
 tsm_start_timing(sint64* cur_time, uint8* flag) {
     hb_TimeSync_GetTime(cur_time);
@@ -34,6 +36,8 @@ tsm_get_delta_time(const sint64 start_time, const uint8 flag) {
     }
     return delta_time;
 }
+
+#endif
 
 boolean 
 tsm_is_bit_set(const uint32 bitfields, const uint8 bitno) {

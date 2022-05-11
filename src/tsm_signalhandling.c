@@ -110,6 +110,8 @@ is_flag_set_with_timecnt(const uint16 timecnt_threshold, uint16* timecnt,
     return flag;
 }
 
+#ifdef CONSUME_TIME
+
 static boolean
 is_flag_set_with_time(const float32 time_threshold, sint64* time,
                       uint8* time_flag, const boolean last_flag) {
@@ -129,6 +131,8 @@ is_flag_set_with_time(const float32 time_threshold, sint64* time,
     }
     return flag;
 }
+
+#endif
 
 static boolean
 tsm_check_gas_pedal_applied(const tsm_veh_sig* p_veh_sig) {
