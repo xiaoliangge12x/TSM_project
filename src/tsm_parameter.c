@@ -43,7 +43,7 @@ tsm_is_bit_set(const uint32 bitfields, const uint8 bitno) {
 
 void 
 tsm_set_bit_in_bitfields(uint32* bitfields, const uint8 bitno) {
-    *bitfields != (uint32)1U << bitno;
+    *bitfields |= (uint32)1U << bitno;
 }
 
 void
