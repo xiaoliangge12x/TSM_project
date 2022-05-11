@@ -384,7 +384,7 @@ tsm_choose_event_id(const enum tsm_event_id lat_event_id,
 }
 
 static size_t
-tsm_run_initial_sit(enum tsm_event_id* p_event, size_t num, 
+tsm_run_initial_sit(uint8* p_event, size_t num, 
                     const enum fault_level mcu_fault_lvl,
                     const enum nda_func_st nda_st) {
     // todo: 发一帧mrm请求给ifc
@@ -405,7 +405,7 @@ tsm_run_initial_sit(enum tsm_event_id* p_event, size_t num,
 }
 
 static size_t
-tsm_run_standstill_sit(enum tsm_event_id* p_event, size_t num, 
+tsm_run_standstill_sit(uint8* p_event, size_t num, 
                        const boolean can_mrm_activate) {
     p_event[num++] = EVENT_VEH_STANDSTILL;
     if (can_mrm_activate) {
@@ -415,7 +415,7 @@ tsm_run_standstill_sit(enum tsm_event_id* p_event, size_t num,
 }
 
 static size_t 
-tsm_run_tor_st(enum tsm_event_id* p_event, size_t num, 
+tsm_run_tor_st(uint8* p_event, size_t num, 
                const boolean can_mrm_activate,
                const boolean is_drvr_lng_ctrl) {
     p_event[num++] = 
@@ -432,7 +432,7 @@ tsm_run_tor_st(enum tsm_event_id* p_event, size_t num,
 }
 
 static size_t 
-tsm_run_mrm_st(enum tsm_event_id* p_event, size_t num, 
+tsm_run_mrm_st(uint8* p_event, size_t num, 
                const boolean can_mrm_activate,
                const boolean is_drvr_lng_ctrl) {
     p_event[num++] = 
@@ -449,7 +449,7 @@ tsm_run_mrm_st(enum tsm_event_id* p_event, size_t num,
 }
 
 static size_t 
-tsm_run_non_standstill_st(enum tsm_event_id* p_event, size_t num,
+tsm_run_non_standstill_st(uint8* p_event, size_t num,
                           const enum pc_st plan_ctrl_st,
                           const boolean can_mrm_activate,
                           const boolean is_drvr_lng_ctrl) {
@@ -467,7 +467,7 @@ tsm_run_non_standstill_st(enum tsm_event_id* p_event, size_t num,
 }
 
 static size_t
-tsm_run_func_exit_sit(enum tsm_event_id* p_event, size_t num, 
+tsm_run_func_exit_sit(uint8* p_event, size_t num, 
                       const enum fault_level mcu_fault_lvl,
                       const boolean is_drvr_to) {
     if (is_drvr_to) {
@@ -521,7 +521,7 @@ tsm_is_drvr_takeover(const enum tsm_mcu_mrm_func_st mrm_state,
 }
 
 static size_t
-tsm_run_situation(enum tsm_event_id* p_event, 
+tsm_run_situation(uint8* p_event, 
                   const enum tsm_mcu_mrm_func_st mrm_state,
                   const struct tsm_entry* p_entry,
                   const struct tsm_intermediate_sig* p_int_sig) {
@@ -581,7 +581,7 @@ tsm_run_user(const enum tsm_mcu_mrm_func_st mrm_state,
         [MCU_MRM_MRC] = tsm_mrc_post_process,
     };  
 
-    enum tsm_event_id event_id[MAX_EVENT_SIZE];
+    uint8 event_id[MAX_EVENT_SIZE];
     size_t event_num = 
         tsm_run_situation(event_id, mrm_state, p_entry, p_int_sig);
 
@@ -591,8 +591,9 @@ tsm_run_user(const enum tsm_mcu_mrm_func_st mrm_state,
     }
 
     enum tsm_mcu_mrm_func_st next_mrm_st = 
-        run_state_transit(tsm_state_flow, event_id, event_num, mrm_state);
-    
+        run_state_transit(tsm_state_flow, ARRAY_LEN(tsm_state_flow), 
+                          event_id, event_num, mrm_state);
+
     post_process[next_mrm_st](p_action);
 
     return next_mrm_st;

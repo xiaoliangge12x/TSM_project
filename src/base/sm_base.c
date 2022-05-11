@@ -14,12 +14,12 @@
 #include "base/sm_base.h"
 
 uint8
-run_state_transit(const struct state_transit* p_state_transit,
-                  const uint8* event_table, const size_t event_num, 
-                  const uint8 cur_st) {
+run_state_transit(const struct state_transit p_state_transit[],
+                  const size_t transit_num, const uint8* event_table, 
+                  const size_t event_num, const uint8 cur_st) {
     uint8 next_st = cur_st;
-
-    for (size_t i = 0; i < ARRAY_LEN(p_state_transit); ++i) {
+    
+    for (size_t i = 0; i < transit_num; ++i) {
         if (cur_st == p_state_transit[i].cur_st) {
             uint8 event = p_state_transit[i].event_id;
             for (size_t j = 0; j < event_num; ++j) {

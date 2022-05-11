@@ -26,7 +26,7 @@ struct state_transit
 };
 
 uint8
-run_state_transit(const struct state_transit* p_state_transit,
-                  const uint8* event_table, const size_t event_num, 
-                  const uint8 cur_st);
+run_state_transit(const struct state_transit p_state_transit[],
+                  const size_t transit_num, const uint8* event_table, 
+                  const size_t event_num, const uint8 cur_st);
 #endif

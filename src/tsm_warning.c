@@ -152,7 +152,7 @@ tsm_mrm_lvl_five_post_process() {
 }
 
 static size_t
-tsm_run_warning_sit(enum warning_event_id* event_id,
+tsm_run_warning_sit(uint8* event_id,
                     const enum tsm_warning_st warning_st,
                     const enum tsm_mcu_mrm_func_st mrm_st,
                     const struct tsm_entry* p_entry, 
@@ -211,7 +211,7 @@ tsm_run_warning_user(const enum tsm_warning_st warning_st,
         [WARNING_MRM_LEVEL_5] = tsm_mrm_lvl_five_post_process,
     };
 
-    enum warning_event_id event_id[MAX_EVENT_SIZE];
+    uint8 event_id[MAX_EVENT_SIZE];
     size_t event_num = 
         tsm_run_warning_sit(event_id, warning_st, mrm_st, p_entry, p_int_sig);
     
@@ -221,7 +221,8 @@ tsm_run_warning_user(const enum tsm_warning_st warning_st,
     }
 
     enum tsm_warning_st next_warning_st = 
-        run_state_transit(warning_state_flow, event_id, event_num, warning_st);
+        run_state_transit(warning_state_flow, ARRAY_LEN(warning_state_flow), 
+                          event_id, event_num, warning_st);
     
     post_process[next_warning_st]();
 
