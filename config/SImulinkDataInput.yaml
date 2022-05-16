@@ -17,13 +17,14 @@ Vehicle_Signal_To_Tsm:
   EMS_GasPedalActPstforMRR: 19.0
 
 Soc_Info:
-  NDA_Function_State: 0
+  NDA_Function_State: 14
   ICA_Function_State: 0
 
 From_Diag:
-  Fault_Level: 1
+  com_fault_with_soc: 1
+  is_support_lane_stop: 0
+  is_support_emergency_stop: 0
   
-
 From_Planlite:
   planningLite_control_state: 0
 

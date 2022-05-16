@@ -105,8 +105,18 @@ tsm_getptr_gaspedal_actpos_vd(struct tsm_simulink_input* simu_in) {
 }
 
 static void*
-tsm_getptr_fault_level(struct tsm_simulink_input* simu_in) {
-    return &(simu_in->rt_in_diag_tsm.Fault_Level);
+tsm_getptr_com_fault_with_soc(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.com_fault_with_soc);
+}
+
+static void*
+tsm_getptr_support_lane_stop(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.is_support_lane_stop);
+}
+
+static void*
+tsm_getptr_support_es(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.is_support_emergency_stop);
 }
 
 static void*
@@ -211,8 +221,18 @@ static const struct tsm_test_signal ts_sig[] = {
     },
     {
         .sig_type = TYPE_UINT8,
-        .signal_name = "Fault_Level",
-        .get_signal_ptr = tsm_getptr_fault_level,
+        .signal_name = "com_fault_with_soc",
+        .get_signal_ptr = tsm_getptr_com_fault_with_soc,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "is_support_lane_stop",
+        .get_signal_ptr = tsm_getptr_support_lane_stop,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "is_support_emergency_stop",
+        .get_signal_ptr = tsm_getptr_support_es,
     },
     {
         .sig_type = TYPE_UINT8,
@@ -237,8 +257,8 @@ static const struct tsm_test_signal ts_sig[] = {
 };
 
 static void
-tsm_set_name(char* name, const yaml_token_t* token) {
-    memset(name, 0, sizeof(name));
+tsm_set_name(char* name, const uint8 name_len, const yaml_token_t* token) {
+    memset(name, 0, name_len);
     strncpy(name, token->data.scalar.value, 
             strlen(token->data.scalar.value));
 }
@@ -342,11 +362,10 @@ tsm_read_yaml_set_data(const char* filename, struct tsm_simulink_input* simu_in)
 
             case YAML_SCALAR_TOKEN: {
                 if (key_flag == 1) {
-                    tsm_set_name(key_name, &token);
+                    tsm_set_name(key_name, MAX_KEY_NAME, &token);
                 } else {
-                    tsm_set_name(value_name, &token);
-                    tsm_set_simu_input(key_name, value_name, 
-                                       &token);
+                    tsm_set_name(value_name, MAX_VALUE_NAME, &token);
+                    tsm_set_simu_input(key_name, value_name, simu_in);
                     key_flag = 0;
                 }
             }

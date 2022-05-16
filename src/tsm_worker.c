@@ -261,7 +261,7 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
                  rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, 
                  rty_DeTSM2HMI, rty_DeTSM2CANGATE);
 
-    static enum tsm_mcu_mrm_func_st mrm_state = MCU_MRM_PASSIVE;
+    static enum tsm_mcu_mrm_func_st mrm_state = MCU_PASSIVE;
     static enum tsm_warning_st warning_state = NO_WARNING;
     static struct tsm_action action;
     // todo:
@@ -278,7 +278,7 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     }
 
     mrm_state = 
-        tsm_run_user(mrm_state, &entry, &int_sig, &action);
+        tsm_run_user(mrm_state, warning_state, &entry, &int_sig, &action);
 
     warning_state = 
         tsm_run_warning_user(warning_state, mrm_state, &entry, &int_sig);

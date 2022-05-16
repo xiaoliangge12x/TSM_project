@@ -175,8 +175,9 @@ typedef struct
 typedef struct
 {
     Dt_RECORD_TimeStamp Diag_TimeStamp;
-    uint8_t             Fault_Level;
-    uint8_t             Com_Fault_with_SOC; 
+    uint8_t             com_fault_with_soc; 
+    uint8_t             is_support_lane_stop;
+    uint8_t             is_support_emergency_stop;
 } Dt_RECORD_Diag2TSM;
 
 typedef struct

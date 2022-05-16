@@ -112,42 +112,42 @@ static const struct state_transit warning_state_flow[] = {
 static void
 tsm_no_warning_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in no warnng st");
+    LOG(COLOR_NONE, "it's in no warnng st.");
 #endif
 }
 
 static void
 tsm_tor_lvl_one_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in warning tor level 1 st");
+    LOG(COLOR_NONE, "it's in warning tor level 1 st.");
 #endif
 }
 
 static void
 tsm_tor_lvl_two_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in warning tor level 2 st");
+    LOG(COLOR_NONE, "it's in warning tor level 2 st.");
 #endif
 }
 
 static void
 tsm_tor_lvl_three_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in warning tor level 3 st");
+    LOG(COLOR_NONE, "it's in warning tor level 3 st.");
 #endif
 }
 
 static void
 tsm_mrm_lvl_four_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in warning mrm level 4 st");
+    LOG(COLOR_NONE, "it's in warning mrm level 4 st.");
 #endif
 }
 
 static void
 tsm_mrm_lvl_five_post_process() {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "it's in warning mrm level 5 st");
+    LOG(COLOR_NONE, "it's in warning mrm level 5 st.");
 #endif
 }
 
@@ -162,10 +162,10 @@ tsm_run_warning_sit(uint8* event_id,
 
     uint8 soc_tor_fault =
         p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
-    boolean is_mcu_in_tor = ((mrm_st == MCU_MRM_TOR_LNG_LAT_CTRL) ||
-                             (mrm_st == MCU_MRM_TOR_LAT_CTRL));
-    boolean is_mcu_in_mrm = ((mrm_st == MCU_MRM_ACTIVE_LNG_LAT_CTRL) ||
-                             (mrm_st == MCU_MRM_ACTIVE_LAT_CTRL));
+    boolean is_mcu_in_tor = ((mrm_st == MCU_TOR_LNG_LAT_CTRL) ||
+                             (mrm_st == MCU_TOR_LAT_CTRL));
+    boolean is_mcu_in_mrm = ((mrm_st == MCU_MRM_LNG_LAT_CTRL) ||
+                             (mrm_st == MCU_MRM_LAT_CTRL));
     if (soc_tor_fault == TOR_LEVEL3_FAULT) {
         event_id[event_num++] = EVENT_COME_LEVEL_3;
     } else if (is_mcu_in_tor) {
@@ -176,7 +176,7 @@ tsm_run_warning_sit(uint8* event_id,
         event_id[event_num++] = EVENT_CHECK_MRM_ST;
     } else if (mrm_st == MCU_MRM_MRC) {
         event_id[event_num++] = EVENT_CHECK_MRC_ST;
-    } else if (mrm_st == MCU_MRM_PASSIVE) {
+    } else if (mrm_st == MCU_PASSIVE) {
         event_id[event_num++] = EVENT_CHECK_PASSIVE_ST;
     } else {
         // do nothing;
