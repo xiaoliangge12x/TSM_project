@@ -14,7 +14,6 @@
 #define COLOR_GREEN         "\033[32m"
 #define COLOR_YELLOW        "\033[33m"
 
-#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0])) 
 #define LOG(str_color, str, ...) { \
     time_t t_time; \
     struct tm *tm_time; \

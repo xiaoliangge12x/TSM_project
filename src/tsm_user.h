@@ -33,6 +33,7 @@ enum tsm_mrm_st
 {
     MRM_ST_TOR = 0,
     MRM_ST_ACTIVE,
+    MRM_ST_ES,
     MRM_ST_INVALID,
 };
 
@@ -46,6 +47,7 @@ struct tsm_action {
 
 enum tsm_mcu_mrm_func_st
 tsm_run_user(const enum tsm_mcu_mrm_func_st mrm_state,
+             const enum tsm_warning_st warning_state,
              const struct tsm_entry* p_entry, 
              const struct tsm_intermediate_sig* p_int_sig,
              struct tsm_action* p_action);

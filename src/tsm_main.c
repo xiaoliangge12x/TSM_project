@@ -16,7 +16,7 @@ tsm_module_work() {
     static struct tsm_simulink_output simu_out;
 
     memset(&simu_in, 0, sizeof(struct tsm_simulink_input));
-    memset(&simu_in, 0, sizeof(struct tsm_simulink_output));
+    memset(&simu_out, 0, sizeof(struct tsm_simulink_output));
 
     gettimeofday(&g_init_time, NULL);
 
@@ -27,6 +27,7 @@ tsm_module_work() {
 #ifdef _OPEN_TEST
         tsm_read_yaml_set_data(filename, &simu_in);
 #endif
+
         MRM_Swc_V_TSM(&simu_in.rt_in_ctrlarb_tsm, &simu_in.rt_in_deciarb_tsm, 
                       &simu_in.rt_in_cangate_tsm, &simu_in.rt_in_diag_tsm, 
                       &simu_in.rt_in_planlite_tsm, &simu_out.rt_out_tsm_planlite, 

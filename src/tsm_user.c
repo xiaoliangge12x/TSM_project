@@ -18,23 +18,27 @@
 enum tsm_event_id
 {
     EVENT_FAULT_NOT_EXIST = BASE_EVENT_TSM_START + 1,
-    EVENT_LIGHTING,
+    EVENT_FAILURE,
     EVENT_NO_LIGHTING,
     EVENT_STANDBY,
     EVENT_NO_STANDBY,
     EVENT_MRM_BOTH_CTRL,
     EVENT_MRM_LAT_CTRL,
     EVENT_MRC,
-    EVENT_TOR_BOTH_CTRL,
-    EVENT_TOR_LAT_CTRL,
+    EVENT_ACTIVATE_TOR_BOTH,
+    EVENT_ACTIVATE_TOR_LAT,
+    EVENT_BOTH_CTRL_EXIT,
+    EVENT_LAT_CTRL_EXIT,
+    EVENT_EMERGENCY_STOP_EXIT,
     EVENT_TOR_TO_MRM_BOTH,
     EVENT_TOR_TO_MRM_LAT,
-    EVENT_MRM_BOTH_CTRL_SWITCH,
-    EVENT_MRM_LAT_CTRL_SWITCH,
-    EVENT_TOR_BOTH_CTRL_SWITCH,
-    EVENT_TOR_LAT_CTRL_SWITCH,
+    EVENT_MRM_ACTIVATE_EMERGENCY_STOP,
+    EVENT_MRM_SWITCH_EMERGENCY_STOP,
+    EVENT_TOR_SWITCH_MRM,
+    EVENT_DRIVER_LNG_OVERRIDE,
+    EVENT_DRIVER_NO_LNG_OVERRIDE,
     EVENT_VEH_STANDSTILL,
-    EVENT_FUNCTION_EXIT,
+    EVENT_MRC_EXIT,
     EVENT_WAIT_EPB_RES,
 };
 
@@ -44,172 +48,135 @@ enum pc_st
     PC_MRM,
 };
 
+enum exit_type {
+    EXIT_FROM_EMERGENCY_STOP,
+    EXIT_FROM_BOTH_CTRL,
+    EXIT_FROM_LAT_CTRL,
+    EXIT_FROM_TOR_STAND,
+    EXIT_FROM_MRC,
+};
+
 static const struct state_transit tsm_state_flow[] = 
 {
     {
-        .cur_st = MCU_MRM_PASSIVE,
-        .event_id = EVENT_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_LIGHTING,
+        .cur_st = MCU_PASSIVE,
+        .event_id = EVENT_FAILURE,
+        .next_st = MCU_FAILURE,
     },
     {
-        .cur_st = MCU_MRM_PASSIVE,
-        .event_id = EVENT_NO_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_NO_LIGHTING,
-    },
-    {
-        .cur_st = MCU_MRM_PASSIVE,
+        .cur_st = MCU_PASSIVE,
         .event_id = EVENT_STANDBY,
-        .next_st = MCU_MRM_STANDBY,
+        .next_st = MCU_STANDBY,
     },
     {
-        .cur_st = MCU_MRM_FAILURE_LIGHTING,
-        .event_id = EVENT_NO_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_NO_LIGHTING,
-    },
-    {
-        .cur_st = MCU_MRM_FAILURE_LIGHTING,
+        .cur_st = MCU_FAILURE,
         .event_id = EVENT_FAULT_NOT_EXIST,
-        .next_st = MCU_MRM_PASSIVE,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_FAILURE_NO_LIGHTING,
-        .event_id = EVENT_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_LIGHTING,
+        .cur_st = MCU_STANDBY,
+        .event_id = EVENT_FAILURE,
+        .next_st = MCU_FAILURE,
     },
     {
-        .cur_st = MCU_MRM_FAILURE_NO_LIGHTING,
-        .event_id = EVENT_FAULT_NOT_EXIST,
-        .next_st = MCU_MRM_PASSIVE,
+        .cur_st = MCU_STANDBY,
+        .event_id = EVENT_MRM_ACTIVATE_EMERGENCY_STOP, 
+        .next_st = MCU_MRM_EMERGENCY_BOTH_CTRL,
     },
     {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_LIGHTING,
+        .cur_st = MCU_STANDBY,
+        .event_id = EVENT_ACTIVATE_TOR_BOTH, 
+        .next_st = MCU_TOR_LNG_LAT_CTRL,
     },
     {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_NO_LIGHTING,
-        .next_st = MCU_MRM_FAILURE_NO_LIGHTING,
+        .cur_st = MCU_STANDBY,
+        .event_id = EVENT_ACTIVATE_TOR_LAT,
+        .next_st = MCU_TOR_LAT_CTRL,
     },
     {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_MRM_BOTH_CTRL,
-        .next_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_MRM_LAT_CTRL,
-        .next_st = MCU_MRM_ACTIVE_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_MRC,
-        .next_st = MCU_MRM_MRC,
-    },
-    {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_TOR_BOTH_CTRL,
-        .next_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_STANDBY,
-        .event_id = EVENT_TOR_LAT_CTRL,
-        .next_st = MCU_MRM_TOR_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_STANDBY,
+        .cur_st = MCU_STANDBY,
         .event_id = EVENT_NO_STANDBY,
-        .next_st = MCU_MRM_PASSIVE,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-        .event_id = EVENT_TOR_LAT_CTRL_SWITCH,
-        .next_st = MCU_MRM_TOR_LAT_CTRL,
+        .cur_st = MCU_TOR_LNG_LAT_CTRL,
+        .event_id = EVENT_BOTH_CTRL_EXIT,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_TOR_LNG_LAT_CTRL,
+        .cur_st = MCU_TOR_LNG_LAT_CTRL,
+        .event_id = EVENT_MRM_SWITCH_EMERGENCY_STOP,
+        .next_st = MCU_MRM_EMERGENCY_BOTH_CTRL,
+    },
+    {
+        .cur_st = MCU_TOR_LNG_LAT_CTRL,
+        .event_id = EVENT_TOR_SWITCH_MRM,
+        .next_st = MCU_MRM_LNG_LAT_CTRL,
+    },
+    {
+        .cur_st = MCU_TOR_LNG_LAT_CTRL,
+        .event_id = EVENT_DRIVER_LNG_OVERRIDE,
+        .next_st = MCU_TOR_LAT_CTRL,
+    },
+    {
+        .cur_st = MCU_TOR_LNG_LAT_CTRL,
         .event_id = EVENT_VEH_STANDSTILL,
-        .next_st = MCU_MRM_TOR_STAND,
+        .next_st = MCU_TOR_STAND,
     },
     {
-        .cur_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-        .event_id = EVENT_TOR_TO_MRM_BOTH,
-        .next_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
+        .cur_st = MCU_TOR_LAT_CTRL,
+        .event_id = EVENT_LAT_CTRL_EXIT,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-        .event_id = EVENT_TOR_TO_MRM_LAT,
-        .next_st = MCU_MRM_ACTIVE_LAT_CTRL,
+        .cur_st = MCU_TOR_LAT_CTRL,
+        .event_id = EVENT_TOR_SWITCH_MRM,
+        .next_st = MCU_MRM_LAT_CTRL,
     },
     {
-        .cur_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-        .event_id = EVENT_FUNCTION_EXIT,
-        .next_st = MCU_MRM_PASSIVE,
+        .cur_st = MCU_TOR_LAT_CTRL,
+        .event_id = EVENT_DRIVER_NO_LNG_OVERRIDE,
+        .next_st = MCU_TOR_LNG_LAT_CTRL,
     },
     {
-        .cur_st = MCU_MRM_TOR_LAT_CTRL,
-        .event_id = EVENT_TOR_BOTH_CTRL_SWITCH,
-        .next_st = MCU_MRM_TOR_LNG_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_TOR_LAT_CTRL,
-        .event_id = EVENT_VEH_STANDSTILL,
-        .next_st = MCU_MRM_TOR_STAND,
-    },
-    {
-        .cur_st = MCU_MRM_TOR_LAT_CTRL,
-        .event_id = EVENT_TOR_TO_MRM_BOTH,
-        .next_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_TOR_LAT_CTRL,
-        .event_id = EVENT_TOR_TO_MRM_LAT,
-        .next_st = MCU_MRM_ACTIVE_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_TOR_LAT_CTRL,
-        .event_id = EVENT_FUNCTION_EXIT,
-        .next_st = MCU_MRM_PASSIVE,
-    },
-    {
-        .cur_st = MCU_MRM_TOR_STAND,
+        .cur_st = MCU_TOR_STAND,
         .event_id = EVENT_WAIT_EPB_RES,
-        .next_st = MCU_MRM_PASSIVE,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
-        .event_id = EVENT_MRM_LAT_CTRL_SWITCH,
-        .next_st = MCU_MRM_ACTIVE_LAT_CTRL,
+        .cur_st = MCU_MRM_LNG_LAT_CTRL,
+        .event_id = EVENT_BOTH_CTRL_EXIT,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
+        .cur_st = MCU_MRM_LNG_LAT_CTRL,
+        .event_id = EVENT_MRM_SWITCH_EMERGENCY_STOP,
+        .next_st = MCU_MRM_EMERGENCY_BOTH_CTRL,
+    },
+    {
+        .cur_st = MCU_MRM_LNG_LAT_CTRL,
+        .event_id = EVENT_DRIVER_LNG_OVERRIDE,
+        .next_st = MCU_MRM_LAT_CTRL,
+    },
+    {
+        .cur_st = MCU_MRM_LNG_LAT_CTRL,
         .event_id = EVENT_VEH_STANDSTILL,
         .next_st = MCU_MRM_MRC,
     },
     {
-        .cur_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
-        .event_id = EVENT_FUNCTION_EXIT,
-        .next_st = MCU_MRM_PASSIVE,
+        .cur_st = MCU_MRM_LAT_CTRL,
+        .event_id = EVENT_LAT_CTRL_EXIT,
+        .next_st = MCU_PASSIVE,
     },
     {
-        .cur_st = MCU_MRM_ACTIVE_LAT_CTRL,
-        .event_id = EVENT_MRM_BOTH_CTRL_SWITCH,
-        .next_st = MCU_MRM_ACTIVE_LNG_LAT_CTRL,
-    },
-    {
-        .cur_st = MCU_MRM_ACTIVE_LAT_CTRL,
-        .event_id = EVENT_VEH_STANDSTILL,
-        .next_st = MCU_MRM_MRC,
-    },
-    {
-        .cur_st = MCU_MRM_ACTIVE_LAT_CTRL,
-        .event_id = EVENT_FUNCTION_EXIT,
-        .next_st = MCU_MRM_PASSIVE,
+        .cur_st = MCU_MRM_LAT_CTRL,
+        .event_id = EVENT_DRIVER_NO_LNG_OVERRIDE,
+        .next_st = MCU_MRM_LNG_LAT_CTRL,
     },
     {
         .cur_st = MCU_MRM_MRC,
-        .event_id = EVENT_FUNCTION_EXIT,
-        .next_st = MCU_MRM_PASSIVE,
+        .event_id = EVENT_MRC_EXIT,
+        .next_st = MCU_PASSIVE,
     },
 };
 
@@ -226,7 +193,7 @@ tsm_set_ctrlarb_req(struct tsm_action* p_action,
 }
 
 static inline void 
-tsm_set_mrm_St(struct tsm_action* p_action,
+tsm_set_mrm_st(struct tsm_action* p_action,
                const enum tsm_mrm_st mrm_state) {
     p_action->mrm_activation_st = mrm_state;
 }
@@ -235,7 +202,7 @@ static inline void
 tsm_reset_action(struct tsm_action* p_action) {
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_INVALID);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_SOC);
-    tsm_set_mrm_St(p_action, MRM_ST_INVALID);
+    tsm_set_mrm_st(p_action, MRM_ST_INVALID);
 }
 
 static void
@@ -247,9 +214,9 @@ tsm_passive_post_process(struct tsm_action* p_action) {
 }
 
 static void
-tsm_lighting_post_process(struct tsm_action* p_action) {
+tsm_failure_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in mcu lighting st.");
+    LOG(COLOR_NONE, "It's in mcu failure st.");
 #endif
     tsm_reset_action(p_action);
 }
@@ -265,31 +232,41 @@ tsm_standby_post_process(struct tsm_action* p_action) {
 static void
 tsm_tor_both_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in mcu tor both ctrl st.");
+    LOG(COLOR_GREEN, "It's in mcu tor both ctrl st.");
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_TOR);
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
 }
 
 static void
 tsm_tor_lat_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in mcu tor lat ctrl st.");
+    LOG(COLOR_GREEN, "It's in mcu tor lat ctrl st.");
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_TOR);
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
 }
 
 static void
 tsm_tor_stand_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
-    LOG(COLOR_NONE, "It's in mcu tor stand st.");
+    LOG(COLOR_GREEN, "It's in mcu tor stand st.");
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_TOR);
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
+}
+
+static void 
+tsm_mrm_es_post_process(struct tsm_action* p_action) {
+#ifdef _NEED_LOG
+    LOG(COLOR_RED, "It's in mcu emergency stop st.");
+#endif
+    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
+    tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
+    tsm_set_mrm_st(p_action, MRM_ST_ES);
 }
 
 static void 
@@ -299,7 +276,7 @@ tsm_mrm_both_post_process(struct tsm_action* p_action) {
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_ACTIVE);
+    tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
 
 static void 
@@ -309,7 +286,7 @@ tsm_mrm_lat_post_process(struct tsm_action* p_action) {
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_ACTIVE);
+    tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
 
 static void 
@@ -319,7 +296,7 @@ tsm_mrc_post_process(struct tsm_action* p_action) {
 #endif
     tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
-    tsm_set_mrm_St(p_action, MRM_ST_ACTIVE);
+    tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
 
 static boolean
@@ -356,16 +333,22 @@ tsm_check_activation_cond(const struct tsm_entry* p_entry,
         p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
     boolean soc_req_mrm =
         p_entry->in_can_gate->Soc_Info.request_mrm_from_soc;
-    boolean soc_com_fault = p_entry->in_diag->Com_Fault_with_SOC;
+    boolean soc_com_fault = p_entry->in_diag->com_fault_with_soc;
     if ((soc_frc_fault == TOR_LEVEL3_FAULT) || soc_req_mrm) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "soc tor fault or soc request trigger mrm.");
+#endif
         check_ret = true;
     } else if (soc_com_fault) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "com fault with soc trigger mrm");
+#endif
         check_ret = true;
     } else if (!tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
                                BITNO_NDA_TRANSIT_NORMAL_FLAG)) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "transit abnormal trigger Mrm.");
+#endif
         check_ret = true;
     } else {
         check_ret = false;
@@ -385,13 +368,13 @@ tsm_choose_event_id(const enum tsm_event_id lat_event_id,
 
 static size_t
 tsm_run_initial_sit(uint8* p_event, size_t num, 
-                    const enum fault_level mcu_fault_lvl,
+                    const boolean mcu_unable_to_stop,
                     const enum nda_func_st nda_st) {
     // todo: 发一帧mrm请求给ifc
-    if (mcu_fault_lvl == NO_FAULT) {
-        p_event[num++] = EVENT_FAULT_NOT_EXIST;
+    if (mcu_unable_to_stop) {
+        p_event[num++] = EVENT_FAILURE;
     } else {
-        p_event[num++] = EVENT_LIGHTING;
+        p_event[num++] = EVENT_FAULT_NOT_EXIST;
     }
 
     // if (tsm_is_nda_active(nda_st)) {
@@ -404,186 +387,249 @@ tsm_run_initial_sit(uint8* p_event, size_t num,
     return num;
 }
 
-static size_t
-tsm_run_standstill_sit(uint8* p_event, size_t num, 
-                       const boolean can_mrm_activate) {
-    p_event[num++] = EVENT_VEH_STANDSTILL;
-    if (can_mrm_activate) {
-        p_event[num++] = EVENT_MRC;
-    }
-    return num;
-}
-
-static size_t 
-tsm_run_tor_st(uint8* p_event, size_t num, 
-               const boolean can_mrm_activate,
-               const boolean is_drvr_lng_ctrl) {
-    p_event[num++] = 
-            tsm_choose_event_id(EVENT_TOR_LAT_CTRL_SWITCH,
-                                EVENT_TOR_BOTH_CTRL_SWITCH, 
-                                is_drvr_lng_ctrl);
-    if (can_mrm_activate) {
-        p_event[num++] = 
-            tsm_choose_event_id(EVENT_TOR_LAT_CTRL,
-                                EVENT_TOR_BOTH_CTRL, 
-                                is_drvr_lng_ctrl);
-    }
-    return num;
-}
-
-static size_t 
-tsm_run_mrm_st(uint8* p_event, size_t num, 
-               const boolean can_mrm_activate,
-               const boolean is_drvr_lng_ctrl) {
-    p_event[num++] = 
-            tsm_choose_event_id(EVENT_TOR_TO_MRM_LAT,
-                                EVENT_TOR_TO_MRM_BOTH, 
-                                is_drvr_lng_ctrl);
-    if (can_mrm_activate) {
-        p_event[num++] = 
-            tsm_choose_event_id(EVENT_MRM_LAT_CTRL,
-                                EVENT_MRM_BOTH_CTRL, 
-                                is_drvr_lng_ctrl);
-    }
-    return num;
-}
-
 static size_t 
 tsm_run_non_standstill_st(uint8* p_event, size_t num,
-                          const enum pc_st plan_ctrl_st,
+                          const boolean is_need_to_switch_es,
                           const boolean can_mrm_activate,
                           const boolean is_drvr_lng_ctrl) {
-    p_event[num++] = 
-        tsm_choose_event_id(EVENT_MRM_LAT_CTRL_SWITCH,
-                            EVENT_MRM_BOTH_CTRL_SWITCH, is_drvr_lng_ctrl);
-    
-    if (plan_ctrl_st == PC_TOR) {
-        num = tsm_run_tor_st(p_event, num, can_mrm_activate, is_drvr_lng_ctrl);
-    } else if (plan_ctrl_st == PC_MRM) {
-        num = tsm_run_mrm_st(p_event, num, can_mrm_activate, is_drvr_lng_ctrl);
+    if (is_need_to_switch_es) {
+        p_event[num++] = (can_mrm_activate) ?
+            EVENT_MRM_ACTIVATE_EMERGENCY_STOP :
+            EVENT_MRM_SWITCH_EMERGENCY_STOP;
+    } else {
+        if (can_mrm_activate) {
+            p_event[num++] = tsm_choose_event_id(EVENT_ACTIVATE_TOR_LAT,
+                                                 EVENT_ACTIVATE_TOR_BOTH,
+                                                 is_drvr_lng_ctrl);
+        }
     }
 
-    return num;
-}
-
-static size_t
-tsm_run_func_exit_sit(uint8* p_event, size_t num, 
-                      const enum fault_level mcu_fault_lvl,
-                      const boolean is_drvr_to) {
-    if (is_drvr_to) {
-        p_event[num++] = EVENT_FUNCTION_EXIT;
-    } else if (mcu_fault_lvl != NO_FAULT) {
-        // todo: 增加向IFC的mrm_req
-        p_event[num++] = EVENT_FUNCTION_EXIT;
-    }
     return num;
 }
 
 static boolean
-tsm_is_drvr_takeover(const enum tsm_mcu_mrm_func_st mrm_state, 
-                     const struct tsm_intermediate_sig* p_int_sig) {
-    boolean is_mrm_lat_ctrl = ((mrm_state == MCU_MRM_ACTIVE_LAT_CTRL) ||
-                               (mrm_state == MCU_MRM_TOR_LAT_CTRL) ||
-                               (mrm_state == MCU_MRM_MRC));
-    if (is_mrm_lat_ctrl) {
-        if (p_int_sig->brk_du_type == LONG_INTERVENTION) {
-            return true;
-        }
-        if ((p_int_sig->drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED) &&
-            tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
-                           BITNO_LONG_TIME_LNG_OVERRIDE)) {
-            return true;
-        }
-        boolean is_drvr_fatigue_or_distracted = 
-            ((p_int_sig->drvr_att_st == DRVR_AWAKE_DISTRACTED) ||
-             (p_int_sig->drvr_att_st == DRVR_FATIGUE));
-        if (is_drvr_fatigue_or_distracted && 
-            tsm_is_bit_set(p_int_sig->int_sig_bitfields,
-                           BITNO_HANDS_CAN_TAKEOVER) &&
-            tsm_is_bit_set(p_int_sig->int_sig_bitfields,
-                           BITNO_LONG_TIME_LNG_OVERRIDE)) {
-            return true;
-        }
-    }
-
-    if ((p_int_sig->drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED) &&
-        (tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
-                        BITNO_HANDS_CAN_TAKEOVER))) {
+tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop) {
+    boolean is_brake_set = tsm_is_bit_set(bitfields, BITNO_SET_BRAKE);
+    if (is_brake_set) {
         return true;
     }
 
-    if (tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
-                       BITNO_DRVR_HANDTORQUE_OVERRIDE_ST)) {
+    boolean is_lat_override =
+        tsm_is_bit_set(bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
+    if (is_lat_override) {
+        return true;
+    }
+
+    if (mcu_unable_to_stop) {
         return true;
     }
 
     return false;
 }
 
+static boolean
+tsm_is_exit_with_lat_ctrl(const enum tsm_drvr_attention_st drvr_att_st, 
+                           const uint32 bitfields) {
+    boolean is_drvr_awake = (drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED);
+    if (is_drvr_awake) {
+        if (tsm_is_bit_set(bitfields, BITNO_HANDS_CAN_TAKEOVER) ||
+            tsm_is_bit_set(bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
+            return true;
+        }
+    } else {
+        if (tsm_is_bit_set(bitfields, BITNO_HANDS_CAN_TAKEOVER) &&
+            tsm_is_bit_set(bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static boolean
+tsm_is_exit_with_hands_to(const enum tsm_drvr_attention_st drvr_att_st, 
+                          const uint32 bitfields) {
+    boolean is_drvr_awake = (drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED);
+    if (is_drvr_awake) {
+        if (tsm_is_bit_set(bitfields, BITNO_HANDS_CAN_TAKEOVER)) {
+            return true;
+        }
+    } 
+    return false;
+}
+
+static boolean
+tsm_is_drvr_takeover(const boolean mcu_unable_to_stop, 
+                     const struct tsm_intermediate_sig* p_int_sig,
+                     const enum exit_type ex_type) {
+    enum tsm_drvr_attention_st drvr_att_st = p_int_sig->drvr_att_st;
+    if (ex_type == EXIT_FROM_TOR_STAND) {
+        // todo:
+    } else {
+        boolean ret =
+            tsm_is_directly_exit(p_int_sig->int_sig_bitfields, 
+                                 mcu_unable_to_stop);
+        if (ret) {
+            return true;
+        }
+
+        if (ex_type == EXIT_FROM_EMERGENCY_STOP) {
+            boolean is_lng_override =
+                tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                               BITNO_LNG_OVERRIDE_ST);
+            if (is_lng_override) {
+                return true;
+            }
+
+            boolean ret =
+                tsm_is_exit_with_hands_to(drvr_att_st, 
+                                          p_int_sig->int_sig_bitfields);
+            if (ret) {
+                return true;
+            }
+        } else if (ex_type == EXIT_FROM_BOTH_CTRL) {
+            boolean ret = 
+                tsm_is_exit_with_hands_to(drvr_att_st,
+                                          p_int_sig->int_sig_bitfields);
+            if (ret) {
+                return true;
+            }
+        } else if (ex_type == EXIT_FROM_LAT_CTRL) {
+            boolean ret = 
+                tsm_is_exit_with_lat_ctrl(drvr_att_st,
+                                          p_int_sig->int_sig_bitfields);
+            if (ret) {
+                return true;
+            }
+        } else if (ex_type == EXIT_FROM_MRC) {
+            boolean is_lng_override =
+                tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                               BITNO_LNG_OVERRIDE_ST);
+            if (is_lng_override) {
+                return true;
+            }
+
+            boolean is_hands_to =
+                tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                               BITNO_HANDS_CAN_TAKEOVER);
+            if (is_hands_to) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+static size_t
+tsm_run_func_exit_sit(uint8* p_event, size_t num, 
+                      const boolean mcu_unable_to_stop,
+                      const struct tsm_intermediate_sig* p_int_sig) {
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             EXIT_FROM_EMERGENCY_STOP)) {
+        p_event[num++] = EVENT_EMERGENCY_STOP_EXIT;
+    }
+
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             EXIT_FROM_BOTH_CTRL)) {
+        p_event[num++] = EVENT_BOTH_CTRL_EXIT;
+    }
+
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             EXIT_FROM_LAT_CTRL)) {
+        p_event[num++] = EVENT_LAT_CTRL_EXIT;
+    }
+
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             EXIT_FROM_TOR_STAND)) {
+        p_event[num++] = EVENT_WAIT_EPB_RES;
+    }
+
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             EXIT_FROM_MRC)) {
+        p_event[num++] = EVENT_MRC_EXIT;
+    }
+
+    return num;
+}
+
 static size_t
 tsm_run_situation(uint8* p_event, 
                   const enum tsm_mcu_mrm_func_st mrm_state,
                   const struct tsm_entry* p_entry,
-                  const struct tsm_intermediate_sig* p_int_sig) {
+                  const struct tsm_intermediate_sig* p_int_sig,
+                  const enum tsm_warning_st warning_state) {
     size_t event_num = 0;
 
-    enum fault_level mcu_fault_lvl = p_entry->in_diag->Fault_Level;
+    boolean mcu_unable_to_stop = 
+        (!p_entry->in_diag->is_support_lane_stop &&
+         !p_entry->in_diag->is_support_emergency_stop);
     enum nda_func_st cur_nda_st = 
         p_entry->in_can_gate->Soc_Info.automaton_state.NDA_Function_State;
     event_num = 
-        tsm_run_initial_sit(p_event, event_num, mcu_fault_lvl, cur_nda_st);
+        tsm_run_initial_sit(p_event, event_num, mcu_unable_to_stop, cur_nda_st);
+
+    // judge mcu_activate_emergecy_stop
 
     enum tsm_veh_standstill_st veh_standstill_st =
         p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt;
-    boolean can_mrm_activate = tsm_check_activation_cond(p_entry, p_int_sig);
-    boolean is_drvr_lng_ctrl = 
-            (tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
-                            BITNO_LNG_OVERRIDE_ST) ||
-             tsm_is_bit_set(p_int_sig->int_sig_bitfields,
-                            BITNO_SET_BRAKE));
     if (veh_standstill_st == VEH_STANDSTILL_ST_STANDSTILL) {
-        event_num = 
-            tsm_run_standstill_sit(p_event, event_num, can_mrm_activate);
+        p_event[event_num++] = EVENT_VEH_STANDSTILL;
     } else if (veh_standstill_st == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
-        enum pc_st plan_ctrl_st = 
-            p_entry->in_planlite->planningLite_control_state;
+        boolean is_need_to_switch_es = 
+            (((p_entry->in_diag->is_support_lane_stop = false) && 
+            (p_entry->in_diag->is_support_emergency_stop = true)) ||
+            (p_entry->in_planlite->planningLite_control_state == PC_MRM));
+        boolean can_mrm_activate = 
+            tsm_check_activation_cond(p_entry, p_int_sig);
+        boolean is_drvr_lng_ctrl = 
+            tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
+                           BITNO_LNG_OVERRIDE_ST);
         event_num =
-            tsm_run_non_standstill_st(p_event, event_num, plan_ctrl_st,
+            tsm_run_non_standstill_st(p_event, event_num, is_need_to_switch_es,
                                       can_mrm_activate, is_drvr_lng_ctrl);
-    } else if (true/* warning st */) {
-    
+        if (warning_state == WARNING_MRM_LEVEL_4) {
+            p_event[event_num++] = EVENT_TOR_SWITCH_MRM;
+        }
+        if (is_drvr_lng_ctrl) {
+            p_event[event_num++] = EVENT_DRIVER_LNG_OVERRIDE;
+        } else {
+            p_event[event_num++] = EVENT_DRIVER_NO_LNG_OVERRIDE;
+        }
     } else {
         // do nothing;
     }
 
-    boolean is_drvr_to = tsm_is_drvr_takeover(mrm_state, p_int_sig);
     event_num = 
-        tsm_run_func_exit_sit(p_event, event_num, mcu_fault_lvl, is_drvr_to);
+        tsm_run_func_exit_sit(p_event, event_num, mcu_unable_to_stop, 
+                              p_int_sig);
 
     return event_num;
 }
 
 enum tsm_mcu_mrm_func_st
 tsm_run_user(const enum tsm_mcu_mrm_func_st mrm_state,
+             const enum tsm_warning_st warning_state,
              const struct tsm_entry* p_entry, 
              const struct tsm_intermediate_sig* p_int_sig,
              struct tsm_action* p_action) {
     typedef void (*tsm_post_process) (struct tsm_action* p_action);
     static const tsm_post_process post_process[] = {
-        [MCU_MRM_PASSIVE] = tsm_passive_post_process,
-        [MCU_MRM_STANDBY] = tsm_standby_post_process,
-        [MCU_MRM_FAILURE_LIGHTING] = tsm_lighting_post_process,
-        [MCU_MRM_TOR_LNG_LAT_CTRL] = tsm_tor_both_post_process,
-        [MCU_MRM_TOR_LAT_CTRL] = tsm_tor_lat_post_process,
-        [MCU_MRM_TOR_STAND] = tsm_tor_stand_post_process,
-        [MCU_MRM_ACTIVE_LNG_LAT_CTRL] = tsm_mrm_both_post_process,
-        [MCU_MRM_ACTIVE_LAT_CTRL] = tsm_mrm_lat_post_process,
+        [MCU_PASSIVE] = tsm_passive_post_process,
+        [MCU_STANDBY] = tsm_standby_post_process,
+        [MCU_FAILURE] = tsm_failure_post_process,
+        [MCU_TOR_LNG_LAT_CTRL] = tsm_tor_both_post_process,
+        [MCU_TOR_LAT_CTRL] = tsm_tor_lat_post_process,
+        [MCU_TOR_STAND] = tsm_tor_stand_post_process,
+        [MCU_MRM_EMERGENCY_BOTH_CTRL] = tsm_mrm_es_post_process,
+        [MCU_MRM_LNG_LAT_CTRL] = tsm_mrm_both_post_process,
+        [MCU_MRM_LAT_CTRL] = tsm_mrm_lat_post_process,
         [MCU_MRM_MRC] = tsm_mrc_post_process,
     };  
 
     uint8 event_id[MAX_EVENT_SIZE];
     size_t event_num = 
-        tsm_run_situation(event_id, mrm_state, p_entry, p_int_sig);
+        tsm_run_situation(event_id, mrm_state, p_entry, p_int_sig, 
+                          warning_state);
 
     if (event_num == 0) {
         post_process[mrm_state](p_action);

@@ -214,6 +214,7 @@ tsm_monitor_nda_false_override(const tsm_soc_st* last_soc_st,
     static boolean last_lat_ovrd_st = false;
     boolean ret = false;
 
+    
     static struct tsm_atomic_data false_ovrd_ad[] = {
         {
             .cur_st =  NDA_LNG_OVERRIDE,
@@ -287,6 +288,8 @@ tsm_monitor_nda_ignore_override(const tsm_soc_st* last_soc_st,
     static uint16 timecnt = 0;
     boolean ret = false;
 
+    
+
     boolean is_lng_or_lat_ovrd = 
         (tsm_is_bit_set(p_int_sig->int_sig_bitfields, BITNO_LNG_OVERRIDE_ST) || 
          tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
@@ -310,7 +313,7 @@ tsm_monitor_nda_false_ovrd_to_act(const tsm_soc_st* last_soc_st,
                                   struct tsm_intermediate_sig* p_int_sig) {
     static boolean enter_normal_monitor = true;
     static boolean last_lat_ovrd = false;
-    boolean ret = true;
+    boolean ret = false;
 
     enum nda_func_st cur_nda_st = 
         p_entry->in_can_gate->Soc_Info.automaton_state.NDA_Function_State;
@@ -512,18 +515,17 @@ void
 tsm_run_monitor(const struct tsm_entry* p_entry, 
                 struct tsm_intermediate_sig* p_int_sig) {
     
-    typedef boolean (*monitor_func) (const tsm_soc_st* last_soc_st,
+    typedef boolean (*monitor_func) (const tsm_soc_st* p_last_soc_st,
                                      const struct tsm_entry* p_entry,
                                      struct tsm_intermediate_sig* p_int_sig);
     
-    static tsm_soc_st last_soc_st = 
-    {
+    static tsm_soc_st last_soc_st = {
         .NDA_Function_State = NDA_DISABLE,
         .ICA_Function_State = ICA_DISABLE,
         .ACC_Function_State = ACC_DISABLE,
     };
     
-    static monitor_func monitor_table[] = {
+    static const monitor_func monitor_table[] = {
         tsm_monitor_nda_false_activate, tsm_monitor_nda_false_override,
         tsm_monitor_nda_ignore_override, tsm_monitor_nda_false_ovrd_to_act,
         tsm_monitor_nda_stuck_in_ovrd, tsm_monitor_false_upgrade_nda,
