@@ -1,6 +1,6 @@
 # Origin Input
 Vehicle_Signal_To_Tsm:
-  BCS_VehicleStandStillSt: 1
+  BCS_VehicleStandStillSt: 0
   BCM_LeftTurnLampSt: 0
   BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 0
@@ -12,18 +12,30 @@ Vehicle_Signal_To_Tsm:
   HOD_CalibrationSt: 0
   HOD_FaultStatus: 0
   EPS_StrngWhlTorqVD: 1
-  EPS_StrngWhlTorq: -1.7
+  EPS_StrngWhlTorq: -1.1
   EMS_GasPedalActPstforMRRVD: 1
   EMS_GasPedalActPstforMRR: 19.0
+  BCS_VehSpd: 31.0
+  BCS_YawRate: 19.0
+  BCS_ActVehLaltrlAccel: 1.0
+  BCS_ActVehLongAccel: 6.0
+  EPS_SteeringAngleSpd: 20.0
+  VCU_CrntGearLvlVD: 1
+  VCU_CrntGearLvl: 1
+  VCU_VehRdySt: 1
+  EPB_SwitchStVD: 1
+  EPB_SwitchSt: 1
+  EPB_SysSt: 0
+  BCM_KeySt: 2
 
 Soc_Info:
   NDA_Function_State: 14
   ICA_Function_State: 0
 
 From_Diag:
-  com_fault_with_soc: 1
-  is_support_lane_stop: 0
-  is_support_emergency_stop: 0
+  com_fault_with_soc: 0
+  is_support_lane_stop: 1
+  is_support_emergency_stop: 1
   
 From_Planlite:
   planningLite_control_state: 0

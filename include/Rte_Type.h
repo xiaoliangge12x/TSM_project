@@ -56,7 +56,9 @@ typedef struct
     uint8_t Relative_Location_Accuracy;
     uint8_t HandsOn_HandsFree_Flag;
     uint8_t NDA_Planning_Request; 
-    float   HD_Map_Warning_Dist
+    uint8_t NDA_System_Fault_Level;
+    int     HD_Map_Warning_Dist;
+    uint8_t is_sys_open_flag;     // NDA系统是否请求双闪
 } Dt_RECORD_Monitor_Signal_Source;
 
 typedef struct
@@ -112,7 +114,7 @@ typedef struct
     uint8_t  BCM_PsngrDoorAjarSt;
     uint8_t  BCM_RLDoorAjarSt;
     uint8_t  BCM_RRDoorAjarSt; 
-    uint8_t  BCM_TrunkAjarSt;    
+    uint8_t  BCM_TrunkAjarSt;
     uint8_t  SRS_DriverSeatBeltSt;
     uint8_t  BCS_YawRateSt;     
     float    BCS_YawRate;    
@@ -135,6 +137,8 @@ typedef struct
     uint8_t  BCM_RightTurnLampSt;
     uint8_t  BCS_VehSpdVD;
     float    BCS_VehSpd;
+    uint16_t RLS_RainfallLevel; 
+    float    cal_light_lux_up;
 } Dt_RECORD_VehicleSignal2TSM;
 
 typedef struct tagTSM2Soc

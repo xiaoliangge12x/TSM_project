@@ -16,59 +16,12 @@
 
 #define MAX_LOG_LEN 50
 
-static uint16  K_MissOverrideTime_Cnt = 5U; // Active未响应进入Override St的时间阈值
-static uint16  K_StuckOverrideTime_Cnt = 5U; // Override未响应进入Active St的时间间隔
-static uint16  K_MissQuitTime_Cnt = 5U;
+uint16  K_MissOverrideTime_Cnt = 5U; // Active未响应进入Override St的时间阈值
+uint16  K_StuckOverrideTime_Cnt = 5U; // Override未响应进入Active St的时间间隔
+uint16  K_MissQuitTime_Cnt = 5U;
 
-// boolean IsRainFallSatisfy(const Veh_Sig* vehicle_signal)
-// {
-//     // TODO:
-//     return true;
-// }
-
-// boolean IsOddSatisfy(const CheckMoment activation_time, const Veh_Sig* vehicle_signal, const Soc_Info* soc_info)
-// {
-//     // TODO:  默认激活前 不满足， 激活后 满足
-//     if (!soc_info->monitor_sig_src.EEA_Status || !IsRainFallSatisfy(vehicle_signal)) {
-//         return false;
-//     }
-
-//     if ((activation_time == BEFORE_ACTIVATION) && 
-//         (!vehicle_signal->BCS_VehSpdVD || (vehicle_signal->BCS_VehSpdVD && (vehicle_signal->BCS_VehSpd > K_VehSpdThreshold)))) {
-//         return false;
-//     }
-
-//     if (activation_time == BEFORE_ACTIVATION) {
-//         return (soc_info->monitor_sig_src.HD_Map_Warning_Dist > K_GeoEndDist_NotActive);
-//     } else {
-//         return (soc_info->monitor_sig_src.HD_Map_Warning_Dist > K_GeoEndDist_Active);
-//     }
-
-//     return true;
-// }
-
-// boolean IsNdaPassiveVD(const Soc_Info* soc_info) 
-// {
-//     // TODO:
-//     return true;
-// }
-
-// boolean IsPhaseInAvailable() 
-// {
-//     // TODO:
-//     return true;
-// }
-
-// boolean IsNdaNeedPhaseIn()
-// {
-//     return true;
-// }
-
-// boolean ValidateNdaAvlCond(const Soc_Info* soc_info)
-// {
-
-// }
 struct tsm_atomic_data {
+    enum nda_func_st last_st;
     enum nda_func_st cur_st;
     boolean* p_flag;
     uint16*  p_timecnt;
@@ -158,12 +111,14 @@ tsm_monitor_nda_false_activate(const tsm_soc_st* last_soc_st,
 
     static struct tsm_atomic_data false_act_ad[] = {
         {
+            .last_st = NDA_STANDBY_NORMAL,
             .cur_st =  NDA_ACTIVE_HANDS_ON_NORMAL,
             .p_flag = &normal_enter_monitor,
             .p_timecnt = NULL_PTR,
             .log = "NDA transit from Stanby to Hands On Normal",
         },
         {
+            .last_st = NDA_STANDBY_NORMAL,
             .cur_st = NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
             .p_flag = &standactive_enter_monitor,
             .p_timecnt = NULL_PTR,
@@ -188,7 +143,7 @@ tsm_monitor_nda_false_activate(const tsm_soc_st* last_soc_st,
 
     enum nda_func_st last_nda_st = last_soc_st->NDA_Function_State;
     for (size_t i = 0; i < ARRAY_LEN(false_act_ad); ++i) {
-        if ((last_nda_st == NDA_STANDBY_NORMAL) && 
+        if ((last_nda_st == false_act_ad[i].last_st) && 
             (cur_nda_st == false_act_ad[i].cur_st)) {
             if (!(*false_act_ad[i].p_flag)) {
                 tsm_reset_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
@@ -217,36 +172,109 @@ tsm_monitor_nda_false_override(const tsm_soc_st* last_soc_st,
     
     static struct tsm_atomic_data false_ovrd_ad[] = {
         {
+            .last_st = NDA_ACTIVE_HANDS_ON_NORMAL,
             .cur_st =  NDA_LNG_OVERRIDE,
             .p_flag = &enter_lng_orvd_monitor,
             .p_timecnt = NULL_PTR,
-            .log = "NDA transit from active to lng override",
+            .log = "NDA transit from hands on normal to lng override",
         },
         {
-            .cur_st = NDA_LNG_LAT_OVERRIDE,
+            .last_st = NDA_ACTIVE_HANDS_ON_NORMAL,
+            .cur_st =  NDA_LNG_LAT_OVERRIDE,
             .p_flag = &enter_both_orvd_monitor,
             .p_timecnt = NULL_PTR,
-            .log = "NDA transit from active to both override",
+            .log = "NDA transit from hands on normal to both override",
         },
         {
-            .cur_st = NDA_LAT_OVERRIDE,
+            .last_st = NDA_ACTIVE_HANDS_ON_NORMAL,
+            .cur_st =  NDA_LAT_OVERRIDE,
             .p_flag = &enter_lat_orvd_monitor,
             .p_timecnt = NULL_PTR,
-            .log = "NDA transit from active to lat override",
+            .log = "NDA transit from hands on normal to lat override",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
+            .cur_st =  NDA_LNG_OVERRIDE,
+            .p_flag = &enter_lng_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from hands on standactive to lng override",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
+            .cur_st =  NDA_LNG_LAT_OVERRIDE,
+            .p_flag = &enter_both_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from hands on standactive to both override",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_WAIT,
+            .cur_st =  NDA_LNG_OVERRIDE,
+            .p_flag = &enter_lng_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from hands on standwait to lng override",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_WAIT,
+            .cur_st =  NDA_LNG_LAT_OVERRIDE,
+            .p_flag = &enter_both_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from hands on standwait to both override",
+        },
+        {
+            .last_st = NDA_LNG_OVERRIDE,
+            .cur_st =  NDA_LNG_LAT_OVERRIDE,
+            .p_flag = &enter_both_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from lng override to both override",
+        },
+        {
+            .last_st = NDA_LNG_OVERRIDE,
+            .cur_st =  NDA_LAT_OVERRIDE,
+            .p_flag = &enter_lat_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from lng override to lat override",
+        },
+        {
+            .last_st = NDA_LAT_OVERRIDE,
+            .cur_st =  NDA_LNG_OVERRIDE,
+            .p_flag = &enter_lng_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from lat override to lng override",
+        },
+        {
+            .last_st = NDA_LAT_OVERRIDE,
+            .cur_st =  NDA_LNG_LAT_OVERRIDE,
+            .p_flag = &enter_both_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from lat override to both override",
+        },
+        {
+            .last_st = NDA_LNG_LAT_OVERRIDE,
+            .cur_st =  NDA_LNG_OVERRIDE,
+            .p_flag = &enter_lng_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from both override to lng override",
+        },
+        {
+            .last_st = NDA_LNG_LAT_OVERRIDE,
+            .cur_st =  NDA_LAT_OVERRIDE,
+            .p_flag = &enter_both_orvd_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from both override to lat override",
         },
     };
 
     enum nda_func_st cur_nda_st = 
         p_entry->in_can_gate->Soc_Info.automaton_state.NDA_Function_State;
+    uint32 int_sig_bitfield = p_int_sig->int_sig_bitfields;
+    boolean lng_ovrd_st = 
+        tsm_is_bit_set(int_sig_bitfield, BITNO_LNG_OVERRIDE_ST);
+    last_lat_ovrd_st =
+        tsm_is_bit_set(int_sig_bitfield, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
+    boolean nda_avl_after_act =
+        tsm_is_bit_set(int_sig_bitfield, BITNO_NDA_AVL_AFTER_ACT);
+
     if (tsm_is_nda_in_active(cur_nda_st)) {
-        uint32 int_sig_bitfield = p_int_sig->int_sig_bitfields;
-        boolean lng_ovrd_st = 
-            tsm_is_bit_set(int_sig_bitfield, BITNO_LNG_OVERRIDE_ST);
-        last_lat_ovrd_st =
-            tsm_is_bit_set(int_sig_bitfield, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
-        boolean nda_avl_after_act =
-            tsm_is_bit_set(int_sig_bitfield, BITNO_NDA_AVL_AFTER_ACT);
-        
         enter_lat_orvd_monitor = 
             (nda_avl_after_act && !lng_ovrd_st && last_lat_ovrd_st);
         enter_lng_orvd_monitor = 
@@ -259,22 +287,19 @@ tsm_monitor_nda_false_override(const tsm_soc_st* last_soc_st,
     enum nda_func_st last_nda_st = last_soc_st->NDA_Function_State;
     for (size_t i = 0; i < ARRAY_LEN(false_ovrd_ad); ++i) {
         if (cur_nda_st == false_ovrd_ad[i].cur_st) {
-            if ((cur_nda_st == NDA_LAT_OVERRIDE)) {
-                if (last_nda_st == NDA_ACTIVE_HANDS_ON_NORMAL) {
-                    ret = tsm_false_transit_post_handle(
-                            *false_ovrd_ad[i].p_flag,
-                            last_lat_ovrd_st,
-                            false_ovrd_ad[i].log,
-                            p_int_sig);
-                }
-            } else {
-                if (tsm_is_nda_in_active(last_nda_st)) {
-                    ret = tsm_false_transit_post_handle(
-                            *false_ovrd_ad[i].p_flag,
-                            last_lat_ovrd_st,
-                            false_ovrd_ad[i].log,
-                            p_int_sig);
-                }
+            if (last_nda_st == false_ovrd_ad[i].last_st) {
+                ret = tsm_false_transit_post_handle( *false_ovrd_ad[i].p_flag,
+                                                     last_lat_ovrd_st,
+                                                     false_ovrd_ad[i].log,
+                                                     p_int_sig);
+            }
+            if (tsm_is_nda_in_override(cur_nda_st)) {
+                enter_lat_orvd_monitor = 
+                    (nda_avl_after_act && !lng_ovrd_st && last_lat_ovrd_st);
+                enter_lng_orvd_monitor = 
+                    (nda_avl_after_act && lng_ovrd_st && !last_lat_ovrd_st);
+                enter_both_orvd_monitor =
+                    (nda_avl_after_act && lng_ovrd_st && last_lat_ovrd_st);
             }
         }
     }
@@ -362,18 +387,21 @@ tsm_monitor_nda_stuck_in_ovrd(const tsm_soc_st* last_soc_st,
 
     static struct tsm_atomic_data stuck_in_ovrd_ad[] = {
         {
+            .last_st = NDA_DISABLE,
             .cur_st =  NDA_LNG_LAT_OVERRIDE,
             .p_flag = &is_not_both_ovrd,
             .p_timecnt = &timecnt_both_ovrd,
             .log = "NDA stuck in both override st",
         },
         {
+            .last_st = NDA_DISABLE,
             .cur_st = NDA_LNG_OVERRIDE,
             .p_flag = &is_not_lng_ovrd,
             .p_timecnt = &timecnt_lng_ovrd,
             .log = "NDA stuck in lng override st",
         },
         {
+            .last_st = NDA_DISABLE,
             .cur_st = NDA_LAT_OVERRIDE,
             .p_flag = &is_not_lat_ovrd,
             .p_timecnt = &timecnt_lat_ovrd,
@@ -511,6 +539,79 @@ tsm_monitor_nda_unable_exit(const tsm_soc_st* last_soc_st,
     return ret;
 }
 
+static boolean
+tsm_monitor_active_false_transit(const tsm_soc_st* last_soc_st,
+                                 const struct tsm_entry* p_entry,
+                                 struct tsm_intermediate_sig* p_int_sig) {
+    static boolean enter_standactive_monitor = true;
+    static boolean enter_normal_monitor = true;
+    static boolean enter_standwait_monitor = true;
+    boolean ret = false;
+    
+    static struct tsm_atomic_data act_false_transit_ad[] = {
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_NORMAL,
+            .cur_st =  NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
+            .p_flag = &enter_standactive_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from Normal to Standactive",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
+            .cur_st = NDA_ACTIVE_HANDS_ON_NORMAL,
+            .p_flag = &enter_normal_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from Standactive to Normal",
+        },
+        {
+            .last_st = NDA_ACTIVE_HANDS_ON_STAND_ACTIVE,
+            .cur_st = NDA_ACTIVE_HANDS_ON_STAND_WAIT,
+            .p_flag = &enter_standwait_monitor,
+            .p_timecnt = NULL_PTR,
+            .log = "NDA transit from Standactive to Standwait",
+        }
+    };
+
+    enum nda_func_st cur_nda_st = 
+        p_entry->in_can_gate->Soc_Info.automaton_state.NDA_Function_State;
+    enum nda_func_st last_nda_st = last_soc_st->NDA_Function_State;
+
+    enum tsm_veh_standstill_st veh_still_st = 
+        p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt;
+    uint32 int_sig_bitfields = p_int_sig->int_sig_bitfields;
+    boolean nda_avl_after_act = 
+        tsm_is_bit_set(int_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT);
+    enum tsm_drvr_attention_st drvr_att_st = p_int_sig->drvr_att_st;
+    uint16 parking_meter_cnt = p_int_sig->parking_meter_cnt;
+
+    for (size_t i = 0; i < ARRAY_LEN(act_false_transit_ad); ++i) {
+        if (cur_nda_st == act_false_transit_ad[i].cur_st) {
+            if(last_nda_st == act_false_transit_ad[i].last_st) {
+                if (!(*act_false_transit_ad[i].p_flag)) {
+                    tsm_reset_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
+                                               BITNO_NDA_TRANSIT_NORMAL_FLAG);
+                    ret = true;
+#ifdef _NEED_LOG
+                    LOG(COLOR_RED, "Trigger Mrm, monitor %s abnormally.", 
+                        act_false_transit_ad[i].log);
+#endif
+                }
+            }
+            enter_standactive_monitor = 
+                (veh_still_st != VEH_STANDSTILL_ST_NOT_STANDSTILL);
+            // todo:
+            enter_normal_monitor = 
+                (nda_avl_after_act && 
+                (drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED));
+            // todo:
+            enter_standwait_monitor = 
+                (parking_meter_cnt >= K_Standstill_waitTime_Cnt);
+        }
+    }
+
+    return ret;
+}
+
 void 
 tsm_run_monitor(const struct tsm_entry* p_entry, 
                 struct tsm_intermediate_sig* p_int_sig) {
@@ -529,7 +630,7 @@ tsm_run_monitor(const struct tsm_entry* p_entry,
         tsm_monitor_nda_false_activate, tsm_monitor_nda_false_override,
         tsm_monitor_nda_ignore_override, tsm_monitor_nda_false_ovrd_to_act,
         tsm_monitor_nda_stuck_in_ovrd, tsm_monitor_false_upgrade_nda,
-        tsm_monitor_nda_unable_exit
+        tsm_monitor_nda_unable_exit, tsm_monitor_active_false_transit
     };
 
     for (size_t i = 0; i < ARRAY_LEN(monitor_table); ++i) {

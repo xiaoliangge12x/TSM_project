@@ -97,11 +97,82 @@ tsm_getptr_gaspedal_actpos(struct tsm_simulink_input* simu_in) {
     return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
         EMS_GasPedalActPstforMRR);
 }
+static void*
+tsm_getptr_veh_spd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCS_VehSpd);
+}
+
+static void*
+tsm_getptr_yaw_rate(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCS_YawRate);
+}
+
+static void*
+tsm_getptr_lat_accel(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCS_ActVehLaltrlAccel);
+}
+
+static void*
+tsm_getptr_lng_accel(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCS_ActVehLongAccel);
+}
+
+static void*
+tsm_getptr_steering_ang_spd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPS_SteeringAngleSpd);
+}
+
+static void*
+tsm_getptr_drvr_gear_vd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        VCU_CrntGearLvlVD);
+}
+
+static void*
+tsm_getptr_drvr_gear(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        VCU_CrntGearLvl);
+}
+
+static void*
+tsm_getptr_veh_rdy_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        VCU_VehRdySt);
+}
 
 static void*
 tsm_getptr_gaspedal_actpos_vd(struct tsm_simulink_input* simu_in) {
     return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
         EMS_GasPedalActPstforMRRVD);
+}
+
+static void*
+tsm_getptr_epb_switch_st_vd(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPB_SwitchStVD);
+}
+
+static void*
+tsm_getptr_epb_switch_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPB_SwitchSt);
+}
+
+static void*
+tsm_getptr_epb_sys_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        EPB_SysSt);
+}
+
+static void*
+tsm_getptr_key_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
+        BCM_KeySt);
 }
 
 static void*
@@ -218,6 +289,66 @@ static const struct tsm_test_signal ts_sig[] = {
         .sig_type = TYPE_FLOAT32,
         .signal_name = "EMS_GasPedalActPstforMRR",
         .get_signal_ptr = tsm_getptr_gaspedal_actpos,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "BCS_VehSpd",
+        .get_signal_ptr = tsm_getptr_veh_spd,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "BCS_YawRate",
+        .get_signal_ptr = tsm_getptr_yaw_rate,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "BCS_ActVehLaltrlAccel",
+        .get_signal_ptr = tsm_getptr_lat_accel,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "BCS_ActVehLongAccel",
+        .get_signal_ptr = tsm_getptr_lng_accel,
+    },
+    {
+        .sig_type = TYPE_FLOAT32,
+        .signal_name = "EPS_SteeringAngleSpd",
+        .get_signal_ptr = tsm_getptr_steering_ang_spd,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "VCU_CrntGearLvlVD",
+        .get_signal_ptr = tsm_getptr_drvr_gear_vd,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "VCU_CrntGearLvl",
+        .get_signal_ptr = tsm_getptr_drvr_gear,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "VCU_VehRdySt",
+        .get_signal_ptr = tsm_getptr_veh_rdy_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EPB_SwitchStVD",
+        .get_signal_ptr = tsm_getptr_epb_switch_st_vd,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EPB_SwitchSt",
+        .get_signal_ptr = tsm_getptr_epb_switch_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "EPB_SysSt",
+        .get_signal_ptr = tsm_getptr_epb_sys_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "BCM_KeySt",
+        .get_signal_ptr = tsm_getptr_key_st,
     },
     {
         .sig_type = TYPE_UINT8,

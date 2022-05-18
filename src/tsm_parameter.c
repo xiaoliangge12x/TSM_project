@@ -7,10 +7,6 @@ float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone = 0;      // 少于2区的�
 float32 K_TakeOverAvailHandTorqThreshold_TwoZone     = 0;      // 2区的具备接管能力的手力矩阈值
 float32 K_TakeOverAvailHandTorqThreshold_ThreeZone   = 0;      // 3区的具备接管能力的手力矩阈值
 
-float32 K_GeoEndDist_NotActive                       = 10.0;   // NDA非激活时的高精地图报警距离阈值
-float32 K_GeoEndDist_Active                          = 10.0;   // NDA激活时的高精地图报警距离阈值
-float32 K_VehSpdThreshold                            = 120.0;  // 车速阈值
-
 #ifdef CONSUME_TIME
 
 void 
@@ -63,4 +59,29 @@ tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st) {
             (mrm_st == MCU_MRM_LNG_LAT_CTRL) ||
             (mrm_st == MCU_MRM_LAT_CTRL) ||
             (mrm_st == MCU_MRM_MRC));
+}
+
+boolean
+tsm_is_nda_active(const enum nda_func_st nda_st) {
+    return ((nda_st == NDA_ACTIVE_EPB_PHASE_IN) || 
+            (nda_st == NDA_ACTIVE_HANDS_FREE_NORMAL) ||
+            (nda_st == NDA_ACTIVE_HANDS_FREE_STAND_ACTIVE) || 
+            (nda_st == NDA_ACTIVE_HANDS_FREE_STAND_WAIT) ||
+            (nda_st == NDA_ACTIVE_HANDS_ON_NORMAL) || 
+            (nda_st == NDA_ACTIVE_HANDS_ON_STAND_ACTIVE) ||
+            (nda_st == NDA_ACTIVE_HANDS_ON_STAND_WAIT) || 
+            (nda_st == NDA_ACTIVE_EPB_PHASE_IN) ||
+            (nda_st == NDA_LNG_OVERRIDE) || 
+            (nda_st == NDA_LNG_LAT_OVERRIDE) ||
+            (nda_st == NDA_LAT_OVERRIDE) || 
+            (nda_st == NDA_TOR_LAT_CTRL) ||
+            (nda_st == NDA_TOR_LNG_LAT_CTRL) || 
+            (nda_st == NDA_TOR_STAND) ||
+            (nda_st == NDA_MRM_ACTIVE_PO_LAT_CTRL) || 
+            (nda_st == NDA_MRM_ACTIVE_PO_LNG_LAT_CTRL) ||
+            (nda_st == NDA_MRM_ACTIVE_CP_LAT_CTRL) || 
+            (nda_st == NDA_MRM_ACTIVE_CP_LNG_LAT_CTRL) ||
+            (nda_st == NDA_MRM_ACTIVE_ES_LAT_CTRL) || 
+            (nda_st == NDA_MRM_ACTIVE_ES_LNG_LAT_CTRL) ||
+            (nda_st == NDA_MRC));
 }

@@ -268,7 +268,7 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     (void)tsm_validate_timestamp(&entry);
 
     static struct tsm_intermediate_sig int_sig;
-    tsm_preprocess_input(&int_sig, &entry, mrm_state);
+    tsm_preprocess_input(&entry, mrm_state, &int_sig);
 
     tsm_set_bit_in_bitfields(&int_sig.int_sig_bitfields, 
                              BITNO_NDA_TRANSIT_NORMAL_FLAG);

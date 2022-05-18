@@ -30,6 +30,7 @@ typedef Dt_RECORD_VehicleSignal2TSM tsm_veh_sig;
 typedef Dt_RECORD_Soc_Info tsm_soc_info;
 typedef Dt_RECORD_Automaton_State tsm_soc_st;
 typedef Dt_RECORD_Diag2TSM tsm_diag;
+typedef Dt_RECORD_Monitor_Signal_Source tsm_monitor_sig;
 
 enum tsm_drvr_attention_st {
     DRVR_AWAKE_NOT_DISTRACTED,
@@ -226,6 +227,7 @@ enum tsm_bitno_int_sig
 struct tsm_intermediate_sig {
     enum tsm_brk_duration_type brk_du_type;
     enum tsm_drvr_attention_st drvr_att_st;
+    uint16 parking_meter_cnt;
     uint32 int_sig_bitfields; 
 };
 
@@ -272,5 +274,8 @@ tsm_reset_bit_in_bitfields(uint32* bitfields, const uint8 bitno);
 
 boolean
 tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st);
+
+boolean
+tsm_is_nda_active(const enum nda_func_st nda_st);
 
 #endif
