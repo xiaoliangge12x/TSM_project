@@ -23,6 +23,6 @@
 void 
 tsm_preprocess_input(struct tsm_intermediate_sig* p_int_sig,
                      const struct tsm_entry* p_entry,
-                     const enum tsm_mcu_mrm_func_st mrm_st);
+                     const enum tsm_ifc_mrm_func_st mrm_st);
 
 #endif

@@ -169,7 +169,7 @@ tsm_check_gas_pedal_applied(const tsm_veh_sig* p_veh_sig) {
 static void
 tsm_process_lng_override(const tsm_veh_sig* p_veh_sig,
                          struct tsm_intermediate_sig* p_int_sig, 
-                         const enum tsm_mcu_mrm_func_st mrm_st) {
+                         const enum tsm_ifc_mrm_func_st mrm_st) {
     enum acc_drvr_orvd
     {
         NO_OVERRIDE,
@@ -273,7 +273,7 @@ tsm_check_brake_applied(const tsm_veh_sig* p_veh_sig) {
 static void
 tsm_process_brake_behavior(const tsm_veh_sig* p_veh_sig,
                            struct tsm_intermediate_sig* p_int_sig,
-                           const enum tsm_mcu_mrm_func_st mrm_st) {
+                           const enum tsm_ifc_mrm_func_st mrm_st) {
     static uint16 timecnt = 0;
 
     boolean is_brake_applied = tsm_check_brake_applied(p_veh_sig);
@@ -331,7 +331,7 @@ tsm_calculate_orvd_torque(const tsm_veh_sig* p_veh_sig) {
 static void
 tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
                          struct tsm_intermediate_sig* p_int_sig,
-                         const enum tsm_mcu_mrm_func_st mrm_st) {
+                         const enum tsm_ifc_mrm_func_st mrm_st) {
     static boolean is_lat_override = false;
 #ifndef CONSUME_TIME
     static uint16 timecnt = 0;
@@ -370,6 +370,10 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
 #endif
     }
 
+    LOG(COLOR_GREEN, "<tsm_process_lat_override> orvd_torque_threshold: %f, "
+        "strng_whl_torque: %f, is_lat_override: %d", orvd_torque_threshold,
+        strng_whl_torque, is_lat_override);
+
     (is_lat_override) ?
         tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields, 
                                  BITNO_DRVR_HANDTORQUE_OVERRIDE_ST) :
@@ -380,7 +384,7 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
 static void
 tsm_process_driver_behavior(struct tsm_intermediate_sig* p_int_sig,
                             const struct tsm_entry* p_entry,
-                            const enum tsm_mcu_mrm_func_st mrm_st) {
+                            const enum tsm_ifc_mrm_func_st mrm_st) {
     tsm_veh_sig veh_sig = p_entry->in_can_gate->Vehicle_Signal_To_Tsm;
     tsm_process_drvr_attention_st(&veh_sig, p_int_sig);
 
@@ -391,24 +395,9 @@ tsm_process_driver_behavior(struct tsm_intermediate_sig* p_int_sig,
     tsm_process_lat_override(&veh_sig, p_int_sig, mrm_st);
 }
 
-static void
-tsm_process_monitor_signal() {
-    // todo
-    return;
-}
-
 void 
 tsm_preprocess_input(struct tsm_intermediate_sig* p_int_sig,
                      const struct tsm_entry* p_entry,
-                     const enum tsm_mcu_mrm_func_st mrm_st) {
+                     const enum tsm_ifc_mrm_func_st mrm_st) {
     tsm_process_driver_behavior(p_int_sig, p_entry, mrm_st);
-
-    tsm_process_monitor_signal();
 }
-
-// boolean IsDriverNotFatigue() 
-// {
-//     return ((g_inter_media_msg.driver_attention_st == AWAKE_AND_NOT_DISTRACTED) ||
-//             (g_inter_media_msg.driver_attention_st == AWAKE_AND_LOOK_REARVIEW_OR_HU) ||
-//             (g_inter_media_msg.driver_attention_st == AWAKE_AND_DISTRACTED));
-// }

@@ -2,6 +2,9 @@
 aux_source_directory(. SRC_FILE)
 FILE(GLOB BASE_FILE "./base/*.c")
 # list(REMOVE_ITEM SRC_FILE "./tsm_warning.c")
+if (INJECT_TEST)
+    list(REMOVE_ITEM SRC_FILE "./open_test.c;./tsm_main.c")
+endif()
 
 if (NOT OPEN_TEST)
     list(REMOVE_ITEM SRC_FILE "./open_test.c")
@@ -16,7 +19,11 @@ set(INCLUDE_PATH ${CMAKE_SOURCE_DIR}/include/
                  ${CMAKE_SOURCE_DIR}/src/)
 include_directories(${INCLUDE_PATH})
 
-add_executable(tsm ${SRC_FILE})
+if (INJECT_TEST)
+    add_library(tsm SHARED ${SRC_FILE})
+else()
+    add_executable(tsm ${SRC_FILE})
+endif()
 
 if (OPEN_TEST)
     target_link_libraries(tsm yaml)

@@ -154,35 +154,35 @@ tsm_mrm_lvl_five_post_process() {
 static size_t
 tsm_run_warning_sit(uint8* event_id,
                     const enum tsm_warning_st warning_st,
-                    const enum tsm_mcu_mrm_func_st mrm_st,
+                    const enum tsm_ifc_mrm_func_st mrm_st,
                     const struct tsm_entry* p_entry, 
                     const struct tsm_intermediate_sig* p_int_sig) {
     size_t event_num = 0;
     static uint16 tor_level3_du_cnt = 0;
 
     uint8 soc_tor_fault =
-        p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
-    boolean is_mcu_in_tor = ((mrm_st == MCU_TOR_LNG_LAT_CTRL) ||
-                             (mrm_st == MCU_TOR_LAT_CTRL));
-    boolean is_mcu_in_mrm = ((mrm_st == MCU_MRM_LNG_LAT_CTRL) ||
-                             (mrm_st == MCU_MRM_LAT_CTRL));
+        p_entry->in_can_gate->Soc_Info.soc_tor_req;
+    boolean is_ifc_in_tor = ((mrm_st == IFC_TOR_LNG_LAT_CTRL) ||
+                             (mrm_st == IFC_TOR_LAT_CTRL));
+    boolean is_ifc_in_mrm = ((mrm_st == IFC_MRM_LNG_LAT_CTRL) ||
+                             (mrm_st == IFC_MRM_LAT_CTRL));
     if (soc_tor_fault == TOR_LEVEL3_FAULT) {
         event_id[event_num++] = EVENT_COME_LEVEL_3;
-    } else if (is_mcu_in_tor) {
+    } else if (is_ifc_in_tor) {
         event_id[event_num++] = EVENT_COME_LEVEL_3;
     }
 
-    if (is_mcu_in_mrm) {
+    if (is_ifc_in_mrm) {
         event_id[event_num++] = EVENT_CHECK_MRM_ST;
-    } else if (mrm_st == MCU_MRM_MRC) {
+    } else if (mrm_st == IFC_MRM_MRC) {
         event_id[event_num++] = EVENT_CHECK_MRC_ST;
-    } else if (mrm_st == MCU_PASSIVE) {
+    } else if (mrm_st == IFC_PASSIVE) {
         event_id[event_num++] = EVENT_CHECK_PASSIVE_ST;
     } else {
         // do nothing;
     }
 
-    if (is_mcu_in_mrm) {
+    if (is_ifc_in_mrm) {
         event_id[event_num++] = EVENT_RAMPUP_LEVEL_4;
     } else if (warning_st == WARNING_TOR_LEVEL_3) {
         if (tor_level3_du_cnt > K_Tor3RampUpToMrm4Time_Cnt) {
@@ -198,7 +198,7 @@ tsm_run_warning_sit(uint8* event_id,
 
 enum tsm_warning_st
 tsm_run_warning_user(const enum tsm_warning_st warning_st, 
-                     const enum tsm_mcu_mrm_func_st mrm_st,
+                     const enum tsm_ifc_mrm_func_st mrm_st,
                      const struct tsm_entry* p_entry, 
                      const struct tsm_intermediate_sig* p_int_sig) {
     typedef void (*tsm_post_process)();

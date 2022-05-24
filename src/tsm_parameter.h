@@ -139,18 +139,19 @@ enum base_event
     BASE_EVENT_WARNING_START = 50,
 };
 
-enum tsm_mcu_mrm_func_st
+enum tsm_ifc_mrm_func_st
 {
-    MCU_PASSIVE = BASE_ST_TSM_START + 1,
-    MCU_STANDBY,
-    MCU_FAILURE,
-    MCU_TOR_LNG_LAT_CTRL,
-    MCU_TOR_LAT_CTRL,
-    MCU_TOR_STAND,
-    MCU_MRM_LNG_LAT_CTRL,
-    MCU_MRM_LAT_CTRL,
-    MCU_MRM_EMERGENCY_BOTH_CTRL,
-    MCU_MRM_MRC
+    IFC_PASSIVE = BASE_ST_TSM_START + 1,
+    IFC_STANDBY,
+    IFC_FAILURE,
+    IFC_ACTIVE_SUPPORT_SOC,
+    IFC_TOR_LNG_LAT_CTRL,
+    IFC_TOR_LAT_CTRL,
+    IFC_TOR_STAND,
+    IFC_MRM_LNG_LAT_CTRL,
+    IFC_MRM_LAT_CTRL,
+    IFC_MRM_EMERGENCY_BOTH_CTRL,
+    IFC_MRM_MRC
 };
 
 enum tsm_warning_st {
@@ -212,7 +213,6 @@ typedef enum
 enum tsm_bitno_int_sig
 {
     BITNO_FAILURE_LIGHTING_FLAG,
-    BITNO_NDA_TRANSIT_NORMAL_FLAG,
     BITNO_DRVR_HANDTORQUE_OVERRIDE_ST,
     BITNO_LNG_OVERRIDE_ST,
     BITNO_LONG_TIME_LNG_OVERRIDE,
@@ -271,6 +271,6 @@ void
 tsm_reset_bit_in_bitfields(uint32* bitfields, const uint8 bitno);
 
 boolean
-tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st);
+tsm_is_mrm_active(const enum tsm_ifc_mrm_func_st mrm_st);
 
 #endif

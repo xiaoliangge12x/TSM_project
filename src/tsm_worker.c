@@ -13,7 +13,6 @@
 
 #include "tsm_worker.h"
 #include "tsm_signalhandling.h"
-#include "tsm_monitor.h"
 #include "tsm_user.h"
 #include "tsm_warning.h"
 
@@ -184,7 +183,7 @@ static void
 tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
                       const struct tsm_action* p_action,
                       const Dt_RECORD_TimeStamp* tsm_ts,
-                      const enum tsm_mcu_mrm_func_st mrm_state, 
+                      const enum tsm_ifc_mrm_func_st mrm_state, 
                       Dt_RECORD_TSM2CANGATE* exit_can_gate) {
     memcpy(&exit_can_gate->Tsm_TimeStamp, tsm_ts, sizeof(Dt_RECORD_TimeStamp));
     memcpy(&exit_can_gate->Decision_Arbitrator_TimeStamp, 
@@ -218,7 +217,7 @@ tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
 static void
 tsm_process_exit(const struct tsm_entry* p_entry,
                  const struct tsm_action* p_action,
-                 const enum tsm_mcu_mrm_func_st mrm_state, 
+                 const enum tsm_ifc_mrm_func_st mrm_state, 
                  struct tsm_exit* p_exit) {
     Dt_RECORD_TimeStamp tsm_timestamp;
     tsm_calculate_timestamp(&tsm_timestamp);
@@ -261,7 +260,7 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
                  rty_DeTSM2DecisionArbitrator, rty_DeTSM2Diag, 
                  rty_DeTSM2HMI, rty_DeTSM2CANGATE);
 
-    static enum tsm_mcu_mrm_func_st mrm_state = MCU_PASSIVE;
+    static enum tsm_ifc_mrm_func_st mrm_state = IFC_PASSIVE;
     static enum tsm_warning_st warning_state = NO_WARNING;
     static struct tsm_action action;
     // todo:
@@ -269,13 +268,6 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
 
     static struct tsm_intermediate_sig int_sig;
     tsm_preprocess_input(&int_sig, &entry, mrm_state);
-
-    tsm_set_bit_in_bitfields(&int_sig.int_sig_bitfields, 
-                             BITNO_NDA_TRANSIT_NORMAL_FLAG);
-
-    if (!tsm_is_mrm_active(mrm_state)) {
-        tsm_run_monitor(&entry, &int_sig);
-    }
 
     mrm_state = 
         tsm_run_user(mrm_state, warning_state, &entry, &int_sig, &action);

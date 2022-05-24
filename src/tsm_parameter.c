@@ -56,11 +56,11 @@ tsm_reset_bit_in_bitfields(uint32* bitfields, const uint8 bitno) {
 }
 
 boolean
-tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st) {
-    return ((mrm_st == MCU_TOR_LNG_LAT_CTRL) ||
-            (mrm_st == MCU_TOR_LAT_CTRL) ||
-            (mrm_st == MCU_TOR_STAND) ||
-            (mrm_st == MCU_MRM_LNG_LAT_CTRL) ||
-            (mrm_st == MCU_MRM_LAT_CTRL) ||
-            (mrm_st == MCU_MRM_MRC));
+tsm_is_mrm_active(const enum tsm_ifc_mrm_func_st mrm_st) {
+    return ((mrm_st == IFC_TOR_LNG_LAT_CTRL) ||
+            (mrm_st == IFC_TOR_LAT_CTRL) ||
+            (mrm_st == IFC_TOR_STAND) ||
+            (mrm_st == IFC_MRM_LNG_LAT_CTRL) ||
+            (mrm_st == IFC_MRM_LAT_CTRL) ||
+            (mrm_st == IFC_MRM_MRC));
 }

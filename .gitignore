@@ -54,3 +54,6 @@ dkms.conf
 
 # vscode configuration
 .vscode/
+
+# py cache
+*.pyc

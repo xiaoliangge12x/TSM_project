@@ -19,7 +19,7 @@
 enum tsm_ctrl_arb_req
 {
     CTRLARB_RESPOND_TO_SOC = 0,
-    CTRLARB_RESPOND_TO_MCU,
+    CTRLARB_RESPOND_TO_IFC,
 };
 
 enum tsm_ovrd_st
@@ -43,10 +43,11 @@ struct tsm_action {
     enum tsm_mrm_st mrm_activation_st;
     enum tsm_ctrl_arb_req control_arb_request;
     uint8 request_mrm;
+    uint16*  p_passive_timer_cnt;
 };
 
-enum tsm_mcu_mrm_func_st
-tsm_run_user(const enum tsm_mcu_mrm_func_st mrm_state,
+enum tsm_ifc_mrm_func_st
+tsm_run_user(const enum tsm_ifc_mrm_func_st mrm_state,
              const enum tsm_warning_st warning_state,
              const struct tsm_entry* p_entry, 
              const struct tsm_intermediate_sig* p_int_sig,

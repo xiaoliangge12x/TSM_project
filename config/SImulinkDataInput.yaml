@@ -21,8 +21,8 @@ Soc_Info:
   ICA_Function_State: 0
 
 From_Diag:
-  com_fault_with_soc: 1
-  is_support_lane_stop: 0
+  com_fault_with_adc: 0
+  is_support_lane_stop: 1
   is_support_emergency_stop: 0
   
 From_Planlite:

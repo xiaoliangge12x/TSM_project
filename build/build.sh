@@ -19,6 +19,8 @@ function main()
         if [ $1 == 'open_test' ]; then
             cmake .. -DOPEN_TEST=ON && make -j8
             exit 0
+        elif [ $1 == 'injection_test' ]; then
+            cmake .. -DINJECT_TEST=ON && make -j8
         else
             echo "wrong params value"
             exit 1

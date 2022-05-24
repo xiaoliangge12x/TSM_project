@@ -65,8 +65,7 @@ typedef struct
     Dt_RECORD_Automaton_State       automaton_state;     
     Dt_RECORD_VehicleControlReq     soc_hmi_request;      
     Dt_RECORD_Monitor_Signal_Source monitor_sig_src;
-    uint8_t frc_fault_from_soc;
-    uint8_t request_mrm_from_soc;
+    uint8_t soc_tor_req;
 } Dt_RECORD_Soc_Info;
 
 typedef struct
@@ -169,13 +168,14 @@ typedef struct
 {
     Dt_RECORD_TimeStamp         TimeStamp;
     Dt_RECORD_VehicleSignal2TSM Vehicle_Signal_To_Tsm;
-    Dt_RECORD_Soc_Info          Soc_Info;             
+    Dt_RECORD_Soc_Info          Soc_Info;
+    uint8_t                     mcu_tor_req;        
 } Dt_RECORD_CANGATE2TSM;
 
 typedef struct
 {
     Dt_RECORD_TimeStamp Diag_TimeStamp;
-    uint8_t             com_fault_with_soc; 
+    uint8_t             com_fault_with_adc; 
     uint8_t             is_support_lane_stop;
     uint8_t             is_support_emergency_stop;
 } Dt_RECORD_Diag2TSM;

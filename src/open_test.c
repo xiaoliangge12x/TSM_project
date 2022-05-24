@@ -105,8 +105,8 @@ tsm_getptr_gaspedal_actpos_vd(struct tsm_simulink_input* simu_in) {
 }
 
 static void*
-tsm_getptr_com_fault_with_soc(struct tsm_simulink_input* simu_in) {
-    return &(simu_in->rt_in_diag_tsm.com_fault_with_soc);
+tsm_getptr_com_fault_with_adc(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.com_fault_with_adc);
 }
 
 static void*
@@ -221,8 +221,8 @@ static const struct tsm_test_signal ts_sig[] = {
     },
     {
         .sig_type = TYPE_UINT8,
-        .signal_name = "com_fault_with_soc",
-        .get_signal_ptr = tsm_getptr_com_fault_with_soc,
+        .signal_name = "com_fault_with_adc",
+        .get_signal_ptr = tsm_getptr_com_fault_with_adc,
     },
     {
         .sig_type = TYPE_UINT8,
