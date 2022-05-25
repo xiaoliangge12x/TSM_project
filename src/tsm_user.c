@@ -236,7 +236,6 @@ tsm_passive_post_process(struct tsm_action* p_action) {
     if (passive_timer_cnt > K_StayInPassiveTime_Cnt) {
         passive_timer_cnt = K_StayInPassiveTime_Cnt + 1;
     } else {
-        LOG(COLOR_YELLOW, "run here");
         ++passive_timer_cnt;
     }
 }

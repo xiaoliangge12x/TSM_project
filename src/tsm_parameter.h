@@ -217,14 +217,23 @@ enum tsm_bitno_int_sig
     BITNO_LNG_OVERRIDE_ST,
     BITNO_LONG_TIME_LNG_OVERRIDE,
     BITNO_HANDS_CAN_TAKEOVER,
+    BITNO_HANDS_TOUCH_DETECTED,
     BITNO_SET_BRAKE,
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
     BITNO_AS_ACTIVE,
 };
 
+enum tsm_lng_ovrd_duration_type {
+    NO_LNG_OVERRIDE = 0,
+    INSTANT_LNG_OVERRIDE,
+    SHORT_TIME_LNG_OVERRIDE,
+    LONG_TIME_LNG_OVERRIDE,
+};
+
 struct tsm_intermediate_sig {
     enum tsm_brk_duration_type brk_du_type;
+    enum tsm_lng_ovrd_duration_type lng_ovrd_du_type;
     enum tsm_drvr_attention_st drvr_att_st;
     uint32 int_sig_bitfields; 
 };
