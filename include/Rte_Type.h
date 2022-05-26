@@ -66,6 +66,7 @@ typedef struct
     Dt_RECORD_VehicleControlReq     soc_hmi_request;      
     Dt_RECORD_Monitor_Signal_Source monitor_sig_src;
     uint8_t soc_tor_req;
+    uint8_t soc_mrm_active_st;
 } Dt_RECORD_Soc_Info;
 
 typedef struct
@@ -175,9 +176,10 @@ typedef struct
 typedef struct
 {
     Dt_RECORD_TimeStamp Diag_TimeStamp;
-    uint8_t             com_fault_with_adc; 
+    uint8_t             com_fault_with_adc;    // need change the name
     uint8_t             is_support_lane_stop;
     uint8_t             is_support_emergency_stop;
+    uint8_t             is_support_transmit_ctrl;
 } Dt_RECORD_Diag2TSM;
 
 typedef struct

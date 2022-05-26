@@ -494,7 +494,7 @@ tsm_process_hands_detection(const tsm_veh_sig* p_veh_sig,
                 timecnt = 0;
             }
 
-            float32 hands_touch_time = (float32)(20 * timecnt) / 1000;
+            // float32 hands_touch_time = (float32)(20 * timecnt) / 1000;
             // LOG(COLOR_YELLOW, "<tsm_process_hands_detection> "
             //     "handson_torque_threshold: %f, time elapse %fs.", 
             //     handson_torque_threshold, hands_touch_time);
