@@ -27,6 +27,11 @@ uint16  K_WiperFastTime_Cnt = 500U;
 uint16  K_ODCHandTorqCheckTime_Cnt = 5U;
 uint16  K_TakeOverAvailHandTorqCheckTime_Cnt = 5U;
 uint16  K_Standstill_waitTime_Cnt = 15000U;    // 停车计时  300s
+uint16  K_HDCCtrlFalseTime_Cnt = 20U;
+uint16  K_VDCActiveFalseTime_Cnt = 10U;
+uint16  K_ABSActiveFalseTime_Cnt = 15U;
+uint16  K_TCSActiveFalseTime_Cnt = 15U;
+uint16  K_EBDActiveFalseTime_Cnt = 10U;
 
 uint16  K_YAW_TimeThreshold_Cnt = 25U;
 uint16  K_LatAcc_TimeThreshold_Cnt = 25U;
@@ -971,9 +976,104 @@ tsm_is_epb_satisfy(const tsm_veh_sig* p_veh_sig) {
 }
 
 static boolean
-tsm_is_chassis_safety_satisfy() {
+tsm_is_actuator_active(const boolean false_flag, 
+                       const uint16 timecnt_threshold, 
+                       uint16* cur_timecnt) {
+    boolean ret = false;
+    
+    if (false_flag) {
+        if (*cur_timecnt > timecnt_threshold) {
+            ret = true;
+        } else {
+            ++(*cur_timecnt);
+            ret = false;
+        }
+    } else {
+        *cur_timecnt = 0;
+        ret = false;
+    }
+
+    return ret;
+}
+
+static boolean
+tsm_is_chassis_safety_satisfy(const tsm_veh_sig* p_veh_sig) {
     // todo:
-    return true;
+    enum tsm_hdc_ctrl_st {
+        OFF,
+        ON_ACTIVE_BRAKING,
+        ON_NOT_ACTIVE_BRAKING,
+        NOT_USED
+    };
+
+    enum tsm_actuator_active_st {
+        NOT_ACTIVE,
+        ACTIVE
+    };
+
+    enum tsm_cdd_available_st {
+        NOT_AVAILABLE,
+        AVAILABLE
+    };
+
+    static boolean is_chassis_safety = true;
+    uint8_t hdc_ctrl_st = p_veh_sig->BCS_HDCCtrlSt;
+    uint8_t vdc_active_st = p_veh_sig->BCS_VDCActiveS;
+    uint8_t abs_active_st = p_veh_sig->BCS_ABSActiveSt;
+    uint8_t tcs_active_st = p_veh_sig->BCS_TCSActiveSt;
+    uint8_t ebd_active_st = p_veh_sig->BCS_EBDActiveSt;
+    uint8_t cdd_available = p_veh_sig->BCS_CDDAvailable;
+
+    boolean is_hdc_ctrl_not_active = 
+        ((hdc_ctrl_st == OFF) || (hdc_ctrl_st == ON_NOT_ACTIVE_BRAKING));
+    
+    if ((vdc_active_st == NOT_ACTIVE) && is_hdc_ctrl_not_active &&
+        (abs_active_st == NOT_ACTIVE) && (tcs_active_st == NOT_ACTIVE) &&
+        (ebd_active_st == NOT_ACTIVE) && (cdd_available == AVAILABLE)) {
+        is_chassis_safety = true;
+    }
+
+    boolean is_hdc_ctrl_active = 
+        ((hdc_ctrl_st == ON_ACTIVE_BRAKING) || (hdc_ctrl_st == NOT_USED));
+    static uint16 hdc_false_timecnt = 0;
+    is_hdc_ctrl_active = 
+        tsm_is_actuator_active(is_hdc_ctrl_active, K_HDCCtrlFalseTime_Cnt,
+                               &hdc_false_timecnt);
+
+    boolean is_vdc_active = (vdc_active_st == ACTIVE);
+    static uint16 vdc_false_timecnt = 0;
+    is_vdc_active =
+        tsm_is_actuator_active(is_vdc_active, K_VDCActiveFalseTime_Cnt,
+                               &vdc_false_timecnt);
+    
+    boolean is_abs_active = (abs_active_st == ACTIVE);
+    static uint16 abs_false_timecnt = 0;
+    is_abs_active = 
+        tsm_is_actuator_active(is_abs_active, K_ABSActiveFalseTime_Cnt,
+                               &abs_false_timecnt);
+
+    boolean is_tcs_active = (tcs_active_st == ACTIVE);
+    static uint16 tcs_false_timecnt = 0;
+    is_tcs_active =
+        tsm_is_actuator_active(is_tcs_active, K_TCSActiveFalseTime_Cnt,
+                               &tcs_false_timecnt);
+    
+    boolean is_ebd_active = (ebd_active_st == ACTIVE);
+    static uint16 ebd_false_timecnt = 0;
+    is_ebd_active = 
+        tsm_is_actuator_active(is_ebd_active, K_EBDActiveFalseTime_Cnt,
+                               &ebd_false_timecnt);
+    
+    boolean is_cdd_not_available = (cdd_available == NOT_ACTIVE);
+
+    if (is_hdc_ctrl_active || is_hdc_ctrl_active || is_abs_active || 
+        is_tcs_active || is_ebd_active || is_cdd_not_available) {
+        is_chassis_safety = false;
+    }
+
+    // LOG(COLOR_YELLOW, "<tsm_is_chassis_safety_satisfy> is_chassis_safety: %d",
+    //     is_chassis_safety);
+    return is_chassis_safety;
 }
 
 static boolean
@@ -1026,7 +1126,15 @@ tsm_is_veh_cond_satisfy(const struct tsm_entry* p_entry) {
     enum nda_func_st nda_st = 
         p_entry->in_can_gate->Soc_Info.automaton_state.NDA_Function_State;
 
-    // todo: lack veh position and posture
+    boolean is_veh_posture_satisfy = 
+        p_entry->in_can_gate->Soc_Info.monitor_sig_src.Vehicle_Posture_St;
+    boolean is_veh_position_satisfy = 
+        p_entry->in_can_gate->Soc_Info.monitor_sig_src.Vehicle_Position_St;
+    if (!is_veh_posture_satisfy || !is_veh_position_satisfy) {
+        LOG(COLOR_RED, "<tsm_is_veh_cond_satisfy> vehicle position or posture "
+            "is not satisfy.");
+    }
+    
     return (tsm_is_veh_door_closed(&veh_sig) &&
             tsm_is_seat_belt_fasten(&veh_sig) &&
             tsm_is_veh_in_drive_gear(&veh_sig) &&
@@ -1037,7 +1145,8 @@ tsm_is_veh_cond_satisfy(const struct tsm_entry* p_entry) {
             tsm_is_epb_satisfy(&veh_sig) &&
             tsm_is_chassis_safety_satisfy(&veh_sig) && 
             !tsm_is_user_set_hazard_light(&veh_sig, &monitor_sig) &&
-            tsm_is_key_st_on(&veh_sig));
+            tsm_is_key_st_on(&veh_sig) && is_veh_posture_satisfy &&
+            is_veh_position_satisfy);
 }
 
 static boolean
@@ -1128,7 +1237,7 @@ tsm_is_odd_avl(const struct tsm_entry* p_entry,
         p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCS_VehSpd;
     boolean is_veh_spd_lower = (veh_spd < K_VehSpdThresholdInOddCheck);
     float32 cal_light_lux =
-        p_entry->in_can_gate->Vehicle_Signal_To_Tsm.cal_light_lux_up;
+        p_entry->in_can_gate->Vehicle_Signal_To_Tsm.RLS_AMBBrightness;
     boolean is_lux_up = (cal_light_lux > K_lightLuxThresholdInOddCheck);
     uint32 rainfall_level = 
         p_entry->in_can_gate->Vehicle_Signal_To_Tsm.RLS_RainfallLevel;

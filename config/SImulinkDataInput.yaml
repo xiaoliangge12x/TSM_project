@@ -1,8 +1,6 @@
 # Origin Input
 Vehicle_Signal_To_Tsm:
   BCS_VehicleStandStillSt: 0
-  BCM_LeftTurnLampSt: 0
-  BCM_RightTurnLampSt: 0
   BCM_HazardLampSt: 0
   EBB_BrkPedalAppliedSt: 1
   EBB_BrkPedalApplied: 0
@@ -27,6 +25,12 @@ Vehicle_Signal_To_Tsm:
   EPB_SwitchSt: 1
   EPB_SysSt: 0
   BCM_KeySt: 2
+  BCS_HDCCtrlSt: 4
+  BCS_VDCActiveS: 0
+  BCS_ABSActiveSt: 0
+  BCS_TCSActiveSt: 0
+  BCS_EBDActiveSt: 0
+  BCS_CDDAvailable: 1
 
 Soc_Info:
   NDA_Function_State: 14

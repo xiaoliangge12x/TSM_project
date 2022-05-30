@@ -300,15 +300,15 @@ tsm_check_activation_cond(const struct tsm_entry* p_entry,
         p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
     boolean soc_req_mrm =
         p_entry->in_can_gate->Soc_Info.request_mrm_from_soc;
-    boolean soc_com_fault = p_entry->in_diag->com_fault_with_soc;
+    boolean mcu_mrm_fault = p_entry->in_diag->mcu_mrm_system_fault_level;
     if ((soc_frc_fault == TOR_LEVEL3_FAULT) || soc_req_mrm) {
 #ifdef _NEED_LOG
         LOG(COLOR_RED, "soc tor fault or soc request trigger mrm.");
 #endif
         check_ret = true;
-    } else if (soc_com_fault) {
+    } else if (mcu_mrm_fault) {
 #ifdef _NEED_LOG
-        LOG(COLOR_RED, "com fault with soc trigger mrm");
+        LOG(COLOR_RED, "mcu mrm fault trigger mrm");
 #endif
         check_ret = true;
     } else if (!tsm_is_bit_set(p_int_sig->int_sig_bitfields, 

@@ -18,7 +18,6 @@ enum tsm_test_sig_type {
 
 struct tsm_simulink_input {
     Dt_RECORD_CtrlArb2TSM            rt_in_ctrlarb_tsm;
-    Dt_RECORD_DecisionArbitrator2TSM rt_in_deciarb_tsm;
     Dt_RECORD_CANGATE2TSM            rt_in_cangate_tsm;
     Dt_RECORD_Diag2TSM               rt_in_diag_tsm;
     Dt_RECORD_PLANLITE2TSM           rt_in_planlite_tsm;
@@ -27,9 +26,7 @@ struct tsm_simulink_input {
 struct tsm_simulink_output {
     Dt_RECORD_TSM2PLANLITE           rt_out_tsm_planlite;
     Dt_RECORD_TSM2CtrlArb            rt_out_tsm_ctrlarb;
-    Dt_RECORD_TSM2DecisionArbitrator rt_out_tsm_deciarb;
     Dt_RECORD_TSM2Diag               rt_out_tsm_diag;
-    Dt_RECORD_TSM2HMI                rt_out_tsm_hmi;
     Dt_RECORD_TSM2CANGATE            rt_out_tsm_cangate;
 };
 

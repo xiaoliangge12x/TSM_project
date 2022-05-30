@@ -234,7 +234,6 @@ struct tsm_intermediate_sig {
 struct tsm_entry
 {
     Dt_RECORD_CtrlArb2TSM*            in_ctrl_arb;
-    Dt_RECORD_DecisionArbitrator2TSM* in_deci_arb;
     Dt_RECORD_CANGATE2TSM*            in_can_gate;
     Dt_RECORD_Diag2TSM*               in_diag;
     Dt_RECORD_PLANLITE2TSM*           in_planlite;
@@ -244,9 +243,7 @@ struct tsm_exit
 {
     Dt_RECORD_TSM2PLANLITE*           out_planlite;
     Dt_RECORD_TSM2CtrlArb*            out_ctrl_arb;
-    Dt_RECORD_TSM2DecisionArbitrator* out_deci_arb;
     Dt_RECORD_TSM2Diag*               out_diag;
-    Dt_RECORD_TSM2HMI*                out_hmi;
     Dt_RECORD_TSM2CANGATE*            out_can_gate;
 };
 
