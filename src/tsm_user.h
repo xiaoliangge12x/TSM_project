@@ -38,8 +38,6 @@ enum tsm_mrm_st
 };
 
 struct tsm_action {
-    enum tsm_ovrd_st lng_override_flag;
-    enum tsm_ovrd_st lat_override_flag;
     enum tsm_mrm_st mrm_activation_st;
     enum tsm_ctrl_arb_req control_arb_request;
     uint8 request_mrm;

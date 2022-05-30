@@ -1264,9 +1264,12 @@ tsm_is_nda_passive_vd() {
 }
 
 static boolean
-tsm_is_nda_need_phase_in() {
+tsm_is_nda_need_phase_in(const struct tsm_entry* p_entry) {
     // todo:
-    return false;
+    return (!p_entry->in_ctrl_arb->as_info.AS_Switch_St.AEB &&
+            !p_entry->in_ctrl_arb->as_info.AS_Switch_St.AES &&
+            !p_entry->in_ctrl_arb->as_info.AS_Switch_St.ELK &&
+            !p_entry->in_ctrl_arb->as_info.AS_Switch_St.ESA);
 }
 
 static boolean
@@ -1310,7 +1313,7 @@ tsm_process_monitor_signal(const struct tsm_entry* p_entry,
         p_entry->in_can_gate->Soc_Info.monitor_sig_src.NDA_System_Fault_Level;
     enum tsm_nda_enable_st nda_enable_st =
         p_entry->in_can_gate->Soc_Info.monitor_sig_src.NDA_Enable_State;
-    boolean is_nda_need_phase_in = tsm_is_nda_need_phase_in();
+    boolean is_nda_need_phase_in = tsm_is_nda_need_phase_in(p_entry);
     boolean is_sd_hd_match_st = 
         p_entry->in_can_gate->Soc_Info.monitor_sig_src.SD_Map_HD_Map_Match_St;
     boolean is_user_set_navi =

@@ -13,11 +13,10 @@ typedef struct
 
 typedef struct 
 {
+    uint8_t ADAS_HWA_TurnLampReq;  // 0 - no request, 1 - left request on, 2 - right request on, 3 - not used
+    uint8_t ADAS_SafeStopLampWarn; // 0 - no warning , 1 - level 1, 2 - level 2, 3 - not used
     uint8_t EPB_Request;           // MCU依据automaton st 发送，
-    uint8_t Hazard_Light_Request;  // 透传SOC的双闪请求
     uint8_t Ecall_Request;         // MCU依据automaton st 发送
-    uint8_t Left_Lamp_Request;     // 透传SOC的左转向灯请求
-    uint8_t Right_Lamp_Request;    // 透传SOC的右转向灯请求
 } Dt_RECORD_VehicleStateReq; 
 
 typedef struct 
@@ -56,9 +55,7 @@ typedef struct
     Dt_RECORD_Automaton_State       automaton_state;
     Dt_RECORD_Hmi_Request           soc_hmi_req;    // add
     Dt_RECORD_Monitor_Signal_Source monitor_sig_src;   // add
-    uint8_t                         soc_hazard_light_request;  // tor, mrm, mrc
-    uint8_t                         soc_left_lamp_request;
-    uint8_t                         soc_right_lamp_request;    // change
+    uint8_t                         soc_veh_lamp_req;    // soc侧传过来的灯光开启请求， 0 - no req , 1 - hazard light req, 2 - left lamp, 3 - right lamp
     uint8_t                         frc_fault_from_soc;     // add, SOC的FRC请求MCU接管故障等级
     uint8_t                         request_mrm_from_soc;   // add, soc_请求接管
 } Dt_RECORD_Soc_Info;
@@ -133,9 +130,14 @@ typedef struct tagTSM2Soc
 
 typedef struct 
 {
-    uint8_t AS_lng_ctrl_st;    // 00 - None   01 - AEB   02 - ESA   03 - AES
-    uint8_t AS_lat_ctrl_st;    // 00 - None   01 - LKA   02 - ELK   03 - LCC ...
-    uint8_t AS_Switch_St;   // 功能开关状态 BIT-0 AEB开关  BIT-1 ESA开关  BIT-2 AES开关 ...       
+    uint8_t AS_lng_ctrl_st;    // 0 - false   1 - true
+    uint8_t AS_lat_ctrl_st;    // 0 - false   1 - true 
+    struct {
+        uint8_t AEB:1;
+        uint8_t AES:1;
+        uint8_t ESA:1;
+        uint8_t ELK:1;
+    } AS_Switch_St;     
 } Dt_RECORD_AS_Info;
 
 //****************************************************** input *******************************************//

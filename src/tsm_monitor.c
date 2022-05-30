@@ -55,7 +55,8 @@ tsm_false_transit_post_handle(const boolean monitor, const boolean lat_ovrd_st,
             LOG(COLOR_RED, "Trigger Mrm, monitor %s abnormally.", log);
 #endif
         } else {
-            // todo:
+            tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
+                                     BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM);
 #ifdef _NEED_LOG
             LOG(COLOR_YELLOW, "No trigger Mrm, but monitor %s abnormally.", 
                 log);
@@ -79,7 +80,8 @@ tsm_stuck_post_handle(uint16* p_timecnt, const boolean flag,
                 tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
                                BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
             if (is_lat_ovrd) {
-                // todo:
+                tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
+                    BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM);
 #ifdef _NEED_LOG
                 LOG(COLOR_YELLOW, "No Trigger Mrm, but monitor %s", log);
 #endif
@@ -349,7 +351,8 @@ tsm_monitor_nda_false_ovrd_to_act(const tsm_soc_st* last_soc_st,
             tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
                            BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
         boolean nda_avl_after_act =
-            tsm_is_bit_set(p_int_sig->int_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT);
+            tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
+                           BITNO_NDA_AVL_AFTER_ACT);
 
         enter_normal_monitor = 
             (!nda_avl_after_act || lng_ovrd_st || last_lat_ovrd) ? false : true;
@@ -523,7 +526,8 @@ tsm_monitor_nda_unable_exit(const tsm_soc_st* last_soc_st,
             strncpy(log, "NDA override st unable to exit", MAX_LOG_LEN);
         if (stuck_cond) {
             if (timecnt_nda_unable_exit > K_MissQuitTime_Cnt) {
-                // todo:
+                tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
+                    BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM);
 #ifdef _NEED_LOG
                 LOG(COLOR_YELLOW, "No Trigger Mrm, but monitor %s", log);
 #endif

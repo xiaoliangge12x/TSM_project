@@ -238,6 +238,18 @@ tsm_getptr_acc_func_st(struct tsm_simulink_input* simu_in) {
         automaton_state.ACC_Function_State);
 }
 
+static void*
+tsm_getptr_veh_posture_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Soc_Info.\
+        monitor_sig_src.Vehicle_Posture_St);
+}
+
+static void*
+tsm_getptr_veh_position_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_cangate_tsm.Soc_Info.\
+        monitor_sig_src.Vehicle_Position_St);
+}
+
 static const struct tsm_test_signal ts_sig[] = {
     {
         .sig_type = TYPE_UINT8,
@@ -423,6 +435,16 @@ static const struct tsm_test_signal ts_sig[] = {
         .sig_type = TYPE_UINT8,
         .signal_name = "ICA_Function_State",
         .get_signal_ptr = tsm_getptr_ica_func_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "Vehicle_Posture_St",
+        .get_signal_ptr = tsm_getptr_veh_posture_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "Vehicle_Position_St",
+        .get_signal_ptr = tsm_getptr_veh_position_st,
     },
     {
         .sig_type = TYPE_UINT8,

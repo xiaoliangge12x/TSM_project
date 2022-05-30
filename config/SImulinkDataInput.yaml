@@ -35,6 +35,8 @@ Vehicle_Signal_To_Tsm:
 Soc_Info:
   NDA_Function_State: 14
   ICA_Function_State: 0
+  Vehicle_Posture_St: 1
+  Vehicle_Position_St: 1
 
 From_Diag:
   com_fault_with_soc: 0

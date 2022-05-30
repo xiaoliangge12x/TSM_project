@@ -222,13 +222,14 @@ enum tsm_bitno_int_sig
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
     BITNO_AS_ACTIVE,
+    BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM,
 };
 
 struct tsm_intermediate_sig {
     enum tsm_brk_duration_type brk_du_type;
     enum tsm_drvr_attention_st drvr_att_st;
     uint16 parking_meter_cnt;
-    uint32 int_sig_bitfields; 
+    uint32 int_sig_bitfields;
 };
 
 struct tsm_entry

@@ -116,6 +116,7 @@ tsm_fill_planlite_exit(const struct tsm_entry* p_entry,
 
 static void
 tsm_fill_ctrl_arb_exit(const struct tsm_entry* p_entry,
+                       const struct tsm_intermediate_sig* p_int_sig,
                        const struct tsm_action* p_action,
                        const Dt_RECORD_TimeStamp* tsm_ts,
                        const enum tsm_mcu_mrm_func_st mrm_state,
@@ -123,7 +124,12 @@ tsm_fill_ctrl_arb_exit(const struct tsm_entry* p_entry,
     memcpy(&exit_ctrl_arb->Tsm_TimeStamp, tsm_ts, sizeof(Dt_RECORD_TimeStamp));
 
     exit_ctrl_arb->MCU_MRM_St = mrm_state;
-	exit_ctrl_arb->control_arb_request = p_action->control_arb_request;
+    if (tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
+                       BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM)) {
+        exit_ctrl_arb->control_arb_request = CTRLARB_RESPOND_TO_MCU;
+    } else {
+        exit_ctrl_arb->control_arb_request = p_action->control_arb_request;
+    }
 }
 
 static void
@@ -136,6 +142,7 @@ tsm_fill_diag_exit(const Dt_RECORD_TimeStamp* tsm_ts,
 
 static void
 tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
+                      const struct tsm_intermediate_sig* p_int_sig,
                       const struct tsm_action* p_action,
                       const Dt_RECORD_TimeStamp* tsm_ts,
                       const enum tsm_mcu_mrm_func_st mrm_state, 
@@ -146,7 +153,13 @@ tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
            sizeof(Dt_RECORD_VehicleStateReq));
     exit_can_gate->Tsm_To_Soc.MCU_MRM_Active_St = tsm_is_mrm_active(mrm_state);
     // todo:
-    exit_can_gate->Tsm_To_Soc.Request_NDA_Exit = 0;
+    if (tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                       BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM)) {
+        exit_can_gate->Tsm_To_Soc.Request_NDA_Exit = 1;
+    } else {
+        exit_can_gate->Tsm_To_Soc.Request_NDA_Exit = 0;
+    }
+
     memcpy(&exit_can_gate->Mcu_To_Ifc.tsm_timestamp, tsm_ts, 
            sizeof(Dt_RECORD_TimeStamp));
     exit_can_gate->Mcu_To_Ifc.mcu_mrm_active_st = tsm_is_mrm_active(mrm_state);
@@ -157,6 +170,7 @@ tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
 
 static void
 tsm_process_exit(const struct tsm_entry* p_entry,
+                 const struct tsm_intermediate_sig* p_int_sig,
                  const struct tsm_action* p_action,
                  const enum tsm_mcu_mrm_func_st mrm_state, 
                  struct tsm_exit* p_exit) {
@@ -166,12 +180,12 @@ tsm_process_exit(const struct tsm_entry* p_entry,
     tsm_fill_planlite_exit(p_entry, p_action, &tsm_timestamp,
                            p_exit->out_planlite);
 
-    tsm_fill_ctrl_arb_exit(p_entry, p_action, &tsm_timestamp, mrm_state,
-                           p_exit->out_ctrl_arb);
+    tsm_fill_ctrl_arb_exit(p_entry, p_int_sig, p_action, &tsm_timestamp, 
+                           mrm_state, p_exit->out_ctrl_arb);
     
     tsm_fill_diag_exit(&tsm_timestamp, p_exit->out_diag);
 
-    tsm_fill_cangate_exit(p_entry, p_action, &tsm_timestamp, mrm_state, 
+    tsm_fill_cangate_exit(p_entry, p_int_sig, p_action, &tsm_timestamp, mrm_state, 
                           p_exit->out_can_gate);
 }
 
@@ -203,6 +217,8 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
 
     tsm_set_bit_in_bitfields(&int_sig.int_sig_bitfields, 
                              BITNO_NDA_TRANSIT_NORMAL_FLAG);
+    tsm_reset_bit_in_bitfields(&int_sig.int_sig_bitfields,
+                               BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM);
 
     if (!tsm_is_mrm_active(mrm_state)) {
         tsm_run_monitor(&entry, &int_sig);
@@ -214,5 +230,5 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
     warning_state = 
         tsm_run_warning_user(warning_state, mrm_state, &entry, &int_sig);
 
-    tsm_process_exit(&entry, &action, mrm_state, &exit);
+    tsm_process_exit(&entry, &int_sig, &action, mrm_state, &exit);
 }

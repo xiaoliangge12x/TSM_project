@@ -172,12 +172,6 @@ static const struct state_transit tsm_state_flow[] =
     },
 };
 
-static inline void
-tsm_set_drvr_lng_ovrd(struct tsm_action* p_action, 
-                      const enum tsm_ovrd_st ovrd_st) {
-    p_action->lng_override_flag = ovrd_st;
-}
-
 static inline void 
 tsm_set_ctrlarb_req(struct tsm_action* p_action, 
                     const enum tsm_ctrl_arb_req ctrl_arb_req) {
@@ -192,7 +186,6 @@ tsm_set_mrm_st(struct tsm_action* p_action,
 
 static inline void
 tsm_reset_action(struct tsm_action* p_action) {
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_INVALID);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_SOC);
     tsm_set_mrm_st(p_action, MRM_ST_INVALID);
 }
@@ -226,7 +219,6 @@ tsm_tor_both_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_GREEN, "It's in mcu tor both ctrl st.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_TOR);
 }
@@ -236,7 +228,6 @@ tsm_tor_lat_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_GREEN, "It's in mcu tor lat ctrl st.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_TOR);
 }
@@ -246,7 +237,6 @@ tsm_tor_stand_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_GREEN, "It's in mcu tor stand st.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_TOR);
 }
@@ -256,7 +246,6 @@ tsm_mrm_es_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_RED, "It's in mcu emergency stop st.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_ES);
 }
@@ -266,7 +255,6 @@ tsm_mrm_both_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_YELLOW, "It's in mcu mrm both ctrl St.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
@@ -276,7 +264,6 @@ tsm_mrm_lat_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_YELLOW, "It's in mcu mrm lat ctrl St.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
@@ -286,7 +273,6 @@ tsm_mrc_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_YELLOW, "It's in mcu mrc St.");
 #endif
-    tsm_set_drvr_lng_ovrd(p_action, OVERRIDE_NOT_SATISFY);
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
 }
@@ -374,7 +360,8 @@ tsm_run_non_standstill_st(uint8* p_event, size_t num,
 }
 
 static boolean
-tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop) {
+tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop,
+                     const boolean as_ctrl_st) {
     boolean is_brake_set = tsm_is_bit_set(bitfields, BITNO_SET_BRAKE);
     if (is_brake_set) {
         LOG(COLOR_RED, "<tsm_is_directly_exit> Driver take brake.");
@@ -394,6 +381,10 @@ tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop) {
         return true;
     }
 
+    if (as_ctrl_st) {
+        LOG(COLOR_RED, "<tsm_is_directly_exit> AS take ctrl of the veh");
+        return true;
+    }
     return false;
 }
 
@@ -436,14 +427,15 @@ tsm_is_exit_with_hands_to(const enum tsm_drvr_attention_st drvr_att_st,
 static boolean
 tsm_is_drvr_takeover(const boolean mcu_unable_to_stop, 
                      const struct tsm_intermediate_sig* p_int_sig,
-                     const enum tsm_mcu_mrm_func_st mrm_state) {
+                     const enum tsm_mcu_mrm_func_st mrm_state,
+                     const boolean is_as_ctrl) {
     enum tsm_drvr_attention_st drvr_att_st = p_int_sig->drvr_att_st;
     if (mrm_state == MCU_TOR_STAND) {
         // todo:
     } else {
         boolean ret =
             tsm_is_directly_exit(p_int_sig->int_sig_bitfields, 
-                                 mcu_unable_to_stop);
+                                 mcu_unable_to_stop, is_as_ctrl);
         if (ret) {
             return true;
         }
@@ -509,7 +501,8 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
 }
 
 static size_t
-tsm_run_func_exit_sit(uint8* p_event, size_t num, 
+tsm_run_func_exit_sit(uint8* p_event, size_t num,
+                      const struct tsm_entry* p_entry,
                       const boolean mcu_unable_to_stop,
                       const struct tsm_intermediate_sig* p_int_sig,
                       const enum tsm_mcu_mrm_func_st mrm_state) {
@@ -522,8 +515,12 @@ tsm_run_func_exit_sit(uint8* p_event, size_t num,
         [MCU_TOR_STAND] = EVENT_WAIT_EPB_RES,
         [MCU_MRM_MRC] = EVENT_MRC_EXIT,
     };
-    
-    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, mrm_state)) {
+
+    boolean is_as_ctrl = 
+        (p_entry->in_ctrl_arb->as_info.AS_lat_ctrl_st ||
+         p_entry->in_ctrl_arb->as_info.AS_lng_ctrl_st);
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
+                             mrm_state, is_as_ctrl)) {
         p_event[num++] = tsm_exit_event[mrm_state];
     }
 
@@ -578,7 +575,7 @@ tsm_run_situation(uint8* p_event,
     }
 
     event_num = 
-        tsm_run_func_exit_sit(p_event, event_num, mcu_unable_to_stop, 
+        tsm_run_func_exit_sit(p_event, event_num, p_entry, mcu_unable_to_stop, 
                               p_int_sig, mrm_state);
 
     return event_num;
