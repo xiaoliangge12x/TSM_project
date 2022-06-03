@@ -281,7 +281,6 @@ static boolean
 tsm_check_activation_cond(const struct tsm_entry* p_entry,
                           const struct tsm_intermediate_sig* p_int_sig) {
     boolean check_ret = false;
-    // todo:
     uint8 soc_frc_fault = 
         p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
     boolean soc_req_mrm =
@@ -336,6 +335,9 @@ tsm_run_initial_sit(uint8* p_event, size_t num,
         p_event[num++] = EVENT_NO_STANDBY;
     }
 
+    // for debug
+    // p_event[num++] = EVENT_STANDBY;
+
     return num;
 }
 
@@ -361,7 +363,7 @@ tsm_run_non_standstill_st(uint8* p_event, size_t num,
 
 static boolean
 tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop,
-                     const boolean as_ctrl_st) {
+                     const boolean is_as_active) {
     boolean is_brake_set = tsm_is_bit_set(bitfields, BITNO_SET_BRAKE);
     if (is_brake_set) {
         LOG(COLOR_RED, "<tsm_is_directly_exit> Driver take brake.");
@@ -381,7 +383,7 @@ tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop,
         return true;
     }
 
-    if (as_ctrl_st) {
+    if (is_as_active) {
         LOG(COLOR_RED, "<tsm_is_directly_exit> AS take ctrl of the veh");
         return true;
     }
@@ -427,15 +429,16 @@ tsm_is_exit_with_hands_to(const enum tsm_drvr_attention_st drvr_att_st,
 static boolean
 tsm_is_drvr_takeover(const boolean mcu_unable_to_stop, 
                      const struct tsm_intermediate_sig* p_int_sig,
-                     const enum tsm_mcu_mrm_func_st mrm_state,
-                     const boolean is_as_ctrl) {
+                     const enum tsm_mcu_mrm_func_st mrm_state) {
     enum tsm_drvr_attention_st drvr_att_st = p_int_sig->drvr_att_st;
     if (mrm_state == MCU_TOR_STAND) {
         // todo:
     } else {
+        boolean is_as_active = 
+            tsm_is_bit_set(p_int_sig->int_sig_bitfields, BITNO_AS_ACTIVE);
         boolean ret =
             tsm_is_directly_exit(p_int_sig->int_sig_bitfields, 
-                                 mcu_unable_to_stop, is_as_ctrl);
+                                 mcu_unable_to_stop, is_as_active);
         if (ret) {
             return true;
         }
@@ -516,11 +519,7 @@ tsm_run_func_exit_sit(uint8* p_event, size_t num,
         [MCU_MRM_MRC] = EVENT_MRC_EXIT,
     };
 
-    boolean is_as_ctrl = 
-        (p_entry->in_ctrl_arb->as_info.AS_lat_ctrl_st ||
-         p_entry->in_ctrl_arb->as_info.AS_lng_ctrl_st);
-    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, 
-                             mrm_state, is_as_ctrl)) {
+    if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, mrm_state)) {
         p_event[num++] = tsm_exit_event[mrm_state];
     }
 

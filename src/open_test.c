@@ -250,6 +250,16 @@ tsm_getptr_veh_position_st(struct tsm_simulink_input* simu_in) {
         monitor_sig_src.Vehicle_Position_St);
 }
 
+static void*
+tsm_getptr_as_lng_ctrl_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_ctrlarb_tsm.as_info.AS_lng_ctrl_st);
+}
+
+static void*
+tsm_getptr_as_lat_ctrl_st(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_ctrlarb_tsm.as_info.AS_lat_ctrl_st);
+}
+
 static const struct tsm_test_signal ts_sig[] = {
     {
         .sig_type = TYPE_UINT8,
@@ -445,6 +455,16 @@ static const struct tsm_test_signal ts_sig[] = {
         .sig_type = TYPE_UINT8,
         .signal_name = "Vehicle_Position_St",
         .get_signal_ptr = tsm_getptr_veh_position_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "AS_lng_ctrl_st",
+        .get_signal_ptr = tsm_getptr_as_lng_ctrl_st,
+    },
+    {
+        .sig_type = TYPE_UINT8,
+        .signal_name = "AS_lat_ctrl_st",
+        .get_signal_ptr = tsm_getptr_as_lat_ctrl_st,
     },
     {
         .sig_type = TYPE_UINT8,

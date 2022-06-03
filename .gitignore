@@ -23,6 +23,9 @@
 *.lo
 /output
 
+# test generation
+/test/build/
+
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so

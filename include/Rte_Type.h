@@ -93,6 +93,7 @@ typedef struct
     uint8_t  BCM_RLDoorAjarSt;
     uint8_t  BCM_RRDoorAjarSt; 
     uint8_t  BCM_TrunkAjarSt;
+    uint8_t  BCM_BonnetAjarSt;
     uint8_t  SRS_DriverSeatBeltSt;
     uint8_t  BCS_YawRateSt;     
     float    BCS_YawRate;    

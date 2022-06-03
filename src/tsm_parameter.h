@@ -14,6 +14,10 @@
 #ifndef TSM_PARAMETER_H_
 #define TSM_PARAMETER_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "TSM.h"
 #ifdef _NEED_LOG
 #include "common.h"
@@ -275,5 +279,9 @@ tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st);
 
 boolean
 tsm_is_nda_active(const enum nda_func_st nda_st);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -669,7 +669,8 @@ tsm_is_veh_door_closed(const tsm_veh_sig* p_veh_sig) {
         (p_veh_sig->BCM_PsngrDoorAjarSt == CLOSED) &&
         (p_veh_sig->BCM_RLDoorAjarSt == CLOSED) &&
         (p_veh_sig->BCM_RRDoorAjarSt == CLOSED) &&
-        (p_veh_sig->BCM_TrunkAjarSt == CLOSED)) {
+        (p_veh_sig->BCM_TrunkAjarSt == CLOSED) &&
+        (p_veh_sig->BCM_BonnetAjarSt == CLOSED)) {
         ret = true;
     } else {
         ret = false;
@@ -998,7 +999,6 @@ tsm_is_actuator_active(const boolean false_flag,
 
 static boolean
 tsm_is_chassis_safety_satisfy(const tsm_veh_sig* p_veh_sig) {
-    // todo:
     enum tsm_hdc_ctrl_st {
         OFF,
         ON_ACTIVE_BRAKING,
@@ -1361,10 +1361,25 @@ tsm_process_monitor_signal(const struct tsm_entry* p_entry,
         tsm_process_parking_meter(nda_st, veh_still_st, p_int_sig);
 }
 
+static boolean
+tsm_process_as_active(const struct tsm_entry* p_entry,
+                      struct tsm_intermediate_sig* p_int_sig) {
+    boolean is_as_ctrl = 
+        (p_entry->in_ctrl_arb->as_info.AS_lat_ctrl_st ||
+         p_entry->in_ctrl_arb->as_info.AS_lng_ctrl_st);
+    (is_as_ctrl) ? 
+        tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields, 
+                                 BITNO_AS_ACTIVE) :
+        tsm_reset_bit_in_bitfields(&p_int_sig->int_sig_bitfields,
+                                   BITNO_AS_ACTIVE);
+}
+
 void 
 tsm_preprocess_input(const struct tsm_entry* p_entry,
                      const enum tsm_mcu_mrm_func_st mrm_st,
                      struct tsm_intermediate_sig* p_int_sig) {
+    tsm_process_as_active(p_entry, p_int_sig);
+
     tsm_process_driver_behavior(p_entry, p_int_sig, mrm_st);
 
     tsm_process_monitor_signal(p_entry, p_int_sig);

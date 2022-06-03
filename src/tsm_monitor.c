@@ -92,7 +92,7 @@ tsm_stuck_post_handle(uint16* p_timecnt, const boolean flag,
                 LOG(COLOR_RED, "Trigger Mrm, monitor %s.", log);
 #endif
             }
-            *p_timecnt = timecnt_threshold + 1;
+            *p_timecnt = 0;  // 已触发，需要将时间清零
             ret = true;
         } else {
             ++(*p_timecnt);
@@ -506,7 +506,6 @@ static boolean
 tsm_monitor_nda_unable_exit(const tsm_soc_st* last_soc_st,
                             const struct tsm_entry* p_entry,
                             struct tsm_intermediate_sig* p_int_sig) {
-    // todo:
     static uint16 timecnt_nda_unable_exit = 0;
     boolean ret = false;
 
@@ -532,7 +531,7 @@ tsm_monitor_nda_unable_exit(const tsm_soc_st* last_soc_st,
                 LOG(COLOR_YELLOW, "No Trigger Mrm, but monitor %s", log);
 #endif
             }
-            timecnt_nda_unable_exit = K_MissQuitTime_Cnt + 1;
+            timecnt_nda_unable_exit = 0;
             ret = true;
         } else {
             ++timecnt_nda_unable_exit;
@@ -587,6 +586,10 @@ tsm_monitor_active_false_transit(const tsm_soc_st* last_soc_st,
         tsm_is_bit_set(int_sig_bitfields, BITNO_NDA_AVL_AFTER_ACT);
     enum tsm_drvr_attention_st drvr_att_st = p_int_sig->drvr_att_st;
     uint16 parking_meter_cnt = p_int_sig->parking_meter_cnt;
+    boolean is_soc_driveoff_req = 
+        p_entry->in_can_gate->Soc_Info.monitor_sig_src.Planning_DriveOff_Req;
+    boolean is_target_lost = 
+        p_entry->in_can_gate->Soc_Info.monitor_sig_src.Target_Lost_St;
 
     for (size_t i = 0; i < ARRAY_LEN(act_false_transit_ad); ++i) {
         if (cur_nda_st == act_false_transit_ad[i].cur_st) {
@@ -603,13 +606,13 @@ tsm_monitor_active_false_transit(const tsm_soc_st* last_soc_st,
             }
             enter_standactive_monitor = 
                 (veh_still_st != VEH_STANDSTILL_ST_NOT_STANDSTILL);
-            // todo:
             enter_normal_monitor = 
                 (nda_avl_after_act && 
-                (drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED));
-            // todo:
+                (drvr_att_st == DRVR_AWAKE_NOT_DISTRACTED) &&
+                is_soc_driveoff_req);
             enter_standwait_monitor = 
-                (parking_meter_cnt >= K_Standstill_waitTime_Cnt);
+                ((parking_meter_cnt >= K_Standstill_waitTime_Cnt) ||
+                is_target_lost);
         }
     }
 

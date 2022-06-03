@@ -38,8 +38,12 @@ Soc_Info:
   Vehicle_Posture_St: 1
   Vehicle_Position_St: 1
 
+From_CtrlArb:
+  AS_lng_ctrl_st: 0
+  AS_lat_ctrl_st: 0
+
 From_Diag:
-  com_fault_with_soc: 0
+  mcu_mrm_fault_level: 0
   is_support_lane_stop: 1
   is_support_emergency_stop: 1
   
