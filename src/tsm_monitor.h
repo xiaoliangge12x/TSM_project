@@ -14,6 +14,11 @@
 #ifndef TSM_MONITOR_H_
 #define TSM_MONITOR_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "tsm_parameter.h"
 
 #define MONITOR_ARRAY_SIZE 39
@@ -21,5 +26,9 @@
 void 
 tsm_run_monitor(const struct tsm_entry* p_entry, 
                 struct tsm_intermediate_sig* p_int_sig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

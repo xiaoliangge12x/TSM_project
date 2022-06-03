@@ -14,6 +14,10 @@
 #ifndef TSM_PARAMETER_H_
 #define TSM_PARAMETER_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "TSM.h"
 #ifdef _NEED_LOG
 #include "common.h"
@@ -30,6 +34,7 @@ typedef Dt_RECORD_VehicleSignal2TSM tsm_veh_sig;
 typedef Dt_RECORD_Soc_Info tsm_soc_info;
 typedef Dt_RECORD_Automaton_State tsm_soc_st;
 typedef Dt_RECORD_Diag2TSM tsm_diag;
+typedef Dt_RECORD_Monitor_Signal_Source tsm_monitor_sig;
 
 enum tsm_drvr_attention_st {
     DRVR_AWAKE_NOT_DISTRACTED,
@@ -221,18 +226,19 @@ enum tsm_bitno_int_sig
     BITNO_NDA_AVL_BEFORE_ACT,
     BITNO_NDA_AVL_AFTER_ACT,
     BITNO_AS_ACTIVE,
+    BITNO_NDA_ABNORMAL_WITHOUT_TRIGGER_MRM,
 };
 
 struct tsm_intermediate_sig {
     enum tsm_brk_duration_type brk_du_type;
     enum tsm_drvr_attention_st drvr_att_st;
-    uint32 int_sig_bitfields; 
+    uint16 parking_meter_cnt;
+    uint32 int_sig_bitfields;
 };
 
 struct tsm_entry
 {
     Dt_RECORD_CtrlArb2TSM*            in_ctrl_arb;
-    Dt_RECORD_DecisionArbitrator2TSM* in_deci_arb;
     Dt_RECORD_CANGATE2TSM*            in_can_gate;
     Dt_RECORD_Diag2TSM*               in_diag;
     Dt_RECORD_PLANLITE2TSM*           in_planlite;
@@ -242,9 +248,7 @@ struct tsm_exit
 {
     Dt_RECORD_TSM2PLANLITE*           out_planlite;
     Dt_RECORD_TSM2CtrlArb*            out_ctrl_arb;
-    Dt_RECORD_TSM2DecisionArbitrator* out_deci_arb;
     Dt_RECORD_TSM2Diag*               out_diag;
-    Dt_RECORD_TSM2HMI*                out_hmi;
     Dt_RECORD_TSM2CANGATE*            out_can_gate;
 };
 
@@ -272,5 +276,12 @@ tsm_reset_bit_in_bitfields(uint32* bitfields, const uint8 bitno);
 
 boolean
 tsm_is_mrm_active(const enum tsm_mcu_mrm_func_st mrm_st);
+
+boolean
+tsm_is_nda_active(const enum nda_func_st nda_st);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

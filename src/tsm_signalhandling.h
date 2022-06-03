@@ -14,15 +14,26 @@
 #ifndef TSM_SIGNAL_HANDLING_H_
 #define TSM_SIGNAL_HANDLING_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifdef _NEED_LOG
 #include "common.h"
 #endif
 
 #include "tsm_parameter.h"
 
+extern uint16  K_Standstill_waitTime_Cnt;
+
 void 
-tsm_preprocess_input(struct tsm_intermediate_sig* p_int_sig,
-                     const struct tsm_entry* p_entry,
-                     const enum tsm_mcu_mrm_func_st mrm_st);
+tsm_preprocess_input(const struct tsm_entry* p_entry,
+                     const enum tsm_mcu_mrm_func_st mrm_st,
+                     struct tsm_intermediate_sig* p_int_sig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
