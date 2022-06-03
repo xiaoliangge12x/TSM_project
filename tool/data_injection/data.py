@@ -79,8 +79,6 @@ class VehSignal(MyStructure):
         ("BCS_VehicleStandStillSt", ctypes.c_ubyte),
         ("EMS_GasPedalActPstforMRRVD", ctypes.c_ubyte),
         ("EMS_GasPedalActPstforMRR", ctypes.c_float),
-        ("BCM_LeftTurnLampSt", ctypes.c_ubyte),
-        ("BCM_RightTurnLampSt", ctypes.c_ubyte),
         ("BCS_VehSpdVD", ctypes.c_ubyte),
         ("BCS_VehSpd", ctypes.c_float),
     ]

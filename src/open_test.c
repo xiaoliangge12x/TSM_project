@@ -21,18 +21,6 @@ tsm_getptr_veh_standstill_st(struct tsm_simulink_input* simu_in) {
 }
 
 static void*
-tsm_getptr_left_lamp_st(struct tsm_simulink_input* simu_in) {
-    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
-        BCM_LeftTurnLampSt);
-}
-
-static void*
-tsm_getptr_right_lamp_st(struct tsm_simulink_input* simu_in) {
-    return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
-        BCM_RightTurnLampSt);
-}
-
-static void*
 tsm_getptr_hazard_lamp_st(struct tsm_simulink_input* simu_in) {
     return &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
         BCM_HazardLampSt);
@@ -105,8 +93,8 @@ tsm_getptr_gaspedal_actpos_vd(struct tsm_simulink_input* simu_in) {
 }
 
 static void*
-tsm_getptr_com_fault_with_adc(struct tsm_simulink_input* simu_in) {
-    return &(simu_in->rt_in_diag_tsm.com_fault_with_adc);
+tsm_getptr_ifc_mrm_system_fault_level(struct tsm_simulink_input* simu_in) {
+    return &(simu_in->rt_in_diag_tsm.ifc_mrm_system_fault_level);
 }
 
 static void*
@@ -148,16 +136,6 @@ static const struct tsm_test_signal ts_sig[] = {
         .sig_type = TYPE_UINT8,
         .signal_name = "BCS_VehicleStandStillSt",
         .get_signal_ptr = tsm_getptr_veh_standstill_st,
-    },
-    {
-        .sig_type = TYPE_UINT8,
-        .signal_name = "BCM_LeftTurnLampSt",
-        .get_signal_ptr = tsm_getptr_left_lamp_st,
-    },
-    {
-        .sig_type = TYPE_UINT8,
-        .signal_name = "BCM_RightTurnLampSt",
-        .get_signal_ptr = tsm_getptr_right_lamp_st,
     },
     {
         .sig_type = TYPE_UINT8,
@@ -221,8 +199,8 @@ static const struct tsm_test_signal ts_sig[] = {
     },
     {
         .sig_type = TYPE_UINT8,
-        .signal_name = "com_fault_with_adc",
-        .get_signal_ptr = tsm_getptr_com_fault_with_adc,
+        .signal_name = "ifc_mrm_system_fault_level",
+        .get_signal_ptr = tsm_getptr_ifc_mrm_system_fault_level,
     },
     {
         .sig_type = TYPE_UINT8,
@@ -264,31 +242,6 @@ tsm_set_name(char* name, const uint8 name_len, const yaml_token_t* token) {
 }
 
 static void
-tsm_set_hazard_light_tmp(const char* value_str, 
-                         struct tsm_simulink_input* simu_in) {
-    int value = atoi(value_str);
-    uint8* left_lamp_st = 
-        &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
-            BCM_LeftTurnLampSt);
-    uint8* right_lamp_st =
-        &(simu_in->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.\
-            BCM_RightTurnLampSt);
-    
-    if (value == 1) {
-        if (*left_lamp_st) {
-            *left_lamp_st = 0;
-            *right_lamp_st = 0;
-        } else {
-            *left_lamp_st = 1;
-            *right_lamp_st = 1;
-        }
-    } else {
-        *left_lamp_st = 0;
-        *right_lamp_st = 0;
-    }
-}
-
-static void
 tsm_set_simu_input(const char* key_str, const char* value_str,
                    struct tsm_simulink_input* simu_in)
 {
@@ -297,14 +250,8 @@ tsm_set_simu_input(const char* key_str, const char* value_str,
         if (!cmp_ret) {
             switch (ts_sig[i].sig_type) {
                 case TYPE_UINT8: {
-                    const char target_str[] = "BCM_HazardLampSt";
-                    cmp_ret = strcmp(key_str, target_str);
-                    if (!cmp_ret) {
-                        tsm_set_hazard_light_tmp(value_str, simu_in);
-                    } else {
-                        *((uint8*)ts_sig[i].get_signal_ptr(simu_in)) =
-                            (uint8)atoi(value_str);
-                    }
+                    *((uint8*)ts_sig[i].get_signal_ptr(simu_in)) =
+                        (uint8)atoi(value_str);
                     break;
                 }
 

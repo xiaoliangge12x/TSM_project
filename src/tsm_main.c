@@ -28,11 +28,10 @@ tsm_module_work() {
         tsm_read_yaml_set_data(filename, &simu_in);
 #endif
 
-        MRM_Swc_V_TSM(&simu_in.rt_in_ctrlarb_tsm, &simu_in.rt_in_deciarb_tsm, 
-                      &simu_in.rt_in_cangate_tsm, &simu_in.rt_in_diag_tsm, 
-                      &simu_in.rt_in_planlite_tsm, &simu_out.rt_out_tsm_planlite, 
-                      &simu_out.rt_out_tsm_ctrlarb, &simu_out.rt_out_tsm_deciarb, 
-                      &simu_out.rt_out_tsm_diag, &simu_out.rt_out_tsm_hmi, 
+        MRM_Swc_V_TSM(&simu_in.rt_in_ctrlarb_tsm, &simu_in.rt_in_cangate_tsm, 
+                      &simu_in.rt_in_diag_tsm, &simu_in.rt_in_planlite_tsm, 
+                      &simu_out.rt_out_tsm_planlite, 
+                      &simu_out.rt_out_tsm_ctrlarb, &simu_out.rt_out_tsm_diag,
                       &simu_out.rt_out_tsm_cangate);
         usleep(20000);
     }

@@ -16,6 +16,7 @@
 #include "base/sm_base.h"
 
 uint16 K_StayInPassiveTime_Cnt = 500U;    // 连续两次的激活间隔必须要在10s以上
+uint16 K_LastActivationTime_Cnt = 1500U;  // 距离上次激活的时间间隔
 
 static uint16 passive_timer_cnt = 0;
 
@@ -368,7 +369,7 @@ tsm_check_activation_cond(const struct tsm_entry* p_entry) {
     boolean check_ret = false;
     uint8 tor_req_from_soc = p_entry->in_can_gate->Soc_Info.soc_tor_req;
     uint8 tor_req_from_mcu = p_entry->in_can_gate->mcu_tor_req;
-    boolean adc_com_fault = p_entry->in_diag->com_fault_with_adc;
+    boolean adc_com_fault = p_entry->in_diag->ifc_mrm_system_fault_level;
 
     if ((tor_req_from_soc == TOR_LEVEL3_REQUEST) || 
         (tor_req_from_mcu == TOR_LEVEL3_REQUEST)) {
@@ -499,7 +500,8 @@ tsm_is_drvr_takeover(const boolean ifc_unable_to_stop,
 
 static size_t
 tsm_run_transmit_soc_sit(uint8* p_event, size_t num,
-                         const struct tsm_entry* p_entry) {
+                         const struct tsm_entry* p_entry, 
+                         const boolean can_mrm_activate) {
     // handle transmit soc ctrl sit
     uint8 soc_tor_req = p_entry->in_can_gate->Soc_Info.soc_tor_req;
     uint8 soc_mrm_active_st = p_entry->in_can_gate->Soc_Info.soc_mrm_active_st;
@@ -507,7 +509,6 @@ tsm_run_transmit_soc_sit(uint8* p_event, size_t num,
         p_event[num++] = EVENT_ACTIVATE_SUPPORT_SOC;
     }
 
-     boolean can_mrm_activate = tsm_check_activation_cond(p_entry);
     if (can_mrm_activate) {
         p_event[num++] = EVENT_ACTIVATE_IFC_MRM;
     }
@@ -545,7 +546,8 @@ tsm_run_func_exit_sit(uint8* p_event, size_t num,
 }
 
 static size_t
-tsm_run_situation(uint8* p_event, const enum tsm_ifc_mrm_func_st mrm_state,
+tsm_run_situation(uint8* p_event,
+                  const enum tsm_ifc_mrm_func_st mrm_state,
                   const struct tsm_entry* p_entry,
                   const struct tsm_intermediate_sig* p_int_sig,
                   const enum tsm_warning_st warning_state) {
@@ -563,6 +565,7 @@ tsm_run_situation(uint8* p_event, const enum tsm_ifc_mrm_func_st mrm_state,
 
     enum tsm_veh_standstill_st veh_standstill_st =
         p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCS_VehicleStandStillSt;
+    boolean can_mrm_activate = tsm_check_activation_cond(p_entry);
     if (veh_standstill_st == VEH_STANDSTILL_ST_STANDSTILL) {
         p_event[event_num++] = EVENT_VEH_STANDSTILL;
     } else if (veh_standstill_st == VEH_STANDSTILL_ST_NOT_STANDSTILL) {
@@ -570,7 +573,6 @@ tsm_run_situation(uint8* p_event, const enum tsm_ifc_mrm_func_st mrm_state,
             (((p_entry->in_diag->is_support_lane_stop = false) && 
             (p_entry->in_diag->is_support_emergency_stop = true)) ||
             (p_entry->in_planlite->planningLite_control_state == PC_MRM));
-        boolean can_mrm_activate = tsm_check_activation_cond(p_entry);
         boolean is_drvr_lng_ctrl = tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
                                                   BITNO_LNG_OVERRIDE_ST);
         event_num = tsm_run_non_standstill_st(p_event, event_num, 
@@ -589,7 +591,7 @@ tsm_run_situation(uint8* p_event, const enum tsm_ifc_mrm_func_st mrm_state,
         // do nothing;
     }
     event_num = 
-        tsm_run_transmit_soc_sit(p_event, event_num, p_entry);
+        tsm_run_transmit_soc_sit(p_event, event_num, p_entry, can_mrm_activate);
 
     event_num = 
         tsm_run_func_exit_sit(p_event, event_num, ifc_unable_to_stop, 

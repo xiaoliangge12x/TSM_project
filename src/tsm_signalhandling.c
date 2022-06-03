@@ -21,7 +21,7 @@ static uint16  K_LngOverrideTakeOverTime_Cnt = 250U;   // 纵向超越至判断�
 static uint16  K_LngOvrdNeedDetectTouchZoneTime_Cnt = 25U;
 static uint16  K_BrakPedalAppliedThresholdTime_Cnt = 10U;    // 制动判断的持续时间(200ms周期)
 static uint16  K_BrakeTOR_TimeThreshold_Cnt = 25U;
-static uint16  K_OverrideHandTorqCheckTime_Cnt = 25U;
+static uint16  K_OverrideHandTorqCheckTime_Cnt = 3U;
 static uint16  K_HandsTouchDetectedTime_Cnt = 25U;
 
 static float32 K_GasPedalAppliedThresholdTime = 0.2;
@@ -398,7 +398,7 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
         tsm_get_hand_torq_thold(veh_spd, ovrd_torq_thold, ovrd_torq_size);
     if (p_veh_sig->EPS_StrngWhlTorqVD &&
         (fabs(strng_whl_torque) > orvd_torque_threshold)) {
-        if (tsm_is_mrm_active(mrm_st)) {
+        // if (tsm_is_mrm_active(mrm_st)) {
 #ifndef CONSUME_TIME
             is_lat_override = 
                 is_flag_set_with_timecnt(K_OverrideHandTorqCheckTime_Cnt,
@@ -408,14 +408,14 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
             is_flag_set_with_time(K_OverrideHandTorqCheckTime, &time
                                   &time_flag, is_lat_override);
 #endif
-        } else {
-            is_lat_override = false;
-#ifndef CONSUME_TIME
-            timecnt = 0;
-#else
-            tsm_stop_timing(&time_flag);
-#endif
-        }
+//         } else {
+//             is_lat_override = false;
+// #ifndef CONSUME_TIME
+//             timecnt = 0;
+// #else
+//             tsm_stop_timing(&time_flag);
+// #endif
+//         }
     } else {
         is_lat_override = false;
 #ifndef CONSUME_TIME

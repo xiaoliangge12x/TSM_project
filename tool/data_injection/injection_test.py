@@ -3,6 +3,8 @@ import ctypes
 
 import data
 
+import matplotlib.pyplot as plt
+
 csv_headers = \
     [
         "cangate2tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorqVD",
@@ -30,12 +32,19 @@ if __name__ == '__main__':
 
     scalib = ctypes.cdll.LoadLibrary(so_path)
 
+    fig,ax = plt.subplots()
+    time = []
+    lat_override = []
+    hand_torque = []
+
     with open(csv_file) as f:
         f_csv = csv.DictReader(f)
         it_csv = iter(f_csv)
+        i = 0
         while True:
             try:
                 inject_data = next(it_csv)
+                # print(inject_data)
                 for cur_header in csv_headers:
                     header_list = cur_header.split('.')
                     if cur_header.startswith("cangate2tsm"):
@@ -67,10 +76,20 @@ if __name__ == '__main__':
                                      ctypes.byref(tsm_to_diag), \
                                      ctypes.byref(tsm_to_hmi), \
                                      ctypes.byref(tsm_to_cangate))
-
+                
+                time.append(i)
+                lat_override.append(tsm_to_ctrlarb.lat_override_flag)
+                hand_torque.append(cangate_to_tsm.Vehicle_Signal_To_Tsm.EPS_StrngWhlTorq)
+                ax.cla()
+                ax.plot(time, lat_override)
+                ax.plot(time, hand_torque, color = 'red')
+                plt.pause(0.2)
+                i = i + 1
+                
             except StopIteration:
                 print("injection test done!")
                 break
+        plt.show()
 
 
     
