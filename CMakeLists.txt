@@ -9,7 +9,7 @@ set(CMAKE_CXX_COMPILER g++)
 project(tsm)
 
 # 显示编译命令
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 指定生成路径
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/output/lib)
@@ -31,6 +31,10 @@ if (OPEN_TEST)
 endif()
 add_compile_options(-D_RUN_IN_LINUX)
 add_compile_options(-D_DEBUG_MODE)
+
+if (INJECT_TEST)
+    add_compile_options(-fprofile-arcs -ftest-coverage)
+endif()
 
 # 添加选项
 add_definitions(-w)

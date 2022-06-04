@@ -133,6 +133,38 @@ tsm_fill_diag_exit(const Dt_RECORD_TimeStamp* tsm_ts,
     exit_diag->Tsm_Status = 0;
 }
 
+static uint8
+tsm_get_icm_warn_card_st(const struct tsm_entry* p_entry, 
+                         const struct tsm_action* p_action,
+                         const enum tsm_ifc_mrm_func_st mrm_state) {
+    enum ifc_icm_warn_card_st {
+        NO_REQUEST,
+        TOR_REQUEST,
+        SAFE_STOP_REQUEST,
+        NOT_USED,
+    };
+
+    uint8 post_tor_warning_level = tsm_is_mrm_active(mrm_state) ? 
+        (p_action->tor_warning_level) :
+        (p_entry->in_can_gate->Soc_Info.soc_hmi_req.Tor_Warning_Level);
+
+    enum ifc_icm_warn_card_st warn_card_st = NO_REQUEST;
+    if (post_tor_warning_level == NO_WARNING) {
+        warn_card_st = NO_REQUEST;
+    } else if ((post_tor_warning_level == WARNING_TOR_LEVEL_1) ||
+               (post_tor_warning_level == WARNING_TOR_LEVEL_2) ||
+               (post_tor_warning_level == WARNING_TOR_LEVEL_3)) {
+        warn_card_st = TOR_REQUEST;
+    } else if ((post_tor_warning_level == WARNING_MRM_LEVEL_4) ||
+               (post_tor_warning_level == WARNING_MRM_LEVEL_5)) {
+        warn_card_st = SAFE_STOP_REQUEST;
+    } else {
+        warn_card_st == NOT_USED;
+    }
+
+    return warn_card_st;
+}
+
 static void
 tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
                       const struct tsm_action* p_action,
@@ -140,19 +172,9 @@ tsm_fill_cangate_exit(const struct tsm_entry* p_entry,
                       const enum tsm_ifc_mrm_func_st mrm_state, 
                       Dt_RECORD_TSM2CANGATE* exit_can_gate) {
     memcpy(&exit_can_gate->Tsm_TimeStamp, tsm_ts, sizeof(Dt_RECORD_TimeStamp));
-    // todo:
-    exit_can_gate->post_hmi_req.Tor_Request = 0;
-    // todo:
-    exit_can_gate->post_hmi_req.Hands_On_Level = 0;
-    // todo:
-    exit_can_gate->post_hmi_req.Focus_On_Level = 0;
-    // todo:
-    exit_can_gate->post_veh_st_req.ADAS_HWA_TurnLampReq = 0;
-    // todo:
-    exit_can_gate->post_veh_st_req.ADAS_SafeStopLampWarn = 0;
-    // todo:
-    exit_can_gate->IFC_MRMAvailability = 0;
-    // todo:
+    exit_can_gate->IFC_ICMWarnCardSt = 
+        tsm_get_icm_warn_card_st(p_entry, p_action, mrm_state);
+    exit_can_gate->IFC_MRMAvailability = p_action->mrm_available_st;
     exit_can_gate->IFC_ADCFault_request = 0;
 }
 
@@ -207,7 +229,8 @@ MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM,
         tsm_run_user(mrm_state, warning_state, &entry, &int_sig, &action);
 
     warning_state = 
-        tsm_run_warning_user(warning_state, mrm_state, &entry, &int_sig);
+        tsm_run_warning_user(warning_state, mrm_state, &entry, &int_sig, 
+                             &action);
 
     tsm_process_exit(&entry, &action, mrm_state, &exit);
 

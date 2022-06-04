@@ -28,7 +28,7 @@ typedef struct
 
 typedef struct
 {
-    uint8_t             Tor_Request;      // TOR报警等级(包含MRM和MRC)， 来自SOC
+    uint8_t             Tor_Warning_Level;      // TOR报警等级(包含MRM和MRC)， 来自SOC
     uint8_t             Hands_On_Level;   // 手扶报警等级， 来自SOC
     uint8_t             Focus_On_Level;   // 脱眼报警等级， 来自SOC
 } Dt_RECORD_Hmi_Request;
@@ -132,8 +132,7 @@ typedef struct
 typedef struct
 {
     Dt_RECORD_TimeStamp         Tsm_TimeStamp; 
-    Dt_RECORD_VehicleStateReq   post_veh_st_req;     // 处理后的车辆状态请求， 是透传soc的，还是用IFC自己的，由IFC判断
-    Dt_RECORD_Hmi_Request       post_hmi_req;
+    uint8_t                     IFC_ICMWarnCardSt;
     uint8_t                     IFC_MRMAvailability;   // add, 是否具备安全停车能力
     uint8_t                     IFC_ADCFault_request;    // for debug use    
 } Dt_RECORD_TSM2CANGATE;

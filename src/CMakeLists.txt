@@ -25,6 +25,10 @@ else()
     add_executable(tsm ${SRC_FILE})
 endif()
 
+if (INJECT_TEST)
+    target_link_libraries(tsm gcov)
+endif()
+
 if (OPEN_TEST)
     target_link_libraries(tsm yaml)
 endif()

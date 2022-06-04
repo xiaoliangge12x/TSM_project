@@ -244,6 +244,7 @@ tsm_passive_post_process(struct tsm_action* p_action) {
     LOG(COLOR_NONE, "It's in ifc passive st.");
 #endif
     tsm_reset_action(p_action);
+    p_action->mrm_available_st = 1;
     if (passive_timer_cnt > K_StayInPassiveTime_Cnt) {
         passive_timer_cnt = K_StayInPassiveTime_Cnt + 1;
     } else {
@@ -258,6 +259,7 @@ tsm_failure_post_process(struct tsm_action* p_action) {
 #endif
     tsm_reset_action(p_action);
     passive_timer_cnt = 0;
+    p_action->mrm_available_st = 0;
 }
 
 static void
@@ -402,7 +404,6 @@ static size_t
 tsm_run_initial_sit(uint8* p_event, size_t num, 
                     const boolean ifc_unable_to_stop,
                     const enum nda_func_st nda_st) {
-    // todo: 发一帧mrm请求给ifc
     if (ifc_unable_to_stop) {
         p_event[num++] = EVENT_FAILURE;
     } else {

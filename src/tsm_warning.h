@@ -14,7 +14,13 @@
 #ifndef TSM_WARNING_H_
 #define TSM_WARNING_H_
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 #include "tsm_parameter.h"
+#include "tsm_user.h"
 
 enum warning_event_id {
     EVENT_CHECK_PASSIVE_ST = BASE_EVENT_WARNING_START + 1,
@@ -33,7 +39,11 @@ enum tsm_warning_st
 tsm_run_warning_user(const enum tsm_warning_st warning_st, 
                      const enum tsm_ifc_mrm_func_st mrm_st,
                      const struct tsm_entry* p_entry, 
-                     const struct tsm_intermediate_sig* p_int_sig);
+                     const struct tsm_intermediate_sig* p_int_sig,
+                     struct tsm_action* p_action);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

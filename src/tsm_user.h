@@ -14,6 +14,10 @@
 #ifndef TSM_USER_H_
 #define TSM_USER_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "tsm_parameter.h"
 
 enum tsm_ctrl_arb_req
@@ -43,6 +47,8 @@ struct tsm_action {
     enum tsm_mrm_st mrm_activation_st;
     enum tsm_ctrl_arb_req control_arb_request;
     uint8 request_mrm;
+    uint8 tor_warning_level;
+    uint8 mrm_available_st;
     uint16*  p_passive_timer_cnt;
 };
 
@@ -52,4 +58,9 @@ tsm_run_user(const enum tsm_ifc_mrm_func_st mrm_state,
              const struct tsm_entry* p_entry, 
              const struct tsm_intermediate_sig* p_int_sig,
              struct tsm_action* p_action);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

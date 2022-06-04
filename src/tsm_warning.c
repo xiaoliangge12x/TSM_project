@@ -110,45 +110,51 @@ static const struct state_transit warning_state_flow[] = {
 };
 
 static void
-tsm_no_warning_post_process() {
+tsm_no_warning_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in no warnng st.");
 #endif
+    p_action->tor_warning_level = NO_WARNING;
 }
 
 static void
-tsm_tor_lvl_one_post_process() {
+tsm_tor_lvl_one_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in warning tor level 1 st.");
 #endif
+    p_action->tor_warning_level = WARNING_TOR_LEVEL_1;
 }
 
 static void
-tsm_tor_lvl_two_post_process() {
+tsm_tor_lvl_two_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in warning tor level 2 st.");
 #endif
+    p_action->tor_warning_level = WARNING_TOR_LEVEL_2;
 }
 
 static void
-tsm_tor_lvl_three_post_process() {
+tsm_tor_lvl_three_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in warning tor level 3 st.");
 #endif
+    p_action->tor_warning_level = WARNING_TOR_LEVEL_3;
 }
 
 static void
-tsm_mrm_lvl_four_post_process() {
+tsm_mrm_lvl_four_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in warning mrm level 4 st.");
 #endif
+    p_action->tor_warning_level = WARNING_MRM_LEVEL_4;
 }
 
 static void
-tsm_mrm_lvl_five_post_process() {
+tsm_mrm_lvl_five_post_process(struct tsm_action* p_action) {
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "it's in warning mrm level 5 st.");
 #endif
+    p_action->tor_warning_level = WARNING_MRM_LEVEL_5;
 }
 
 static size_t
@@ -200,8 +206,9 @@ enum tsm_warning_st
 tsm_run_warning_user(const enum tsm_warning_st warning_st, 
                      const enum tsm_ifc_mrm_func_st mrm_st,
                      const struct tsm_entry* p_entry, 
-                     const struct tsm_intermediate_sig* p_int_sig) {
-    typedef void (*tsm_post_process)();
+                     const struct tsm_intermediate_sig* p_int_sig,
+                     struct tsm_action* p_action) {
+    typedef void (*tsm_post_process)(struct tsm_action* p_action);
     static const tsm_post_process post_process[] = {
         [NO_WARNING] = tsm_no_warning_post_process,
         [WARNING_TOR_LEVEL_1] = tsm_tor_lvl_one_post_process,
@@ -216,7 +223,7 @@ tsm_run_warning_user(const enum tsm_warning_st warning_st,
         tsm_run_warning_sit(event_id, warning_st, mrm_st, p_entry, p_int_sig);
     
     if (event_num == 0) {
-        post_process[warning_st]();
+        post_process[warning_st](p_action);
         return warning_st;
     }
 
@@ -224,7 +231,7 @@ tsm_run_warning_user(const enum tsm_warning_st warning_st,
         run_state_transit(warning_state_flow, ARRAY_LEN(warning_state_flow), 
                           event_id, event_num, warning_st);
     
-    post_process[next_warning_st]();
+    post_process[next_warning_st](p_action);
 
     return next_warning_st;
 }

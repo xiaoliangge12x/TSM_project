@@ -14,6 +14,15 @@
 #ifndef TSM_CHART_H_
 #define TSM_CHART_H_
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 #include "tsm_parameter.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
