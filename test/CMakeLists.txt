@@ -24,7 +24,7 @@ FILE(GLOB SRC_FILE "../src/tsm_monitor.c"
                    "../src/tsm_signalhandling.c")
 
 set(TEST_FILE ${TEST_FILE} ${SRC_FILE})
-MESSAGE(${TEST_FILE})
+
 # 指定头文件路径
 set(INCLUDE_PATH ${CMAKE_SOURCE_DIR}/../include/
                  ${CMAKE_SOURCE_DIR}/../src/)

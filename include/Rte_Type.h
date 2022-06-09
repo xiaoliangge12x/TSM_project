@@ -45,15 +45,8 @@ typedef struct
 
 typedef struct
 {
-    uint8_t             Tor_Request;      // TOR报警等级(包含MRM和MRC)， 来自SOC
-    uint8_t             Hands_On_Level;   // add, 手扶报警等级， 来自SOC
-    uint8_t             Focus_On_Level;   // add, 脱眼报警等级， 来自SOC
-} Dt_RECORD_Hmi_Request;  // add
-
-typedef struct
-{
     Dt_RECORD_Automaton_State       automaton_state;
-    Dt_RECORD_Hmi_Request           soc_hmi_req;    // add
+    uint8_t                         soc_warn_card_st;
     Dt_RECORD_Monitor_Signal_Source monitor_sig_src;   // add
     uint8_t                         soc_veh_lamp_req;    // soc侧传过来的灯光开启请求， 0 - no req , 1 - hazard light req, 2 - left lamp, 3 - right lamp
     uint8_t                         frc_fault_from_soc;     // add, SOC的FRC请求MCU接管故障等级
@@ -193,7 +186,7 @@ typedef struct
 {
     Dt_RECORD_TimeStamp         Tsm_TimeStamp; 
     Dt_RECORD_VehicleStateReq   post_veh_st_req;  // 处理后的车辆状态请求， 是透传soc的，还是用MCU自己的，由MCU判断
-    Dt_RECORD_Hmi_Request       post_hmi_req;    // add
+    uint8_t                     post_warn_card_st;
     Dt_RECORD_TSM2Soc           Tsm_To_Soc;            
     Dt_RECORD_MCU2IFC           Mcu_To_Ifc;
 } Dt_RECORD_TSM2CANGATE;
