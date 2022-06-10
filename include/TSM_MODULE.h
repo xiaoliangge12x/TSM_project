@@ -28,12 +28,14 @@ typedef unsigned char boolean;
 #define false 0U
 #endif
 
+#define ENABLE_INTERNAL_TEST 1
+
 extern void MRM_TSM_MODULE_Init(void);
-extern void MRM_TSM_MODULE(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-    const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-    const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
-    Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-    Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb,
-    Dt_RECORD_TSM2DecisionArbitrator *rty_DeTSM2DecisionArbitrator, 
-    Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
+extern void MRM_TSM_MODULE(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, const
+  Dt_RECORD_DECIARB2TSM *rtu_DeDecisionArbitrator2TSM, const
+  Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_RECORD_Diag2TSM
+  *rtu_DeDiag2TSM, const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
+  Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite, Dt_RECORD_TSM2CtrlArb
+  *rty_DeTSM2CtrlArb, Dt_RECORD_TSM2DecisionArbitrator
+  *rty_DeTSM2DecisionArbitrator, Dt_RECORD_TSM2Diag *rty_DeTSM2Diag);
 #endif

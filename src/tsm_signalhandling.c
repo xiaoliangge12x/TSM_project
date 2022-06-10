@@ -36,9 +36,9 @@ void SignalHandling(const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, const Dt_REC
     DebugActivateFunction(&rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm);
 #ifdef _NEED_LOG
     LOG(COLOR_NONE, "lng_override_long_duration_flag: %d, brake_is_set: %d, driver_acc_pedal_applied_flag: %d, "
-        "driver_hand_torque_st: %d", g_inter_media_msg.lng_override_long_duration_flag, 
+        "driver_hand_torque_st: %d, BCM_HazardLampSt: %d", g_inter_media_msg.lng_override_long_duration_flag, 
         g_inter_media_msg.brake_is_set, g_inter_media_msg.driver_acc_pedal_applied_flag, 
-        g_inter_media_msg.driver_hand_torque_st);
+        g_inter_media_msg.driver_hand_torque_st, rtu_DeCANGATE2TSM->Vehicle_Signal_To_Tsm.BCM_HazardLampSt);
 #endif
 }
 
@@ -375,7 +375,7 @@ void DebugActivateFunction(const Dt_RECORD_VehicleSignal2TSM* vehicle_signal)
         }
     }
 
-    if (hazardlight_on) {
+    if (vehicle_signal->BCM_HazardLampSt) {
         g_inter_media_msg.mrm_system_fault_level = TOR_LEVEL3_FAULT;
     } else {
         g_inter_media_msg.mrm_system_fault_level = NO_FAULT;

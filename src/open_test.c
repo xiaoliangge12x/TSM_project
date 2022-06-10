@@ -7,6 +7,7 @@ static const Signal g_signal_table[] =
     {TYPE_UINT8,   "BCM_LeftTurnLampSt",            GetBCM_LeftTurnLampSt},
     {TYPE_UINT8,   "BCM_RightTurnLampSt",           GetBCM_RightTurnLampSt},
     {TYPE_UINT8,   "BCM_HazardLampSt",              GetBCM_HazardLampSt},
+    {TYPE_UINT8,   "BCM_TurnLightSwitchSt",         GetBCM_TurnLightSwitchSt},
     {TYPE_UINT8,   "EBB_BrkPedalAppliedSt",         GetEBB_BrkPedalAppliedSt},
     {TYPE_UINT8,   "EBB_BrkPedalApplied",           GetEBB_BrkPedalApplied},
     {TYPE_UINT8,   "HOD_TouchZone1",                GetHOD_TouchZone1},
@@ -87,24 +88,24 @@ void SimulinkDataSet(const char* key_str, const char* value_str, SimulinkData* s
         if (!strcmp(key_str, g_signal_table[i].signal_name)) {
             switch (g_signal_table[i].signal_type) {
                 case TYPE_UINT8: {
-                    if (!strcmp(key_str, "BCM_HazardLampSt")) {
-                        // 模拟车上环境，暂时
-                        if (atoi(value_str) == 1) {
-                            if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt) {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                            } else {
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 1;
-                                simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 1;
-                            }
-                        } else {
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
-                            simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
-                        }
-                    } else {
+                    // if (!strcmp(key_str, "BCM_HazardLampSt")) {
+                    //     // 模拟车上环境，暂时
+                    //     if (atoi(value_str) == 1) {
+                    //         if (simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt) {
+                    //             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
+                    //             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
+                    //         } else {
+                    //             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 1;
+                    //             simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 1;
+                    //         }
+                    //     } else {
+                    //         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_LeftTurnLampSt = 0;
+                    //         simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_RightTurnLampSt = 0;
+                    //     }
+                    // } else {
                         *((uint8*)g_signal_table[i].signal_ptr_get(simulink_data)) = 
                             (uint8)atoi(value_str);
-                    }
+                    // }
                     break;
                 }
 

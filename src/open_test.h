@@ -45,6 +45,10 @@ void* GetBCM_HazardLampSt(SimulinkData* simulink_data)
 {
     return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_HazardLampSt);
 }
+void* GetBCM_TurnLightSwitchSt(SimulinkData* simulink_data)
+{
+    return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.BCM_TurnLightSwitchSt);
+}
 void* GetEBB_BrkPedalAppliedSt(SimulinkData* simulink_data)
 {
     return &(simulink_data->rt_in_cangate_tsm.Vehicle_Signal_To_Tsm.EBB_BrkPedalAppliedSt);

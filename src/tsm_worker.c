@@ -37,7 +37,8 @@ void TsmModulerWorker()
 #ifdef _OPEN_TEST
         ReadFromYamlAndSetData(filename, &simulink_data);
 #endif
-        MRM_TSM_MODULE(&simulink_data.rt_in_cangate_tsm, &simulink_data.rt_in_diag_tsm, 
+        MRM_TSM_MODULE(&simulink_data.rt_in_ctrlarb_tsm, &simulink_data.rt_in_deciarb_tsm,
+            &simulink_data.rt_in_cangate_tsm, &simulink_data.rt_in_diag_tsm, 
             &simulink_data.rt_in_planlite_tsm, &rt_out_tsm_planlite, &rt_out_tsm_ctrlarb, &rt_out_tsm_deciarb, 
             &rt_out_tsm_diag);
         usleep(20000);

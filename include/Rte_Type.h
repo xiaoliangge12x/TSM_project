@@ -134,6 +134,7 @@ typedef struct tagVehicleSignal2TSM
     float   EMS_GasPedalActPstforMRR;   // 驾驶员踩油门的开度
     uint8_t BCM_LeftTurnLampSt;       // 左转向灯
     uint8_t BCM_RightTurnLampSt;       // 右转向灯
+    uint8_t  BCM_TurnLightSwitchSt;
 } Dt_RECORD_VehicleSignal2TSM;
 
 typedef struct
@@ -216,7 +217,7 @@ typedef struct tagDecisionArbitrator2TSM
     uint8_t             Lane_Change_Allow_Flag;  // 是否允许变道
     uint16_t            Check_Info;              // 各种check的结果
     Dt_RECORD_TimeStamp Decision_Arbitrator_TimeStamp;
-} Dt_RECORD_DecisionArbitrator2TSM;
+} Dt_RECORD_DECIARB2TSM;
 
 // CANSwitch --> TSM  保持和IFC环境同步
 typedef struct tagDeCANGATE2TSM
@@ -351,7 +352,7 @@ typedef struct tagTSM2CANSwitch
 typedef struct tagSimulinkData
 {
     Dt_RECORD_CtrlArb2TSM rt_in_ctrlarb_tsm;
-    Dt_RECORD_DecisionArbitrator2TSM rt_in_deciarb_tsm;
+    Dt_RECORD_DECIARB2TSM rt_in_deciarb_tsm;
     Dt_RECORD_CANGATE2TSM rt_in_cangate_tsm;
     Dt_RECORD_Diag2TSM rt_in_diag_tsm;
     Dt_RECORD_PLANLITE2TSM rt_in_planlite_tsm;
