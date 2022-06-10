@@ -20,6 +20,7 @@ class tsm_signalhandling_test : public ::testing::Test {
     protected:
         struct tsm_entry* p_entry;
         struct tsm_intermediate_sig* p_int_sig;
+        enum tsm_ifc_mrm_func_st mrm_st;
 };
 
 TEST_F(tsm_signalhandling_test, process_lng_override) {
@@ -35,15 +36,91 @@ TEST_F(tsm_signalhandling_test, process_lng_override) {
 
     ASSERT_FALSE(tsm_is_bit_set(p_int_sig->int_sig_bitfields,
                                 BITNO_LNG_OVERRIDE_ST));
+    ASSERT_EQ(p_int_sig->lng_ovrd_du_type, NO_LNG_OVERRIDE);
     
-    enum tsm_ifc_mrm_func_st mrm_st = IFC_PASSIVE;
+    mrm_st = IFC_TOR_LNG_LAT_CTRL;
     // 执行了10个周期
-    for (size_t i = 0; i < K_GasPedalAppliedThresholdTime_Cnt + 2; ++i) {
+    for (size_t i = 0; i < (K_GasPedalAppliedThresholdTime_Cnt + 2); ++i) {
         tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
     }
     ASSERT_TRUE(tsm_is_bit_set(p_int_sig->int_sig_bitfields,
                                BITNO_LNG_OVERRIDE_ST));
 
+    ASSERT_EQ(p_int_sig->lng_ovrd_du_type, INSTANT_LNG_OVERRIDE);
+    for (size_t i = 0; i < (K_LngOvrdNeedDetectTouchZoneTime_Cnt + 2); ++ i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+    ASSERT_EQ(p_int_sig->lng_ovrd_du_type, SHORT_TIME_LNG_OVERRIDE);
+
+    for (size_t i = 0; i < (K_LngOverrideTakeOverTime_Cnt - 
+                            K_LngOvrdNeedDetectTouchZoneTime_Cnt) + 2; ++i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+
+    ASSERT_EQ(p_int_sig->lng_ovrd_du_type, LONG_TIME_LNG_OVERRIDE);
+
+    mrm_st = IFC_PASSIVE;
+    tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    ASSERT_EQ(p_int_sig->lng_ovrd_du_type, NO_LNG_OVERRIDE);
+}
+
+TEST_F(tsm_signalhandling_test, process_brake_behavior) {
+    Dt_RECORD_VehicleSignal2TSM *p_veh_sig = 
+        &p_entry->in_can_gate->Vehicle_Signal_To_Tsm;
+    p_veh_sig->EBB_BrkPedalAppliedSt = 1;
+    p_veh_sig->EBB_BrkPedalApplied = 1;
+    static const uint16 K_BrakPedalAppliedThresholdTime_Cnt = 10;
+    static const uint16 K_BrakeTOR_TimeThreshold_Cnt = 25;
+
+    mrm_st = IFC_TOR_LNG_LAT_CTRL;
+
+    ASSERT_TRUE(!tsm_is_bit_set(p_int_sig->int_sig_bitfields, BITNO_SET_BRAKE));
+    ASSERT_EQ(p_int_sig->brk_du_type, NO_BRAKE_INTERVENTION);
+    for (size_t i = 0; i < (K_BrakPedalAppliedThresholdTime_Cnt + 2); ++i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+
+    ASSERT_TRUE(tsm_is_bit_set(p_int_sig->int_sig_bitfields, BITNO_SET_BRAKE));
+    ASSERT_EQ(p_int_sig->brk_du_type, SHORT_INTERVENTION);
+    for (size_t i = 0; i < (K_BrakeTOR_TimeThreshold_Cnt + 2); ++i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+    ASSERT_EQ(p_int_sig->brk_du_type, LONG_INTERVENTION);
+
+    mrm_st = IFC_PASSIVE;
+    tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    ASSERT_EQ(p_int_sig->brk_du_type, NO_BRAKE_INTERVENTION);
+}
+
+TEST_F(tsm_signalhandling_test, process_lat_override) {
+    Dt_RECORD_VehicleSignal2TSM *p_veh_sig = 
+        &p_entry->in_can_gate->Vehicle_Signal_To_Tsm;
+    p_veh_sig->EPS_StrngWhlTorqVD = 1;
+    p_veh_sig->EPS_StrngWhlTorq = 1.4;
+    p_veh_sig->BCS_VehSpd = 15.0;
+
+    mrm_st = IFC_TOR_LNG_LAT_CTRL;
+
+    static const uint16 K_OverrideHandTorqCheckTime_Cnt = 3;
+
+    ASSERT_TRUE(!tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
+                                BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
+    for (size_t i = 0; i < (K_OverrideHandTorqCheckTime_Cnt + 2); ++i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+    ASSERT_TRUE(!tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                               BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
+    p_veh_sig->BCS_VehSpd = 31.0;
+    for (size_t i = 0; i < (K_OverrideHandTorqCheckTime_Cnt + 2); ++i) {
+        tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    }
+    ASSERT_TRUE(tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                               BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
+    
+    mrm_st = IFC_PASSIVE;
+    tsm_preprocess_input(p_int_sig, p_entry, mrm_st);
+    ASSERT_TRUE(!tsm_is_bit_set(p_int_sig->int_sig_bitfields,
+                                BITNO_DRVR_HANDTORQUE_OVERRIDE_ST));
 }
 
 int

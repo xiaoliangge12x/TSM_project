@@ -398,7 +398,7 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
         tsm_get_hand_torq_thold(veh_spd, ovrd_torq_thold, ovrd_torq_size);
     if (p_veh_sig->EPS_StrngWhlTorqVD &&
         (fabs(strng_whl_torque) > orvd_torque_threshold)) {
-        // if (tsm_is_mrm_active(mrm_st)) {
+        if (tsm_is_mrm_active(mrm_st)) {
 #ifndef CONSUME_TIME
             is_lat_override = 
                 is_flag_set_with_timecnt(K_OverrideHandTorqCheckTime_Cnt,
@@ -408,14 +408,14 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
             is_flag_set_with_time(K_OverrideHandTorqCheckTime, &time
                                   &time_flag, is_lat_override);
 #endif
-//         } else {
-//             is_lat_override = false;
-// #ifndef CONSUME_TIME
-//             timecnt = 0;
-// #else
-//             tsm_stop_timing(&time_flag);
-// #endif
-//         }
+        } else {
+            is_lat_override = false;
+#ifndef CONSUME_TIME
+            timecnt = 0;
+#else
+            tsm_stop_timing(&time_flag);
+#endif
+        }
     } else {
         is_lat_override = false;
 #ifndef CONSUME_TIME
@@ -425,9 +425,9 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
 #endif
     }
 
-    LOG(COLOR_GREEN, "<tsm_process_lat_override> orvd_torque_threshold: %f, "
-        "strng_whl_torque: %f, is_lat_override: %d", orvd_torque_threshold,
-        strng_whl_torque, is_lat_override);
+    // LOG(COLOR_GREEN, "<tsm_process_lat_override> orvd_torque_threshold: %f, "
+    //     "strng_whl_torque: %f, is_lat_override: %d", orvd_torque_threshold,
+    //     strng_whl_torque, is_lat_override);
 
     (is_lat_override) ?
         tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields, 
