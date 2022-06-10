@@ -470,10 +470,12 @@ tsm_process_lat_torq_odc(const tsm_veh_sig* p_veh_sig) {
         tsm_process_hand_torque(p_veh_sig, odc_torque_threshold, &timecnt,
                                 is_lat_torque_odc, K_ODCHandTorqCheckTime_Cnt,
                                 false);
+#ifdef _NEED_LOG
     if (!is_lat_torque_odc) {
         LOG(COLOR_GREEN, "<tsm_process_lat_torq_odc> odc_torque_threshold: %f, "
             "is_lat_torque_odc: %d", odc_torque_threshold, is_lat_torque_odc);
     }
+#endif
     return is_lat_torque_odc;
 }
 
@@ -516,11 +518,12 @@ tsm_process_lat_override(const tsm_veh_sig* p_veh_sig,
         is_lat_override = false;
         timecnt = 0;
     }
-    
+#ifdef _NEED_LOG
     if (is_lat_override) {
         LOG(COLOR_GREEN, "<tsm_process_lat_override> ovrd_torque_threshold: "
             "%f, is_lat_override: %d", ovrd_torque_threshold, is_lat_override);
     }
+#endif
 
     (is_lat_override) ?
         tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields, 
@@ -627,12 +630,13 @@ tsm_process_hands_takeover(const tsm_veh_sig* p_veh_sig,
         is_hands_can_tk = false;
         timecnt = 0;
     }
-    
+#ifdef _NEED_LOG
     if (is_hands_can_tk) {
         LOG(COLOR_GREEN, "<tsm_process_hands_takeover> tk_torque_threshold: "
             "%f, is_hands_can_takeover: %d", tk_torque_threshold, 
             is_hands_can_tk);
     }
+#endif
 
     (is_hands_can_tk) ?
         tsm_set_bit_in_bitfields(&p_int_sig->int_sig_bitfields, 
@@ -676,9 +680,11 @@ tsm_is_veh_door_closed(const tsm_veh_sig* p_veh_sig) {
         ret = false;
     }
     // for debug
+#ifdef _NEED_LOG
     if (!ret) {
         LOG(COLOR_RED, "<tsm_is_veh_door_closed> door is open.");
     }
+#endif
 
     return ret;
 }
@@ -700,9 +706,11 @@ tsm_is_seat_belt_fasten(const tsm_veh_sig* p_veh_sig) {
     }
 
     // for debug
+#ifdef _NEED_LOG
     if (!ret) {
         LOG(COLOR_RED, "<tsm_is_seat_belt_fasten> seat belt not fasten.");
     }
+#endif
 
     return ret;
 }
@@ -730,9 +738,11 @@ tsm_is_veh_in_drive_gear(const tsm_veh_sig* p_veh_sig) {
     }
 
     // for debug
+#ifdef _NEED_LOG
     if (!ret) {
         LOG(COLOR_RED, "<tsm_is_veh_in_drive_gear> gear not in drive.");
     }
+#endif
 
     return ret;
 }
@@ -854,11 +864,13 @@ tsm_is_veh_yawrate_satisfy(const tsm_veh_sig* p_veh_sig,
         tsm_process_veh_motion_params(p_veh_sig, YAW_RATE, nda_active_st, 
                                       true, is_veh_yawrate_satisfy, 
                                       &false_timecnt);
+#ifdef _NEED_LOG
     if (!is_veh_yawrate_satisfy) {
         LOG(COLOR_RED, "<tsm_is_veh_yawrate_satisfy> yawrate: %f, "
             "is_veh_yawrate_satisfy: %d", p_veh_sig->BCS_YawRate, 
             is_veh_yawrate_satisfy);
     }
+#endif
     return is_veh_yawrate_satisfy;
 }
 
@@ -880,11 +892,13 @@ tsm_is_veh_latacc_satisfy(const tsm_veh_sig* p_veh_sig,
         tsm_process_veh_motion_params(p_veh_sig, LAT_ACC, nda_active_st, 
                                       true, is_veh_latacc_satisfy, 
                                       &false_timecnt);
+#ifdef _NEED_LOG
     if (!is_veh_latacc_satisfy) {
         LOG(COLOR_RED, "<tsm_is_veh_latacc_satisfy> lat_acc: %f, "
             "is_veh_latacc_satisfy: %d", p_veh_sig->BCS_ActVehLaltrlAccel, 
             is_veh_latacc_satisfy);
     }
+#endif
     return is_veh_latacc_satisfy;
 }
 
@@ -906,11 +920,13 @@ tsm_is_veh_lngacc_satisfy(const tsm_veh_sig* p_veh_sig,
         tsm_process_veh_motion_params(p_veh_sig, LNG_ACC, nda_active_st, 
                                       true, is_veh_lngacc_satisfy, 
                                       &false_timecnt);
+#ifdef _NEED_LOG
     if (!is_veh_lngacc_satisfy) {
         LOG(COLOR_RED, "<tsm_is_veh_lngacc_satisfy> lng_acc: %f, "
             "is_veh_lngacc_satisfy: %d", p_veh_sig->BCS_ActVehLongAccel, 
             is_veh_lngacc_satisfy);
     }
+#endif
     return is_veh_lngacc_satisfy;
 }
 
@@ -933,11 +949,13 @@ tsm_is_str_whl_ang_spd_satisfy(const tsm_veh_sig* p_veh_sig,
                                       nda_active_st, true, 
                                       is_strnwhlang_spd_satisfy, 
                                       &false_timecnt);
+#ifdef _NEED_LOG
     if (!is_strnwhlang_spd_satisfy) {
         LOG(COLOR_RED, "<tsm_is_str_whl_ang_spd_satisfy> strn whl ang spd: %f, "
             "is_strnwhlang_spd_satisfy: %d", p_veh_sig->EPS_SteeringAngleSpd, 
             is_strnwhlang_spd_satisfy);
     }
+#endif
     return is_strnwhlang_spd_satisfy;
 }
 
@@ -970,9 +988,11 @@ tsm_is_epb_satisfy(const tsm_veh_sig* p_veh_sig) {
     } else {
         is_epb_satisfy = false;
     }
+#ifdef _NEED_LOG
     if (!is_epb_satisfy) {
         LOG(COLOR_RED, "<tsm_is_veh_in_drive_gear> epb is not satisfy.");
     }
+#endif
     return is_epb_satisfy;
 }
 
@@ -1092,10 +1112,11 @@ tsm_is_user_set_hazard_light(const tsm_veh_sig* p_veh_sig,
                 is_sys_open_flag ) {
         ret = false;
     }
-
+#ifdef _NEED_LOG
     if (ret) {
         LOG(COLOR_RED, "<tsm_is_veh_in_drive_gear> user set hazard light.");
     }
+#endif
     return ret;
 }
 
@@ -1112,7 +1133,9 @@ tsm_is_key_st_on(const tsm_veh_sig* p_veh_sig) {
     if (p_veh_sig->BCM_KeySt == ON) {
         is_key_st_on = true;
     } else {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "<tsm_is_veh_cond_satisfy> key_st is not on.");
+#endif
         is_key_st_on = false;
     }
     return  is_key_st_on;
@@ -1130,10 +1153,12 @@ tsm_is_veh_cond_satisfy(const struct tsm_entry* p_entry) {
         p_entry->in_can_gate->Soc_Info.monitor_sig_src.Vehicle_Posture_St;
     boolean is_veh_position_satisfy = 
         p_entry->in_can_gate->Soc_Info.monitor_sig_src.Vehicle_Position_St;
+#ifdef _NEED_LOG
     if (!is_veh_posture_satisfy || !is_veh_position_satisfy) {
         LOG(COLOR_RED, "<tsm_is_veh_cond_satisfy> vehicle position or posture "
             "is not satisfy.");
     }
+#endif
     
     return (tsm_is_veh_door_closed(&veh_sig) &&
             tsm_is_seat_belt_fasten(&veh_sig) &&

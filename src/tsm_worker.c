@@ -190,15 +190,14 @@ tsm_process_exit(const struct tsm_entry* p_entry,
 }
 
 void 
-MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
-              const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
-              const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
-              const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, 
-              Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
-              Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, 
-              Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, 
-              Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE)
-{
+MRM_Swc1_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
+             const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
+             const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
+             const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm, 
+             Dt_RECORD_TSM2PLANLITE *rty_DeTsm2Planlite,
+             Dt_RECORD_TSM2CtrlArb *rty_DeTSM2CtrlArb, 
+             Dt_RECORD_TSM2Diag *rty_DeTSM2Diag, 
+             Dt_RECORD_TSM2CANGATE *rty_DeTSM2CANGATE) {
     static struct tsm_entry entry;
     static struct tsm_exit exit;
     tsm_set_entry(&entry, rtu_DeCtrlArb2TSM, rtu_DeCANGATE2TSM, 

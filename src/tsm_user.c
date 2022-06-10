@@ -366,25 +366,33 @@ tsm_is_directly_exit(const uint32 bitfields, const boolean mcu_unable_to_stop,
                      const boolean is_as_active) {
     boolean is_brake_set = tsm_is_bit_set(bitfields, BITNO_SET_BRAKE);
     if (is_brake_set) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "<tsm_is_directly_exit> Driver take brake.");
+#endif
         return true;
     }
 
     boolean is_lat_override =
         tsm_is_bit_set(bitfields, BITNO_DRVR_HANDTORQUE_OVERRIDE_ST);
     if (is_lat_override) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "<tsm_is_directly_exit> Driver take lat override.");
+#endif
         return true;
     }
 
     if (mcu_unable_to_stop) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "<tsm_is_directly_exit> mcu unable to safe stop and "
             "emergency stop");
+#endif
         return true;
     }
 
     if (is_as_active) {
+#ifdef _NEED_LOG
         LOG(COLOR_RED, "<tsm_is_directly_exit> AS take ctrl of the veh");
+#endif
         return true;
     }
     return false;
@@ -397,17 +405,21 @@ tsm_is_exit_with_lat_ctrl(const enum tsm_drvr_attention_st drvr_att_st,
     if (is_drvr_awake) {
         if (tsm_is_bit_set(bitfields, BITNO_HANDS_CAN_TAKEOVER) ||
             tsm_is_bit_set(bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
+#ifdef _NEED_LOG
             LOG(COLOR_RED, "<tsm_is_exit_with_lat_ctrl> Driver attention st: "
                 "%d, Driver hands can takeover or Driver take lng override"
                 " long time.", drvr_att_st);
+#endif
             return true;
         }
     } else {
         if (tsm_is_bit_set(bitfields, BITNO_HANDS_CAN_TAKEOVER) &&
             tsm_is_bit_set(bitfields, BITNO_LONG_TIME_LNG_OVERRIDE)) {
+#ifdef _NEED_LOG
             LOG(COLOR_RED, "<tsm_is_exit_with_lat_ctrl> Driver attention st: "
                 "%d, Driver hands can takeover and Driver take lng override"
                 " long time.", drvr_att_st);
+#endif
             return true;
         }
     }
@@ -448,8 +460,10 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
                 tsm_is_bit_set(p_int_sig->int_sig_bitfields,
                                BITNO_LNG_OVERRIDE_ST);
             if (is_lng_override) {
+#ifdef _NEED_LOG
                 LOG(COLOR_RED, "<tsm_is_drvr_takeover> Driver take lng "
                     "override.");
+#endif
                 return true;
             }
 
@@ -457,8 +471,10 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
                 tsm_is_exit_with_hands_to(drvr_att_st, 
                                           p_int_sig->int_sig_bitfields);
             if (ret) {
+#ifdef _NEED_LOG
                 LOG(COLOR_RED, "<tsm_is_drvr_takeover>  Driver attention st:"
                     " %d, Driver hands can take over.", drvr_att_st);
+#endif
                 return true;
             }
         } else if ((mrm_state == MCU_TOR_LNG_LAT_CTRL) || 
@@ -467,8 +483,10 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
                 tsm_is_exit_with_hands_to(drvr_att_st,
                                           p_int_sig->int_sig_bitfields);
             if (ret) {
+#ifdef _NEED_LOG
                 LOG(COLOR_RED, "<tsm_is_drvr_takeover> Driver attention st:"
                     " %d, Driver hands can take over.", drvr_att_st);
+#endif
                 return true;
             }
         } else if ((mrm_state == MCU_TOR_LAT_CTRL) || 
@@ -484,8 +502,10 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
                 tsm_is_bit_set(p_int_sig->int_sig_bitfields, 
                     BITNO_LNG_OVERRIDE_ST);
             if (is_lng_override) {
+#ifdef _NEED_LOG
                 LOG(COLOR_RED, "<tsm_is_drvr_takeover> Driver take lng" 
                     "override.");
+#endif
                 return true;
             }
 
@@ -493,8 +513,10 @@ tsm_is_drvr_takeover(const boolean mcu_unable_to_stop,
                 tsm_is_bit_set(p_int_sig->int_sig_bitfields,
                                BITNO_HANDS_CAN_TAKEOVER);
             if (is_hands_to) {
+#ifdef _NEED_LOG
                 LOG(COLOR_RED, "<tsm_is_drvr_takeover> Driver hands can "
                     "takeover");
+#endif
                 return true;
             }
         }

@@ -30,7 +30,7 @@ typedef unsigned char boolean;
 #endif
 
 extern void MRM_TSM_MODULE_Init(void);
-extern void MRM_Swc_V_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
+extern void MRM_Swc1_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
     const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 
     const Dt_RECORD_Diag2TSM *rtu_DeDiag2TSM,
     const Dt_RECORD_PLANLITE2TSM *rtu_DePlanlite2Tsm,
