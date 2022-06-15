@@ -33,7 +33,7 @@ Vehicle_Signal_To_Tsm:
   BCS_CDDAvailable: 1
 
 Soc_Info:
-  NDA_Function_State: 14
+  NDA_Function_State: 0
   ICA_Function_State: 0
   Vehicle_Posture_St: 1
   Vehicle_Position_St: 1

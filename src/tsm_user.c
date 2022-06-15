@@ -187,7 +187,11 @@ tsm_set_mrm_st(struct tsm_action* p_action,
 static inline void
 tsm_reset_action(struct tsm_action* p_action) {
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_SOC);
+#if ENABLE_INTERNAL_TEST
+    tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
+#else
     tsm_set_mrm_st(p_action, MRM_ST_INVALID);
+#endif
 }
 
 static void
@@ -247,7 +251,11 @@ tsm_mrm_es_post_process(struct tsm_action* p_action) {
     LOG(COLOR_RED, "It's in mcu emergency stop st.");
 #endif
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
+#if ENABLE_INTERNAL_TEST
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
+#else
     tsm_set_mrm_st(p_action, MRM_ST_ES);
+#endif
 }
 
 static void 
@@ -256,7 +264,11 @@ tsm_mrm_both_post_process(struct tsm_action* p_action) {
     LOG(COLOR_YELLOW, "It's in mcu mrm both ctrl St.");
 #endif
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
+#if ENABLE_INTERNAL_TEST
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
+#else
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
+#endif
 }
 
 static void 
@@ -265,7 +277,11 @@ tsm_mrm_lat_post_process(struct tsm_action* p_action) {
     LOG(COLOR_YELLOW, "It's in mcu mrm lat ctrl St.");
 #endif
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
+#if ENABLE_INTERNAL_TEST
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
+#else
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
+#endif
 }
 
 static void 
@@ -274,13 +290,24 @@ tsm_mrc_post_process(struct tsm_action* p_action) {
     LOG(COLOR_YELLOW, "It's in mcu mrc St.");
 #endif
     tsm_set_ctrlarb_req(p_action, CTRLARB_RESPOND_TO_MCU);
+#if ENABLE_INTERNAL_TEST
+    tsm_set_mrm_st(p_action, MRM_ST_TOR);
+#else
     tsm_set_mrm_st(p_action, MRM_ST_ACTIVE);
+#endif
 }
 
 static boolean
 tsm_check_activation_cond(const struct tsm_entry* p_entry,
                           const struct tsm_intermediate_sig* p_int_sig) {
     boolean check_ret = false;
+#if ENABLE_INTERNAL_TEST
+    uint8 hazard_lamp_st = 
+        p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCM_HazardLampSt;
+    if (g_enable_activate_mcu_mrm && hazard_lamp_st) {
+        check_ret = true;
+    }
+#else
     uint8 soc_frc_fault = 
         p_entry->in_can_gate->Soc_Info.frc_fault_from_soc;
     boolean soc_req_mrm =
@@ -305,6 +332,7 @@ tsm_check_activation_cond(const struct tsm_entry* p_entry,
     } else {
         check_ret = false;
     }
+#endif
 
     return check_ret;
 }
@@ -328,12 +356,16 @@ tsm_run_initial_sit(uint8* p_event, size_t num,
     } else {
         p_event[num++] = EVENT_FAULT_NOT_EXIST;
     }
-
+    
+#if ENABLE_INTERNAL_TEST
+    p_event[num++] = EVENT_STANDBY;
+#else
     if (tsm_is_nda_active(nda_st)) {
         p_event[num++] = EVENT_STANDBY;
     } else {
         p_event[num++] = EVENT_NO_STANDBY;
     }
+#endif
 
     // for debug
     // p_event[num++] = EVENT_STANDBY;
@@ -541,9 +573,17 @@ tsm_run_func_exit_sit(uint8* p_event, size_t num,
         [MCU_MRM_MRC] = EVENT_MRC_EXIT,
     };
 
+#if ENABLE_INTERNAL_TEST
+    uint8 hazard_lamp_st = 
+        p_entry->in_can_gate->Vehicle_Signal_To_Tsm.BCM_HazardLampSt;
+    if (!hazard_lamp_st) {
+        p_event[num++] = tsm_exit_event[mrm_state];
+    }
+#else
     if (tsm_is_drvr_takeover(mcu_unable_to_stop, p_int_sig, mrm_state)) {
         p_event[num++] = tsm_exit_event[mrm_state];
     }
+#endif
 
     return num;
 }

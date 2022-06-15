@@ -28,6 +28,8 @@ extern "C"
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0])) 
 
+extern uint8 g_enable_activate_mcu_mrm;
+
 typedef unsigned long size_t;
 
 typedef Dt_RECORD_VehicleSignal2TSM tsm_veh_sig;

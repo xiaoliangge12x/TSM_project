@@ -29,6 +29,8 @@ typedef unsigned char boolean;
 #define false 0U
 #endif
 
+#define ENABLE_INTERNAL_TEST 1
+
 extern void MRM_TSM_MODULE_Init(void);
 extern void MRM_Swc1_TSM(const Dt_RECORD_CtrlArb2TSM *rtu_DeCtrlArb2TSM, 
     const Dt_RECORD_CANGATE2TSM *rtu_DeCANGATE2TSM, 

@@ -111,6 +111,11 @@ tsm_fill_planlite_exit(const struct tsm_entry* p_entry,
                        const Dt_RECORD_TimeStamp* tsm_ts,
                        Dt_RECORD_TSM2PLANLITE* exit_planlite) {
     memcpy(&exit_planlite->Tsm_TimeStamp, tsm_ts, sizeof(Dt_RECORD_TimeStamp));
+
+#ifdef _NEED_LOG
+    LOG(COLOR_YELLOW, "<tsm_fill_planlite_exit> mrm_activation_st: %d", 
+        p_action->mrm_activation_st);
+#endif
     exit_planlite->MRM_Status = p_action->mrm_activation_st;
 }
 

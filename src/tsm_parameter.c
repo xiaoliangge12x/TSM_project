@@ -7,6 +7,8 @@ float32 K_TakeOverAvailHandTorqThreshold_LessTwoZone = 0;      // 少于2区的�
 float32 K_TakeOverAvailHandTorqThreshold_TwoZone     = 0;      // 2区的具备接管能力的手力矩阈值
 float32 K_TakeOverAvailHandTorqThreshold_ThreeZone   = 0;      // 3区的具备接管能力的手力矩阈值
 
+uint8 g_enable_activate_mcu_mrm = 1;
+
 #ifdef CONSUME_TIME
 
 void 
